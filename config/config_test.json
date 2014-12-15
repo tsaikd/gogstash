@@ -1,0 +1,14 @@
+{
+	"input": [
+		{
+			"type": "file",
+			"path": "/tmp/log/syslog"
+		}
+	],
+	"filter": [],
+	"output": [
+		{
+			"type": "redis"
+		}
+	]
+}

@@ -1,4 +1,4 @@
-go-log-shipper
+gogstash
 ==============
 
-Ship log to remote server, written in golang
+Logstash like, written in golang
