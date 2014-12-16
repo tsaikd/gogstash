@@ -7,7 +7,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/tsaikd/go-log-shipper/config"
+	"github.com/tsaikd/gogstash/config"
 )
 
 func Test_main(t *testing.T) {

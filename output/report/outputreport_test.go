@@ -1,4 +1,4 @@
-package outputredis
+package outputreport
 
 import (
 	"testing"
@@ -27,11 +27,25 @@ func Test_main(t *testing.T) {
 	if len(outputs) > 0 {
 		output := outputs[0].(*OutputConfig)
 		assert.IsType(&OutputConfig{}, output)
-		assert.Equal("redis", output.Type())
+		assert.Equal("report", output.Type())
+		assert.Equal(1, output.Interval)
 
-		output.Event(config.LogEvent{
+		event := config.LogEvent{
 			Timestamp: time.Now(),
-			Message:   "outputredis test message",
-		})
+			Message:   "outputreport test message",
+		}
+
+		output.Event(event)
+		output.Event(event)
+		time.Sleep(2 * time.Second)
+
+		output.Event(event)
+		time.Sleep(2 * time.Second)
+
+		output.Event(event)
+		output.Event(event)
+		output.Event(event)
+		output.Event(event)
+		time.Sleep(2 * time.Second)
 	}
 }
