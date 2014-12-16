@@ -217,13 +217,10 @@ func (self *InputConfig) fileReadLoop(
 
 		since.Offset += int64(size)
 
-		go func(event config.LogEvent) {
-			log.Debugf("%q %v", event.Message, event)
-			self.EventChan <- event
-			//self.SaveSinceDBInfos()
-			self.CheckSaveSinceDBInfos()
-			//chanSinceDBSave <- 1
-		}(event)
+		log.Debugf("%q %v", event.Message, event)
+		self.EventChan <- event
+		//self.SaveSinceDBInfos()
+		self.CheckSaveSinceDBInfos()
 	}
 
 	return
