@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"time"
 
@@ -28,6 +30,11 @@ var (
 		false,
 		"Show version information",
 	)
+	FlProfile = flag.String(
+		[]string{"-PROFILE"},
+		env.GetString("PROFILE", ""),
+		"Listen http profiling interface, e.g. localhost:6060",
+	)
 )
 
 func main() {
@@ -54,6 +61,15 @@ func mainBody() {
 	if conf, err = config.LoadConfig(*FlConfig); err != nil {
 		log.Errorf("Load config failed: %q", *FlConfig)
 		return
+	}
+
+	if *FlProfile != "" {
+		go func() {
+			log.Infof("Profile listen http: %q", *FlProfile)
+			if err := http.ListenAndServe(*FlProfile, nil); err != nil {
+				log.Errorf("Profile listen http failed: %q\n%v", *FlProfile, err)
+			}
+		}()
 	}
 
 	for _, input := range conf.Input() {
