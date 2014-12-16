@@ -15,7 +15,7 @@ type Version struct {
 }
 
 var (
-	VERSION   = "0.0.1"
+	VERSION   = "0.0.2"
 	BUILDTIME string
 	GITCOMMIT string
 )
