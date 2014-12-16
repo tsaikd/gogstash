@@ -4,6 +4,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"runtime"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -56,6 +57,10 @@ func mainBody() {
 	if *FlVersion {
 		version.ShowVersion(os.Stdout)
 		return
+	}
+
+	if runtime.GOMAXPROCS(0) == 1 && runtime.NumCPU() > 1 {
+		log.Warnf("set GOMAXPROCS = %d to get better performance", runtime.NumCPU())
 	}
 
 	if conf, err = config.LoadConfig(*FlConfig); err != nil {
