@@ -13,10 +13,27 @@ import (
 type LogEvent struct {
 	Timestamp time.Time              `json:"timestamp"`
 	Message   string                 `json:"message"`
+	Tags      []string               `json:"tags,omitempty"`
 	Extra     map[string]interface{} `json:"-"`
 }
 
 const timeFormat = `2006-01-02T15:04:05.999999999Z`
+
+func appendIfMissing(slice []string, s string) []string {
+	for _, ele := range slice {
+		if ele == s {
+			return slice
+		}
+	}
+	return append(slice, s)
+}
+
+func (self *LogEvent) AddTag(tag ...string) {
+	for _, t := range tag {
+		t = self.Format(t)
+		self.Tags = appendIfMissing(self.Tags, t)
+	}
+}
 
 func (self *LogEvent) Marshal() (raw []byte, err error) {
 	event := map[string]interface{}{

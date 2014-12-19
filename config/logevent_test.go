@@ -46,4 +46,12 @@ func Test_Format(t *testing.T) {
 
 	out = logevent.Format("%{null}")
 	assert.Equal("%{null}", out)
+
+	logevent.AddTag("tag1", "tag2", "tag3")
+	assert.Len(logevent.Tags, 3)
+	assert.Contains(logevent.Tags, "tag1")
+
+	logevent.AddTag("tag1", "tag%{int}")
+	assert.Len(logevent.Tags, 4)
+	assert.Contains(logevent.Tags, "tag123")
 }
