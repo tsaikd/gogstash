@@ -16,10 +16,12 @@ type LogEvent struct {
 	Extra     map[string]interface{} `json:"-"`
 }
 
+const timeFormat = `2006-01-02T15:04:05.999999999Z`
+
 func (self *LogEvent) Marshal() (raw []byte, err error) {
 	event := map[string]interface{}{
-		"timestamp": self.Timestamp,
-		"message":   self.Message,
+		"@timestamp": self.Timestamp.UTC().Format(timeFormat),
+		"message":    self.Message,
 	}
 	for key, value := range self.Extra {
 		event[key] = value
@@ -33,8 +35,8 @@ func (self *LogEvent) Marshal() (raw []byte, err error) {
 
 func (self *LogEvent) MarshalIndent() (raw []byte, err error) {
 	event := map[string]interface{}{
-		"timestamp": self.Timestamp,
-		"message":   self.Message,
+		"@timestamp": self.Timestamp.UTC().Format(timeFormat),
+		"message":    self.Message,
 	}
 	for key, value := range self.Extra {
 		event[key] = value
@@ -49,7 +51,7 @@ func (self *LogEvent) MarshalIndent() (raw []byte, err error) {
 
 func (self *LogEvent) Get(field string) (v interface{}) {
 	switch field {
-	case "timestamp":
+	case "@timestamp":
 		v = self.Timestamp
 	case "message":
 		v = self.Message
@@ -61,8 +63,8 @@ func (self *LogEvent) Get(field string) (v interface{}) {
 
 func (self *LogEvent) GetString(field string) (v string) {
 	switch field {
-	case "timestamp":
-		v = self.Timestamp.String()
+	case "@timestamp":
+		v = self.Timestamp.UTC().Format(timeFormat)
 	case "message":
 		v = self.Message
 	default:
@@ -74,7 +76,7 @@ func (self *LogEvent) GetString(field string) (v string) {
 }
 
 func (self *LogEvent) Format(format string) (out string) {
-	revar := regexp.MustCompile(`%{(\w+)}`)
+	revar := regexp.MustCompile(`%{([\w@]+)}`)
 	out = format
 	matches := revar.FindAllStringSubmatch(out, -1)
 	for _, submatches := range matches {

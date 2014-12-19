@@ -31,8 +31,9 @@ func Test_Format(t *testing.T) {
 	out = logevent.Format("%{message}")
 	assert.Equal("Test Message", out)
 
-	out = logevent.Format("%{timestamp}")
+	out = logevent.Format("%{@timestamp}")
 	assert.NotEmpty(out)
+	assert.NotEqual("%{@timestamp}", out)
 
 	out = logevent.Format("%{int}")
 	assert.Equal("123", out)

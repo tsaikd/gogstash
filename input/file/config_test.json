@@ -2,7 +2,9 @@
 	"input": [
 		{
 			"type": "file",
-			"path": "/tmp/log/syslog"
+			"path": "/tmp/log/syslog",
+			"sincedb_path": "",
+			"start_position": "beginning"
 		}
 	]
 }
