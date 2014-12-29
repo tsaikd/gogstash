@@ -1,0 +1,10 @@
+{
+	"input": [
+		{
+			"type": "exec",
+			"command": "uptime",
+			"args": [],
+			"interval": 3
+		}
+	]
+}
