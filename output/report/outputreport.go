@@ -12,8 +12,8 @@ import (
 
 type OutputConfig struct {
 	config.CommonConfig
-	Interval   int    `json:"interval"`
-	TimeFormat string `json:"time_format"`
+	Interval   int    `json:"interval,omitempty"`
+	TimeFormat string `json:"time_format,omitempty"`
 
 	ProcessCount int `json:"-"`
 }
