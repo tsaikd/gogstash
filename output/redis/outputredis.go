@@ -2,7 +2,7 @@ package outputredis
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -13,11 +13,15 @@ import (
 
 type OutputConfig struct {
 	config.CommonConfig
-	Key      string   `json:"key"`
-	Host     []string `json:"host"`
-	DataType string   `json:"data_type,omitempty"` // one of ["list", "channel"], TODO: implement channel mode
-	Timeout  int      `json:"timeout,omitempty"`
-	client   *redis.Client
+	Key               string   `json:"key"`
+	Host              []string `json:"host"`
+	DataType          string   `json:"data_type,omitempty"` // one of ["list", "channel"]
+	Timeout           int      `json:"timeout,omitempty"`
+	ReconnectInterval int      `json:"reconnect_interval,omitempty"`
+
+	clients []*redis.Client // all configured clients
+	client  *redis.Client   // cache last success client
+	chEvent chan config.LogEvent
 }
 
 func DefaultOutputConfig() OutputConfig {
@@ -25,9 +29,12 @@ func DefaultOutputConfig() OutputConfig {
 		CommonConfig: config.CommonConfig{
 			Type: "redis",
 		},
-		Key:      "logstash-test",
-		DataType: "list",
-		Timeout:  5,
+		Key:               "gogstash",
+		DataType:          "list",
+		Timeout:           5,
+		ReconnectInterval: 1,
+
+		chEvent: make(chan config.LogEvent),
 	}
 }
 
@@ -46,6 +53,10 @@ func init() {
 			log.Error(err)
 			return
 		}
+		go conf.(*OutputConfig).loop()
+		if err = conf.(*OutputConfig).initRedisClient(); err != nil {
+			return
+		}
 		return
 	})
 }
@@ -55,32 +66,119 @@ func (self *OutputConfig) Type() string {
 }
 
 func (self *OutputConfig) Event(event config.LogEvent) (err error) {
+	self.chEvent <- event
+	return
+}
+
+func (self *OutputConfig) loop() (err error) {
 	var (
-		raw []byte
-		res *redis.Reply
-		key string
+		event config.LogEvent
 	)
 
-	if self.client == nil {
-		for _, addr := range self.Host {
-			if self.client, err = redis.DialTimeout("tcp", addr, time.Duration(self.Timeout)*time.Second); err != nil {
-				log.Errorf("Redis connection failed: %q\n%s", addr, err)
-				return
-			}
+	for {
+		event = <-self.chEvent
+		self.sendEvent(event)
+	}
+
+	return
+}
+
+func (self *OutputConfig) initRedisClient() (err error) {
+	var (
+		client *redis.Client
+	)
+
+	self.closeRedisClient()
+
+	for _, addr := range self.Host {
+		if client, err = redis.DialTimeout("tcp", addr, time.Duration(self.Timeout)*time.Second); err == nil {
+			self.clients = append(self.clients, client)
+		} else {
+			log.Warnf("Redis connection failed: %q\n%s", addr, err)
 		}
 	}
 
-	if self.client == nil {
-		err = fmt.Errorf("no valid redis server connection")
-		return
+	if len(self.clients) > 0 {
+		self.client = self.clients[0]
+		err = nil
+	} else {
+		self.client = nil
+		err = errors.New("no valid redis server connection")
 	}
+
+	return
+}
+
+func (self *OutputConfig) closeRedisClient() (err error) {
+	var (
+		client *redis.Client
+	)
+
+	for _, client = range self.clients {
+		client.Close()
+	}
+
+	self.clients = self.clients[:0]
+
+	return
+}
+
+func (self *OutputConfig) sendEvent(event config.LogEvent) (err error) {
+	var (
+		client *redis.Client
+		raw    []byte
+		key    string
+	)
 
 	if raw, err = event.Marshal(); err != nil {
 		log.Errorf("event Marshal failed: %v", event)
 		return
 	}
 	key = event.Format(self.Key)
-	res = self.client.Cmd("rpush", key, raw)
-	log.Debug("redisoutput", res, event)
+
+	// try previous client first
+	if self.client != nil {
+		if err = self.redisSend(self.client, key, raw); err == nil {
+			return
+		}
+	}
+
+	// try to log forever
+	for {
+		// reconfig all clients
+		if err = self.initRedisClient(); err != nil {
+			return
+		}
+
+		// find valid client
+		for _, client = range self.clients {
+			if err = self.redisSend(client, key, raw); err == nil {
+				self.client = client
+				return
+			}
+		}
+
+		time.Sleep(time.Duration(self.ReconnectInterval) * time.Second)
+	}
+
+	return
+}
+
+func (self *OutputConfig) redisSend(client *redis.Client, key string, raw []byte) (err error) {
+	var (
+		res *redis.Reply
+	)
+
+	switch self.DataType {
+	case "list":
+		res = client.Cmd("rpush", key, raw)
+		err = res.Err
+	case "channel":
+		res = client.Cmd("publish", key, raw)
+		err = res.Err
+	default:
+		err = errors.New("unknown DataType: " + self.DataType)
+	}
+
 	return
 }
