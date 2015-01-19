@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"os"
 	"os/exec"
 	"time"
 
@@ -72,9 +73,15 @@ func (self *InputConfig) Event(eventChan chan config.LogEvent) (err error) {
 
 func (self *InputConfig) Loop() {
 	var (
+		hostname  string
+		err       error
 		startChan = make(chan bool) // startup tick
 		ticker    = time.NewTicker(time.Duration(self.Interval) * time.Second)
 	)
+
+	if hostname, err = os.Hostname(); err != nil {
+		log.Errorf("Get hostname failed: %v", err)
+	}
 
 	go func() {
 		startChan <- true
@@ -83,16 +90,16 @@ func (self *InputConfig) Loop() {
 	for {
 		select {
 		case <-startChan:
-			self.Exec()
+			self.Exec(hostname)
 		case <-ticker.C:
-			self.Exec()
+			self.Exec(hostname)
 		}
 	}
 
 	return
 }
 
-func (self *InputConfig) Exec() {
+func (self *InputConfig) Exec(hostname string) {
 	var (
 		err  error
 		data string
@@ -103,8 +110,8 @@ func (self *InputConfig) Exec() {
 	event := config.LogEvent{
 		Timestamp: time.Now(),
 		Message:   data,
-		Extra:     map[string]interface{}{
-		//"url": self.Url,
+		Extra: map[string]interface{}{
+			"host": hostname,
 		},
 	}
 
