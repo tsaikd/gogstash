@@ -304,12 +304,13 @@ func readline(reader *bufio.Reader, buffer *bytes.Buffer) (line string, size int
 }
 
 func isPartialLine(segment []byte) bool {
-	if len(segment) > 0 {
-		if segment[len(segment)-1] == '\n' {
-			return false
-		}
+	if len(segment) < 1 {
+		return true
 	}
-	return true
+	if segment[len(segment)-1] != '\n' {
+		return true
+	}
+	return false
 }
 
 var (
