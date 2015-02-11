@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -72,9 +73,15 @@ func (self *InputConfig) Event(eventChan chan config.LogEvent) (err error) {
 
 func (self *InputConfig) RequestLoop() {
 	var (
+		hostname  string
+		err       error
 		startChan = make(chan bool) // startup tick
 		ticker    = time.NewTicker(time.Duration(self.Interval) * time.Second)
 	)
+
+	if hostname, err = os.Hostname(); err != nil {
+		log.Errorf("Get hostname failed: %v", err)
+	}
 
 	go func() {
 		startChan <- true
@@ -83,16 +90,16 @@ func (self *InputConfig) RequestLoop() {
 	for {
 		select {
 		case <-startChan:
-			self.Request()
+			self.Request(hostname)
 		case <-ticker.C:
-			self.Request()
+			self.Request(hostname)
 		}
 	}
 
 	return
 }
 
-func (self *InputConfig) Request() {
+func (self *InputConfig) Request(hostname string) {
 	var (
 		err  error
 		data string
@@ -104,7 +111,8 @@ func (self *InputConfig) Request() {
 		Timestamp: time.Now(),
 		Message:   data,
 		Extra: map[string]interface{}{
-			"url": self.Url,
+			"host": hostname,
+			"url":  self.Url,
 		},
 	}
 
