@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -19,9 +20,11 @@ const (
 
 type InputConfig struct {
 	config.CommonConfig
-	Command  string   `json:"command"`        // Command to run. e.g. “uptime”
-	Args     []string `json:"args,omitempty"` // Arguments of command
-	Interval int      `json:"interval,omitempty"`
+	Command   string   `json:"command"`                  // Command to run. e.g. “uptime”
+	Args      []string `json:"args,omitempty"`           // Arguments of command
+	Interval  int      `json:"interval,omitempty"`       // Second, default: 60
+	MsgTrim   string   `json:"message_trim,omitempty"`   // default: " \t\r\n"
+	MsgPrefix string   `json:"message_prefix,omitempty"` // e.g. "%{@timestamp} [uptime] "
 
 	EventChan chan config.LogEvent `json:"-"`
 }
@@ -32,6 +35,7 @@ func DefaultInputConfig() InputConfig {
 			Type: ModuleName,
 		},
 		Interval: 60,
+		MsgTrim:  " \t\r\n",
 	}
 }
 
@@ -115,6 +119,8 @@ func (self *InputConfig) Exec(hostname string) {
 		},
 	}
 
+	event.Message = event.Format(self.MsgPrefix) + event.Message
+
 	if err != nil {
 		event.AddTag("intputexec_failed")
 		event.Extra["error"] = err.Error()
@@ -138,6 +144,7 @@ func (self *InputConfig) doExec() (data string, err error) {
 		return
 	}
 	data = string(raw)
+	data = strings.Trim(data, self.MsgTrim)
 	if buferr.Len() > 0 {
 		err = errors.New(buferr.String())
 	}
