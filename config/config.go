@@ -56,20 +56,26 @@ func LoadConfig(path string) (config Config, err error) {
 	return
 }
 
-func StripComments(data []byte) ([]byte, error) {
+// Supported comment formats
+// format 1: ^\s*#
+// format 2: ^\s*//
+func StripComments(data []byte) (out []byte, err error) {
+	reForm1 := regexp.MustCompile(`^\s*#`)
+	reForm2 := regexp.MustCompile(`^\s*//`)
 	data = bytes.Replace(data, []byte("\r"), []byte(""), 0) // Windows
 	lines := bytes.Split(data, []byte("\n"))
 	filtered := make([][]byte, 0)
 
 	for _, line := range lines {
-		match, err := regexp.Match(`^\s*#`, line)
-		if err != nil {
-			return nil, err
+		if reForm1.Match(line) {
+			continue
 		}
-		if !match {
-			filtered = append(filtered, line)
+		if reForm2.Match(line) {
+			continue
 		}
+		filtered = append(filtered, line)
 	}
 
-	return bytes.Join(filtered, []byte("\n")), nil
+	out = bytes.Join(filtered, []byte("\n"))
+	return
 }
