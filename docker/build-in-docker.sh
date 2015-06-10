@@ -14,8 +14,8 @@ go get -v
 godep restore
 
 if [ "${BUILDTIME}" ] && [ "${GITHASH}" ] ; then
-	go build -ldflags "-X github.com/tsaikd/KDGoLib/version.BUILDTIME ${BUILDTIME} -X github.com/tsaikd/KDGoLib/version.GITCOMMIT ${GITHASH}"
+	go build -ldflags "-X github.com/tsaikd/KDGoLib/version.BUILDTIME ${BUILDTIME} -X github.com/tsaikd/KDGoLib/version.GITCOMMIT ${GITHASH}" -o "gogstash-$(uname -s)-$(uname -m)"
 else
-	go build
+	go build -o "gogstash-$(uname -s)-$(uname -m)"
 fi
 

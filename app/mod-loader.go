@@ -1,4 +1,4 @@
-package main
+package gogstash
 
 import (
 	_ "github.com/tsaikd/gogstash/input/docker"
