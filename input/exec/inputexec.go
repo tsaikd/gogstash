@@ -122,7 +122,7 @@ func (self *InputConfig) Exec(hostname string) {
 	event.Message = event.Format(self.MsgPrefix) + event.Message
 
 	if err != nil {
-		event.AddTag("intputexec_failed")
+		event.AddTag("inputexec_failed")
 		event.Extra["error"] = err.Error()
 	}
 

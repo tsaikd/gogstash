@@ -117,7 +117,7 @@ func (self *InputConfig) Request(hostname string) {
 	}
 
 	if err != nil {
-		event.AddTag("intputhttp_failed")
+		event.AddTag("inputhttp_failed")
 	}
 
 	log.Debugf("%v", event)
