@@ -5,7 +5,6 @@ import (
 	"errors"
 	"os"
 	"regexp"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -25,6 +24,8 @@ type InputConfig struct {
 	sincedb   *SinceDB             `json:"-"`
 	includes  []*regexp.Regexp     `json:"-"`
 	excludes  []*regexp.Regexp     `json:"-"`
+	hostname  string               `json:"-"`
+	client    *docker.Client       `json:"-"`
 }
 
 func DefaultInputConfig() InputConfig {
@@ -64,6 +65,15 @@ func init() {
 			log.Error(err)
 			return
 		}
+		if defconf.hostname, err = os.Hostname(); err != nil {
+			log.Errorf("Get hostname failed: %v", err)
+			return
+		}
+		if defconf.client, err = docker.NewClient(defconf.Host); err != nil {
+			log.Fatal("create docker client failed", err)
+			return
+		}
+
 		return
 	})
 }
@@ -85,65 +95,50 @@ func (self *InputConfig) Event(eventChan chan config.LogEvent) (err error) {
 	return
 }
 
-func (self *InputConfig) Loop() {
-	hostname, err := os.Hostname()
-	if err != nil {
-		log.Errorf("Get hostname failed: %v", err)
-	}
-
-	eventExtra := map[string]interface{}{
-		"host": hostname,
-	}
-
-	client, err := docker.NewClient(self.Host)
-	if err != nil {
-		log.Fatal("create docker client failed", err)
-		return
-	}
-
-	containers, err := client.ListContainers(docker.ListContainersOptions{})
+func (t *InputConfig) Loop() {
+	containers, err := t.client.ListContainers(docker.ListContainersOptions{})
 	if err != nil {
 		log.Fatal("list docker container failed", err)
 		return
 	}
 
 	for _, container := range containers {
-		if !self.isValidContainer(container.Names) {
+		if !t.isValidContainer(container.Names) {
 			continue
 		}
-		since, err := self.sincedb.Get(container.ID)
+		since, err := t.sincedb.Get(container.ID)
 		if err != nil {
 			log.Fatal("get sincedb failed", err)
 			return
 		}
-		go containerLogLoop(client, container.ID, self.EventChan, eventExtra, since)
+		go t.containerLogLoop(container, since)
 	}
 
 	dockerEventChan := make(chan *docker.APIEvents)
 
-	if err = client.AddEventListener(dockerEventChan); err != nil {
+	if err = t.client.AddEventListener(dockerEventChan); err != nil {
 		log.Fatal("listen docker event failed", err)
 		return
 	}
 
 	for {
 		select {
-		case dockerEvevt := <-dockerEventChan:
-			if dockerEvevt.Status == "start" {
-				container, err := client.InspectContainer(dockerEvevt.ID)
+		case dockerEvent := <-dockerEventChan:
+			if dockerEvent.Status == "start" {
+				container, err := t.client.InspectContainer(dockerEvent.ID)
 				if err != nil {
 					log.Fatal("inspect container failed", err)
 					return
 				}
-				if !self.isValidContainer([]string{container.Name}) {
+				if !t.isValidContainer([]string{container.Name}) {
 					return
 				}
-				since, err := self.sincedb.Get(dockerEvevt.ID)
+				since, err := t.sincedb.Get(dockerEvent.ID)
 				if err != nil {
 					log.Fatal("get sincedb failed", err)
 					return
 				}
-				go containerLogLoop(client, dockerEvevt.ID, self.EventChan, eventExtra, since)
+				go t.containerLogLoop(dockerEvent, since)
 			}
 		}
 	}
@@ -169,21 +164,4 @@ func (t *InputConfig) isValidContainer(names []string) bool {
 	} else {
 		return true
 	}
-}
-
-func (self *InputConfig) sendEvent(data string, hostname string, err error) {
-	event := config.LogEvent{
-		Timestamp: time.Now(),
-		Message:   data,
-		Extra: map[string]interface{}{
-			"host": hostname,
-		},
-	}
-
-	if err != nil {
-		event.AddTag("inputdocker_failed")
-	}
-
-	log.Debugf("%v", event)
-	self.EventChan <- event
 }
