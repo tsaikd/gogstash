@@ -35,7 +35,7 @@ var (
 )
 
 func init() {
-	version.VERSION = "0.0.8"
+	version.VERSION = "0.0.9"
 }
 
 func Main() {
