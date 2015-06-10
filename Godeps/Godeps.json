@@ -1,0 +1,11 @@
+{
+	"ImportPath": "github.com/tsaikd/gogstash",
+	"GoVersion": "go1.4.2",
+	"Deps": [
+		{
+			"ImportPath": "github.com/codegangsta/cli",
+			"Comment": "1.2.0-112-g2272dad",
+			"Rev": "2272dad83ef28967ad46bf27470b56be95840ada"
+		}
+	]
+}
