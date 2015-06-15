@@ -1,0 +1,9 @@
+{
+	"input": [
+		{
+			"type": "dockerstats",
+			"host": "unix:///var/run/docker.sock",
+			"stat_interval": 3
+		}
+	]
+}
