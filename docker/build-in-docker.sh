@@ -5,6 +5,9 @@ set -e
 PN="${BASH_SOURCE[0]##*/}"
 PD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+renice 15 $$
+cd "${PD}/.."
+
 if ! type godep &>/dev/null ; then
 	go get -v "github.com/tools/godep"
 fi

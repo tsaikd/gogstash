@@ -5,6 +5,7 @@ set -e
 PN="${BASH_SOURCE[0]##*/}"
 PD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+renice 15 $$
 pushd "${PD}/.." >/dev/null
 
 githash="$(git rev-parse HEAD | cut -c1-6)"
