@@ -2,7 +2,6 @@ package inputexec
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"os"
 	"os/exec"
@@ -40,26 +39,15 @@ func DefaultInputConfig() InputConfig {
 }
 
 func init() {
-	config.RegistInputHandler(ModuleName, func(mapraw map[string]interface{}) (conf config.TypeInputConfig, err error) {
-		var (
-			raw []byte
-		)
-		if raw, err = json.Marshal(mapraw); err != nil {
-			log.Error(err)
+	config.RegistInputHandler(ModuleName, func(mapraw map[string]interface{}) (retconf config.TypeInputConfig, err error) {
+		conf := DefaultInputConfig()
+		if err = config.ReflectConfig(mapraw, &conf); err != nil {
 			return
 		}
-		defconf := DefaultInputConfig()
-		conf = &defconf
-		if err = json.Unmarshal(raw, &conf); err != nil {
-			log.Error(err)
-			return
-		}
+
+		retconf = &conf
 		return
 	})
-}
-
-func (self *InputConfig) Type() string {
-	return self.CommonConfig.Type
 }
 
 func (self *InputConfig) Event(eventChan chan config.LogEvent) (err error) {

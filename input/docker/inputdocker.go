@@ -1,7 +1,6 @@
 package inputdocker
 
 import (
-	"encoding/json"
 	"errors"
 	"os"
 	"regexp"
@@ -9,7 +8,12 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/fsouza/go-dockerclient"
+	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
+)
+
+const (
+	ModuleName = "docker"
 )
 
 type InputConfig struct {
@@ -31,7 +35,7 @@ type InputConfig struct {
 func DefaultInputConfig() InputConfig {
 	return InputConfig{
 		CommonConfig: config.CommonConfig{
-			Type: "docker",
+			Type: ModuleName,
 		},
 		Host: "unix:///var/run/docker.sock",
 		ConnectionRetryInterval: 10,
@@ -41,45 +45,33 @@ func DefaultInputConfig() InputConfig {
 }
 
 func init() {
-	config.RegistInputHandler("docker", func(mapraw map[string]interface{}) (conf config.TypeInputConfig, err error) {
-		var (
-			raw []byte
-		)
-		if raw, err = json.Marshal(mapraw); err != nil {
-			log.Error(err)
-			return
-		}
-		defconf := DefaultInputConfig()
-		conf = &defconf
-		if err = json.Unmarshal(raw, &conf); err != nil {
-			log.Error(err)
-			return
-		}
-		for _, pattern := range defconf.IncludePatterns {
-			defconf.includes = append(defconf.includes, regexp.MustCompile(pattern))
-		}
-		for _, pattern := range defconf.ExcludePatterns {
-			defconf.excludes = append(defconf.excludes, regexp.MustCompile(pattern))
-		}
-		if defconf.sincedb, err = NewSinceDB(defconf.SincePath); err != nil {
-			log.Error(err)
-			return
-		}
-		if defconf.hostname, err = os.Hostname(); err != nil {
-			log.Errorf("Get hostname failed: %v", err)
-			return
-		}
-		if defconf.client, err = docker.NewClient(defconf.Host); err != nil {
-			log.Fatal("create docker client failed", err)
+	config.RegistInputHandler(ModuleName, func(mapraw map[string]interface{}) (retconf config.TypeInputConfig, err error) {
+		conf := DefaultInputConfig()
+		if err = config.ReflectConfig(mapraw, &conf); err != nil {
 			return
 		}
 
+		for _, pattern := range conf.IncludePatterns {
+			conf.includes = append(conf.includes, regexp.MustCompile(pattern))
+		}
+		for _, pattern := range conf.ExcludePatterns {
+			conf.excludes = append(conf.excludes, regexp.MustCompile(pattern))
+		}
+		if conf.sincedb, err = NewSinceDB(conf.SincePath); err != nil {
+			return
+		}
+		if conf.hostname, err = os.Hostname(); err != nil {
+			err = errutil.New("get hostname failed", err)
+			return
+		}
+		if conf.client, err = docker.NewClient(conf.Host); err != nil {
+			err = errutil.New("create docker client failed", err)
+			return
+		}
+
+		retconf = &conf
 		return
 	})
-}
-
-func (self *InputConfig) Type() string {
-	return self.CommonConfig.Type
 }
 
 func (self *InputConfig) Event(eventChan chan config.LogEvent) (err error) {

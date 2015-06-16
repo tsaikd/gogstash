@@ -3,7 +3,6 @@ package inputfile
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"errors"
 	"io"
 	"os"
@@ -15,6 +14,10 @@ import (
 	"github.com/go-fsnotify/fsnotify"
 
 	"github.com/tsaikd/gogstash/config"
+)
+
+const (
+	ModuleName = "file"
 )
 
 type InputConfig struct {
@@ -33,7 +36,7 @@ type InputConfig struct {
 func DefaultInputConfig() InputConfig {
 	return InputConfig{
 		CommonConfig: config.CommonConfig{
-			Type: "file",
+			Type: ModuleName,
 		},
 		StartPos:             "end",
 		SinceDBPath:          ".sincedb.json",
@@ -44,26 +47,15 @@ func DefaultInputConfig() InputConfig {
 }
 
 func init() {
-	config.RegistInputHandler("file", func(mapraw map[string]interface{}) (conf config.TypeInputConfig, err error) {
-		var (
-			raw []byte
-		)
-		if raw, err = json.Marshal(mapraw); err != nil {
-			log.Error(err)
+	config.RegistInputHandler(ModuleName, func(mapraw map[string]interface{}) (retconf config.TypeInputConfig, err error) {
+		conf := DefaultInputConfig()
+		if err = config.ReflectConfig(mapraw, &conf); err != nil {
 			return
 		}
-		defconf := DefaultInputConfig()
-		conf = &defconf
-		if err = json.Unmarshal(raw, &conf); err != nil {
-			log.Error(err)
-			return
-		}
+
+		retconf = &conf
 		return
 	})
-}
-
-func (self *InputConfig) Type() string {
-	return self.CommonConfig.Type
 }
 
 func (self *InputConfig) Event(eventChan chan config.LogEvent) (err error) {

@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strings"
 	"time"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 type LogEvent struct {
@@ -28,77 +26,74 @@ func appendIfMissing(slice []string, s string) []string {
 	return append(slice, s)
 }
 
-func (self *LogEvent) AddTag(tag ...string) {
-	for _, t := range tag {
-		t = self.Format(t)
-		self.Tags = appendIfMissing(self.Tags, t)
+func (t *LogEvent) AddTag(tags ...string) {
+	for _, tag := range tags {
+		ftag := t.Format(tag)
+		t.Tags = appendIfMissing(t.Tags, ftag)
 	}
 }
 
-func (self *LogEvent) Marshal() (raw []byte, err error) {
+func (t LogEvent) getJsonMap() map[string]interface{} {
 	event := map[string]interface{}{
-		"@timestamp": self.Timestamp.UTC().Format(timeFormat),
-		"message":    self.Message,
+		"@timestamp": t.Timestamp.UTC().Format(timeFormat),
 	}
-	for key, value := range self.Extra {
+	if t.Message != "" {
+		event["message"] = t.Message
+	}
+	if len(t.Tags) > 0 {
+		event["tags"] = t.Tags
+	}
+	for key, value := range t.Extra {
 		event[key] = value
 	}
-	if raw, err = json.Marshal(event); err != nil {
-		log.Errorf("Marshal failed: %v\n%v", self, err)
-		return
-	}
-	return
+	return event
 }
 
-func (self *LogEvent) MarshalIndent() (raw []byte, err error) {
-	event := map[string]interface{}{
-		"@timestamp": self.Timestamp.UTC().Format(timeFormat),
-		"message":    self.Message,
-	}
-	for key, value := range self.Extra {
-		event[key] = value
-	}
-	if raw, err = json.MarshalIndent(event, "", "\t"); err != nil {
-		log.Errorf("MarshalIndent failed: %v\n%v", self, err)
-		return
-	}
-	raw = append(raw, '\n')
-	return
+func (t LogEvent) MarshalJSON() (data []byte, err error) {
+	event := t.getJsonMap()
+	return json.Marshal(event)
 }
 
-func (self *LogEvent) Get(field string) (v interface{}) {
+func (t LogEvent) MarshalIndent() (data []byte, err error) {
+	event := t.getJsonMap()
+	return json.MarshalIndent(event, "", "\t")
+}
+
+func (t LogEvent) Get(field string) (v interface{}) {
 	switch field {
 	case "@timestamp":
-		v = self.Timestamp
+		v = t.Timestamp
 	case "message":
-		v = self.Message
+		v = t.Message
 	default:
-		v = self.Extra[field]
+		v = t.Extra[field]
 	}
 	return
 }
 
-func (self *LogEvent) GetString(field string) (v string) {
+func (t LogEvent) GetString(field string) (v string) {
 	switch field {
 	case "@timestamp":
-		v = self.Timestamp.UTC().Format(timeFormat)
+		v = t.Timestamp.UTC().Format(timeFormat)
 	case "message":
-		v = self.Message
+		v = t.Message
 	default:
-		if value, ok := self.Extra[field]; ok {
+		if value, ok := t.Extra[field]; ok {
 			v = fmt.Sprintf("%v", value)
 		}
 	}
 	return
 }
 
-func (self *LogEvent) Format(format string) (out string) {
-	revar := regexp.MustCompile(`%{([\w@]+)}`)
+var revar = regexp.MustCompile(`%{([\w@]+)}`)
+
+// format string with LogEvent field, ex: %{hostname}
+func (t LogEvent) Format(format string) (out string) {
 	out = format
 	matches := revar.FindAllStringSubmatch(out, -1)
 	for _, submatches := range matches {
 		field := submatches[1]
-		value := self.GetString(field)
+		value := t.GetString(field)
 		if value != "" {
 			out = strings.Replace(out, submatches[0], value, -1)
 		}

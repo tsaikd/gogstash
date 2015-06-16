@@ -1,13 +1,16 @@
 package outputreport
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/tsaikd/gogstash/config"
+)
+
+const (
+	ModuleName = "report"
 )
 
 type OutputConfig struct {
@@ -21,7 +24,7 @@ type OutputConfig struct {
 func DefaultOutputConfig() OutputConfig {
 	return OutputConfig{
 		CommonConfig: config.CommonConfig{
-			Type: "report",
+			Type: ModuleName,
 		},
 		Interval:   5,
 		TimeFormat: "[2/Jan/2006:15:04:05 -0700]",
@@ -29,27 +32,17 @@ func DefaultOutputConfig() OutputConfig {
 }
 
 func init() {
-	config.RegistOutputHandler("report", func(mapraw map[string]interface{}) (conf config.TypeOutputConfig, err error) {
-		var (
-			raw []byte
-		)
-		if raw, err = json.Marshal(mapraw); err != nil {
-			log.Error(err)
+	config.RegistOutputHandler(ModuleName, func(mapraw map[string]interface{}) (retconf config.TypeOutputConfig, err error) {
+		conf := DefaultOutputConfig()
+		if err = config.ReflectConfig(mapraw, &conf); err != nil {
 			return
 		}
-		defconf := DefaultOutputConfig()
-		conf = &defconf
-		if err = json.Unmarshal(raw, &conf); err != nil {
-			log.Error(err)
-			return
-		}
-		go defconf.ReportLoop()
+
+		go conf.ReportLoop()
+
+		retconf = &conf
 		return
 	})
-}
-
-func (self *OutputConfig) Type() string {
-	return self.CommonConfig.Type
 }
 
 func (self *OutputConfig) Event(event config.LogEvent) (err error) {

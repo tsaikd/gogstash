@@ -10,13 +10,9 @@ import (
 )
 
 func Test_main(t *testing.T) {
-	var (
-		assert   = assert.New(t)
-		err      error
-		conftest config.Config
-	)
+	assert := assert.New(t)
 
-	conftest, err = config.LoadConfig("config_test.json")
+	conftest, err := config.LoadConfig("config_test.json")
 	assert.NoError(err)
 
 	outputs := conftest.Output()
@@ -24,7 +20,7 @@ func Test_main(t *testing.T) {
 	if len(outputs) > 0 {
 		output := outputs[0].(*OutputConfig)
 		assert.IsType(&OutputConfig{}, output)
-		assert.Equal("stdout", output.Type())
+		assert.Equal("stdout", output.GetType())
 
 		output.Event(config.LogEvent{
 			Timestamp: time.Now(),

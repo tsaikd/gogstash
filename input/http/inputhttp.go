@@ -1,7 +1,6 @@
 package inputhttp
 
 import (
-	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -12,6 +11,10 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/tsaikd/gogstash/config"
+)
+
+const (
+	ModuleName = "http"
 )
 
 type InputConfig struct {
@@ -26,36 +29,23 @@ type InputConfig struct {
 func DefaultInputConfig() InputConfig {
 	return InputConfig{
 		CommonConfig: config.CommonConfig{
-			Type: "http",
+			Type: ModuleName,
 		},
 		Method:   "GET",
 		Interval: 60,
-
-		//SinceDBInfos: map[string]*SinceDBInfo{},
 	}
 }
 
 func init() {
-	config.RegistInputHandler("http", func(mapraw map[string]interface{}) (conf config.TypeInputConfig, err error) {
-		var (
-			raw []byte
-		)
-		if raw, err = json.Marshal(mapraw); err != nil {
-			log.Error(err)
+	config.RegistInputHandler(ModuleName, func(mapraw map[string]interface{}) (retconf config.TypeInputConfig, err error) {
+		conf := DefaultInputConfig()
+		if err = config.ReflectConfig(mapraw, &conf); err != nil {
 			return
 		}
-		defconf := DefaultInputConfig()
-		conf = &defconf
-		if err = json.Unmarshal(raw, &conf); err != nil {
-			log.Error(err)
-			return
-		}
+
+		retconf = &conf
 		return
 	})
-}
-
-func (self *InputConfig) Type() string {
-	return self.CommonConfig.Type
 }
 
 func (self *InputConfig) Event(eventChan chan config.LogEvent) (err error) {

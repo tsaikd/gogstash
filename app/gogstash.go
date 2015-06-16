@@ -80,7 +80,7 @@ func MainAction(c *cli.Context) (err error) {
 	}
 
 	for _, input := range conf.Input() {
-		log.Debugf("Init input %q", input.Type())
+		log.Debugf("Init input %q", input.GetType())
 		if err = input.Event(eventChan); err != nil {
 			return errutil.New("process input event chan failed", err)
 		}

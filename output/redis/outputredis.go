@@ -1,7 +1,6 @@
 package outputredis
 
 import (
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -9,6 +8,10 @@ import (
 	"github.com/fzzy/radix/redis"
 
 	"github.com/tsaikd/gogstash/config"
+)
+
+const (
+	ModuleName = "redis"
 )
 
 type OutputConfig struct {
@@ -27,7 +30,7 @@ type OutputConfig struct {
 func DefaultOutputConfig() OutputConfig {
 	return OutputConfig{
 		CommonConfig: config.CommonConfig{
-			Type: "redis",
+			Type: ModuleName,
 		},
 		Key:               "gogstash",
 		DataType:          "list",
@@ -39,30 +42,20 @@ func DefaultOutputConfig() OutputConfig {
 }
 
 func init() {
-	config.RegistOutputHandler("redis", func(mapraw map[string]interface{}) (conf config.TypeOutputConfig, err error) {
-		var (
-			raw []byte
-		)
-		if raw, err = json.Marshal(mapraw); err != nil {
-			log.Error(err)
+	config.RegistOutputHandler(ModuleName, func(mapraw map[string]interface{}) (retconf config.TypeOutputConfig, err error) {
+		conf := DefaultOutputConfig()
+		if err = config.ReflectConfig(mapraw, &conf); err != nil {
 			return
 		}
-		defconf := DefaultOutputConfig()
-		conf = &defconf
-		if err = json.Unmarshal(raw, &conf); err != nil {
-			log.Error(err)
+
+		go conf.loop()
+		if err = conf.initRedisClient(); err != nil {
 			return
 		}
-		go conf.(*OutputConfig).loop()
-		if err = conf.(*OutputConfig).initRedisClient(); err != nil {
-			return
-		}
+
+		retconf = &conf
 		return
 	})
-}
-
-func (self *OutputConfig) Type() string {
-	return self.CommonConfig.Type
 }
 
 func (self *OutputConfig) Event(event config.LogEvent) (err error) {
@@ -130,7 +123,7 @@ func (self *OutputConfig) sendEvent(event config.LogEvent) (err error) {
 		key    string
 	)
 
-	if raw, err = event.Marshal(); err != nil {
+	if raw, err = event.MarshalJSON(); err != nil {
 		log.Errorf("event Marshal failed: %v", event)
 		return
 	}

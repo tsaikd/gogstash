@@ -19,8 +19,12 @@ type CommonConfig struct {
 	Type string `json:"type"`
 }
 
+func (t *CommonConfig) GetType() string {
+	return t.Type
+}
+
 type TypeConfig interface {
-	Type() string
+	GetType() string
 }
 
 func (config *Config) Filter() (filters []interface{}) {
@@ -50,6 +54,19 @@ func LoadConfig(path string) (config Config, err error) {
 
 	if err = json.Unmarshal(buffer, &config); err != nil {
 		log.Errorf("Failed unmarshalling json\n%s", err)
+		return
+	}
+
+	return
+}
+
+func ReflectConfig(mapraw map[string]interface{}, conf interface{}) (err error) {
+	data, err := json.Marshal(mapraw)
+	if err != nil {
+		return
+	}
+
+	if err = json.Unmarshal(data, conf); err != nil {
 		return
 	}
 
