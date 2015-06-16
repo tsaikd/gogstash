@@ -56,6 +56,10 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time) 
 						continue
 					}
 
+					if t.ZeroHierarchicalMemoryLimit {
+						stats.MemoryStats.Stats.HierarchicalMemoryLimit = 0
+					}
+
 					event := config.LogEvent{
 						Timestamp: time.Now(),
 						Extra: map[string]interface{}{

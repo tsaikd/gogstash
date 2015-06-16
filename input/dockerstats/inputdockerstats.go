@@ -25,6 +25,8 @@ type InputConfig struct {
 	StatInterval            int      `json:"stat_interval"`
 	ConnectionRetryInterval int      `json:"connection_retry_interval,omitempty"`
 
+	ZeroHierarchicalMemoryLimit bool `json:"zero_hierarchical_memory_limit,omitempty"`
+
 	EventChan chan config.LogEvent  `json:"-"`
 	sincemap  map[string]*time.Time `json:"-"`
 	includes  []*regexp.Regexp      `json:"-"`
