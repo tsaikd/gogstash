@@ -9,6 +9,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/flagutil"
 	"github.com/tsaikd/KDGoLib/version"
 	"github.com/tsaikd/gogstash/config"
@@ -65,8 +66,7 @@ func MainAction(c *cli.Context) (err error) {
 
 	confpath := c.String(FlagConfig.Name)
 	if conf, err = config.LoadConfig(confpath); err != nil {
-		log.Errorf("Load config failed: %q", confpath)
-		return
+		return errutil.New("load config failed, "+confpath, err)
 	}
 
 	profile := c.String(FlagProfile.Name)
@@ -82,7 +82,7 @@ func MainAction(c *cli.Context) (err error) {
 	for _, input := range conf.Input() {
 		log.Debugf("Init input %q", input.Type())
 		if err = input.Event(eventChan); err != nil {
-			log.Errorf("input failed: %v", err)
+			return errutil.New("process input event chan failed", err)
 		}
 	}
 
