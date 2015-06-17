@@ -2,6 +2,7 @@ package inputdockerstats
 
 import (
 	"errors"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -26,13 +27,13 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time) 
 		id = container.ID
 		name = container.Names[0]
 		name = regNameTrim.ReplaceAllString(name, "")
-	case docker.Container:
-		container := container.(docker.Container)
+	case *docker.Container:
+		container := container.(*docker.Container)
 		id = container.ID
 		name = container.Name
 		name = regNameTrim.ReplaceAllString(name, "")
 	default:
-		return errors.New("unsupported container type")
+		return errors.New("unsupported container type: " + reflect.TypeOf(container).String())
 	}
 	if containerMap[id] != nil {
 		return &ErrorContainerLoopRunning{id}

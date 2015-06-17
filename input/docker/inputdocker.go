@@ -130,7 +130,7 @@ func (t *InputConfig) Loop() {
 					log.Fatal("get sincedb failed", err)
 					return
 				}
-				go t.containerLogLoop(dockerEvent, since)
+				go t.containerLogLoop(container, since)
 			}
 		}
 	}

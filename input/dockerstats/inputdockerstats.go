@@ -131,7 +131,7 @@ func (t *InputConfig) Loop() {
 					since = &time.Time{}
 					t.sincemap[container.ID] = since
 				}
-				go t.containerLogLoop(dockerEvent, since)
+				go t.containerLogLoop(container, since)
 			}
 		}
 	}

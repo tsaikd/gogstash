@@ -28,7 +28,7 @@ func Test_main(t *testing.T) {
 	if len(inputs) > 0 {
 		input := inputs[0].(*InputConfig)
 		assert.IsType(&InputConfig{}, input)
-		assert.Equal("docker", input.Type())
+		assert.Equal("docker", input.GetType())
 
 		eventChan := make(chan config.LogEvent, 10)
 		go func() {

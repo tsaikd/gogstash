@@ -75,7 +75,7 @@ func (t *ContainerLogStream) sendEvent(data []byte) (err error) {
 	event.Extra["containerid"] = t.ID
 
 	loc := reTime.FindIndex(data)
-	if loc[0] < 10 {
+	if len(loc) > 0 && loc[0] < 10 {
 		timestr := string(data[loc[0]:loc[1]])
 		eventTime, err = time.Parse(time.RFC3339Nano, timestr)
 		if err == nil {
@@ -88,7 +88,7 @@ func (t *ContainerLogStream) sendEvent(data []byte) (err error) {
 			t.logger.Println(err)
 		}
 	} else {
-		t.logger.Fatal("invalid event format", string(data))
+		t.logger.Printf("invalid event format %q\n", string(data))
 	}
 
 	event.Message = string(bytes.TrimSpace(data))
