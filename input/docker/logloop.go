@@ -2,6 +2,7 @@ package inputdocker
 
 import (
 	"errors"
+	"log"
 	"reflect"
 	"regexp"
 	"strings"
@@ -15,11 +16,7 @@ var (
 	regNameTrim     = regexp.MustCompile(`^/`)
 )
 
-func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time) (err error) {
-	var (
-		id   string
-		name string
-	)
+func GetContainerInfo(container interface{}) (id string, name string, err error) {
 	switch container.(type) {
 	case docker.APIContainers:
 		container := container.(docker.APIContainers)
@@ -32,7 +29,20 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time) 
 		name = container.Name
 		name = regNameTrim.ReplaceAllString(name, "")
 	default:
-		return errors.New("unsupported container type: " + reflect.TypeOf(container).String())
+		err = errors.New("unsupported container type: " + reflect.TypeOf(container).String())
+	}
+	return
+}
+
+func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time) (err error) {
+	defer func() {
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+	id, name, err := GetContainerInfo(container)
+	if err != nil {
+		return
 	}
 	if containerLogMap[id] != nil {
 		return &ErrorContainerLogLoopRunning{id}

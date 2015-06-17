@@ -1,39 +1,28 @@
 package inputdockerstats
 
 import (
-	"errors"
-	"reflect"
-	"regexp"
+	"log"
 	"strings"
 	"time"
 
 	"github.com/fsouza/go-dockerclient"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/input/docker"
 )
 
 var (
 	containerMap = map[string]interface{}{}
-	regNameTrim  = regexp.MustCompile(`^/`)
 )
 
 func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time) (err error) {
-	var (
-		id   string
-		name string
-	)
-	switch container.(type) {
-	case docker.APIContainers:
-		container := container.(docker.APIContainers)
-		id = container.ID
-		name = container.Names[0]
-		name = regNameTrim.ReplaceAllString(name, "")
-	case *docker.Container:
-		container := container.(*docker.Container)
-		id = container.ID
-		name = container.Name
-		name = regNameTrim.ReplaceAllString(name, "")
-	default:
-		return errors.New("unsupported container type: " + reflect.TypeOf(container).String())
+	defer func() {
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+	id, name, err := inputdocker.GetContainerInfo(container)
+	if err != nil {
+		return
 	}
 	if containerMap[id] != nil {
 		return &ErrorContainerLoopRunning{id}
