@@ -61,8 +61,10 @@ func init() {
 }
 
 func (t *OutputConfig) Event(event config.LogEvent) (err error) {
+	index := event.Format(t.Index)
+	doctype := event.Format(t.DocumentType)
 	id := event.Format(t.DocumentID)
-	if _, err = t.conn.Index(t.Index, t.DocumentType, id, nil, event); err != nil {
+	if _, err = t.conn.Index(index, doctype, id, nil, event); err != nil {
 		return
 	}
 	return
