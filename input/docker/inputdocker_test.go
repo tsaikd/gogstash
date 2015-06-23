@@ -1,7 +1,6 @@
 package inputdocker
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -34,8 +33,7 @@ func Test_main(t *testing.T) {
 		go func() {
 			for {
 				event := <-eventChan
-				event = event
-				fmt.Println(event)
+				t.Log(event)
 			}
 		}()
 		err = input.Event(eventChan)

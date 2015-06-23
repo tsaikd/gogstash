@@ -1,7 +1,6 @@
 package inputdockerstats
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -28,14 +27,13 @@ func Test_main(t *testing.T) {
 	if len(inputs) > 0 {
 		input := inputs[0].(*InputConfig)
 		assert.IsType(&InputConfig{}, input)
-		assert.Equal("dockerstats", input.Type())
+		assert.Equal("dockerstats", input.GetType())
 
 		eventChan := make(chan config.LogEvent, 10)
 		go func() {
 			for {
 				event := <-eventChan
-				data, _ := event.Marshal()
-				fmt.Println(string(data))
+				t.Log(event)
 			}
 		}()
 		err = input.Event(eventChan)

@@ -27,7 +27,7 @@ func Test_main(t *testing.T) {
 	if len(inputs) > 0 {
 		input := inputs[0].(*InputConfig)
 		assert.IsType(&InputConfig{}, input)
-		assert.Equal("file", input.Type())
+		assert.Equal("file", input.GetType())
 		assert.Equal("/tmp/log/syslog", input.Path)
 
 		eventChan := make(chan config.LogEvent, 10)

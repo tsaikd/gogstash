@@ -27,7 +27,7 @@ func Test_main(t *testing.T) {
 	if len(inputs) > 0 {
 		input := inputs[0].(*InputConfig)
 		assert.IsType(&InputConfig{}, input)
-		assert.Equal("exec", input.Type())
+		assert.Equal("exec", input.GetType())
 		assert.Equal("uptime", input.Command)
 
 		eventChan := make(chan config.LogEvent, 10)

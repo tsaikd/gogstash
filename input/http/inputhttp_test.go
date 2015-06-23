@@ -27,7 +27,7 @@ func Test_main(t *testing.T) {
 	if len(inputs) > 0 {
 		input := inputs[0].(*InputConfig)
 		assert.IsType(&InputConfig{}, input)
-		assert.Equal("http", input.Type())
+		assert.Equal("http", input.GetType())
 		assert.Equal("GET", input.Method)
 
 		eventChan := make(chan config.LogEvent, 10)

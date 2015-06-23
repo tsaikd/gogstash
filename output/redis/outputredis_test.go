@@ -28,7 +28,7 @@ func Test_main(t *testing.T) {
 	if len(outputs) > 0 {
 		output := outputs[0].(*OutputConfig)
 		assert.IsType(&OutputConfig{}, output)
-		assert.Equal("redis", output.Type())
+		assert.Equal("redis", output.GetType())
 
 		output.Event(config.LogEvent{
 			Timestamp: time.Now(),
