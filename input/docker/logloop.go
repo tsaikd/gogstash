@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/fsouza/go-dockerclient"
+	"github.com/tsaikd/KDGoLib/errutil"
 )
 
 var (
@@ -42,7 +43,7 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time) 
 	}()
 	id, name, err := GetContainerInfo(container)
 	if err != nil {
-		return
+		return errutil.New("get container info failed", err)
 	}
 	if containerLogMap[id] != nil {
 		return &ErrorContainerLogLoopRunning{id}

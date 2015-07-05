@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/fsouza/go-dockerclient"
+	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/input/docker"
 )
@@ -22,7 +23,7 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time) 
 	}()
 	id, name, err := inputdocker.GetContainerInfo(container)
 	if err != nil {
-		return
+		return errutil.New("get container info failed", err)
 	}
 	if containerMap[id] != nil {
 		return &ErrorContainerLoopRunning{id}
