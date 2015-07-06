@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 const (
@@ -18,62 +19,45 @@ const (
 )
 
 type InputConfig struct {
-	config.CommonConfig
+	config.InputConfig
 	Command   string   `json:"command"`                  // Command to run. e.g. “uptime”
 	Args      []string `json:"args,omitempty"`           // Arguments of command
 	Interval  int      `json:"interval,omitempty"`       // Second, default: 60
 	MsgTrim   string   `json:"message_trim,omitempty"`   // default: " \t\r\n"
 	MsgPrefix string   `json:"message_prefix,omitempty"` // e.g. "%{@timestamp} [uptime] "
 
-	EventChan chan config.LogEvent `json:"-"`
+	hostname string `json:"-"`
 }
 
 func DefaultInputConfig() InputConfig {
 	return InputConfig{
-		CommonConfig: config.CommonConfig{
-			Type: ModuleName,
+		InputConfig: config.InputConfig{
+			CommonConfig: config.CommonConfig{
+				Type: ModuleName,
+			},
 		},
 		Interval: 60,
 		MsgTrim:  " \t\r\n",
 	}
 }
 
-func init() {
-	config.RegistInputHandler(ModuleName, func(mapraw map[string]interface{}) (retconf config.TypeInputConfig, err error) {
-		conf := DefaultInputConfig()
-		if err = config.ReflectConfig(mapraw, &conf); err != nil {
-			return
-		}
-
-		retconf = &conf
-		return
-	})
-}
-
-func (self *InputConfig) Event(eventChan chan config.LogEvent) (err error) {
-	if self.EventChan != nil {
-		err = errors.New("Event chan already inited")
-		log.Error(err)
+func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err error) {
+	conf := DefaultInputConfig()
+	if err = config.ReflectConfig(confraw, &conf); err != nil {
 		return
 	}
-	self.EventChan = eventChan
 
-	go self.Loop()
+	if conf.hostname, err = os.Hostname(); err != nil {
+		return
+	}
 
+	retconf = &conf
 	return
 }
 
-func (self *InputConfig) Loop() {
-	var (
-		hostname  string
-		err       error
-		startChan = make(chan bool) // startup tick
-		ticker    = time.NewTicker(time.Duration(self.Interval) * time.Second)
-	)
-
-	if hostname, err = os.Hostname(); err != nil {
-		log.Errorf("Get hostname failed: %v", err)
-	}
+func (self *InputConfig) Start() {
+	startChan := make(chan bool) // startup tick
+	ticker := time.NewTicker(time.Duration(self.Interval) * time.Second)
 
 	go func() {
 		startChan <- true
@@ -82,28 +66,21 @@ func (self *InputConfig) Loop() {
 	for {
 		select {
 		case <-startChan:
-			self.Exec(hostname)
+			self.Invoke(self.Exec)
 		case <-ticker.C:
-			self.Exec(hostname)
+			self.Invoke(self.Exec)
 		}
 	}
-
-	return
 }
 
-func (self *InputConfig) Exec(hostname string) {
-	var (
-		err  error
-		data string
-	)
+func (self *InputConfig) Exec(evchan chan logevent.LogEvent, logger *logrus.Logger) {
+	data, err := self.doExec()
 
-	data, err = self.doExec()
-
-	event := config.LogEvent{
+	event := logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   data,
 		Extra: map[string]interface{}{
-			"host": hostname,
+			"host": self.hostname,
 		},
 	}
 
@@ -114,8 +91,8 @@ func (self *InputConfig) Exec(hostname string) {
 		event.Extra["error"] = err.Error()
 	}
 
-	log.Debugf("%v", event)
-	self.EventChan <- event
+	logger.Debugf("%+v", event)
+	evchan <- event
 
 	return
 }

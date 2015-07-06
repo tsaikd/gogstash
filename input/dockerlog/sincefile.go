@@ -1,4 +1,4 @@
-package inputdocker
+package inputdockerlog
 
 import (
 	"io/ioutil"

@@ -4,43 +4,46 @@ import (
 	"testing"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/tsaikd/KDGoLib/logrusutil"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 func Test_main(t *testing.T) {
-	var (
-		assert   = assert.New(t)
-		err      error
-		conftest config.Config
-	)
+	assert := assert.New(t)
 
-	log.SetLevel(log.DebugLevel)
+	logger := logrusutil.DefaultConsoleLogger
+	logger.Level = logrus.DebugLevel
+	config.RegistInputHandler(ModuleName, InitHandler)
 
-	conftest, err = config.LoadConfig("config_test.json")
+	conf, err := config.LoadFromString(`{
+		"input": [{
+			"type": "http",
+			"method": "GET",
+			"url": "http://127.0.0.1/",
+			"interval": 3
+		}]
+	}`)
+	assert.NoError(err)
+	conf.Map(logger)
+
+	evchan := make(chan logevent.LogEvent, 10)
+	conf.Map(evchan)
+
+	err = conf.RunInputs(evchan)
 	assert.NoError(err)
 
-	inputs := conftest.Input()
-	assert.Len(inputs, 1)
-	if len(inputs) > 0 {
-		input := inputs[0].(*InputConfig)
-		assert.IsType(&InputConfig{}, input)
-		assert.Equal("http", input.GetType())
-		assert.Equal("GET", input.Method)
+	go func() {
+		for {
+			event := <-evchan
+			logger.Debugln(event)
+		}
+	}()
 
-		eventChan := make(chan config.LogEvent, 10)
-		go func() {
-			for {
-				<-eventChan
-			}
-		}()
-		err = input.Event(eventChan)
-		assert.NoError(err)
-
-		waitsec := 10
-		log.Debugf("Wait for %d seconds", waitsec)
-		time.Sleep(time.Duration(waitsec) * time.Second)
-	}
+	waitsec := 10
+	logger.Debugf("Wait for %d seconds", waitsec)
+	time.Sleep(time.Duration(waitsec) * time.Second)
 }

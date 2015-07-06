@@ -1,37 +1,27 @@
 package gogstash
 
 import (
-	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"runtime"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/flagutil"
 	"github.com/tsaikd/KDGoLib/version"
+
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
+
+	_ "github.com/tsaikd/gogstash/modloader"
 )
 
 var (
-	FlagDebug = flagutil.AddBoolFlag(cli.BoolFlag{
-		Name:   "debug",
-		EnvVar: "DEBUG",
-		Usage:  "Show DEBUG messages",
-	})
 	FlagConfig = flagutil.AddStringFlag(cli.StringFlag{
 		Name:   "config",
 		EnvVar: "CONFIG",
 		Value:  "config.json",
 		Usage:  "Path to configuration file",
-	})
-	FlagProfile = flagutil.AddStringFlag(cli.StringFlag{
-		Name:   "profile",
-		EnvVar: "PROFILE",
-		Value:  "",
-		Usage:  "Listen http profiling interface, e.g. localhost:6060",
 	})
 )
 
@@ -51,65 +41,31 @@ func Main() {
 }
 
 func MainAction(c *cli.Context) (err error) {
-	var (
-		conf      config.Config
-		eventChan = make(chan config.LogEvent, 100)
-	)
-
-	if c.Bool(FlagDebug.Name) {
-		log.SetLevel(log.DebugLevel)
-	}
-
 	if runtime.GOMAXPROCS(0) == 1 && runtime.NumCPU() > 1 {
-		log.Warnf("set GOMAXPROCS = %d to get better performance", runtime.NumCPU())
+		logger.Warnf("set GOMAXPROCS = %d to get better performance", runtime.NumCPU())
 	}
 
 	confpath := c.String(FlagConfig.Name)
-	if conf, err = config.LoadConfig(confpath); err != nil {
+	conf, err := config.LoadFromFile(confpath)
+	if err != nil {
 		return errutil.New("load config failed, "+confpath, err)
 	}
 
-	profile := c.String(FlagProfile.Name)
-	if profile != "" {
-		go func() {
-			log.Infof("Profile listen http: %q", profile)
-			if err := http.ListenAndServe(profile, nil); err != nil {
-				log.Errorf("Profile listen http failed: %q\n%v", profile, err)
-			}
-		}()
+	conf.Map(logger)
+
+	evchan := make(chan logevent.LogEvent, 100)
+	conf.Map(evchan)
+
+	if _, err = conf.Invoke(conf.RunInputs); err != nil {
+		return
 	}
 
-	for _, input := range conf.Input() {
-		log.Debugf("Init input %q", input.GetType())
-		if err = input.Event(eventChan); err != nil {
-			return errutil.New("process input event chan failed", err)
-		}
+	if _, err = conf.Invoke(conf.RunOutputs); err != nil {
+		return
 	}
-
-	go func() {
-		outputs := conf.Output()
-		for {
-			select {
-			case event := <-eventChan:
-				for _, output := range outputs {
-					if err = output.Event(event); err != nil {
-						log.Errorf("output failed: %v", err)
-					}
-				}
-			}
-		}
-	}()
 
 	for {
 		// infinite sleep
 		time.Sleep(1 * time.Hour)
-	}
-}
-
-func actionWrapper(action func(context *cli.Context) error) func(context *cli.Context) {
-	return func(context *cli.Context) {
-		if err := action(context); err != nil {
-			log.Fatal(err)
-		}
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/fzzy/radix/redis"
 
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 const (
@@ -15,7 +16,7 @@ const (
 )
 
 type OutputConfig struct {
-	config.CommonConfig
+	config.OutputConfig
 	Key               string   `json:"key"`
 	Host              []string `json:"host"`
 	DataType          string   `json:"data_type,omitempty"` // one of ["list", "channel"]
@@ -24,52 +25,48 @@ type OutputConfig struct {
 
 	clients []*redis.Client // all configured clients
 	client  *redis.Client   // cache last success client
-	chEvent chan config.LogEvent
+	evchan  chan logevent.LogEvent
 }
 
 func DefaultOutputConfig() OutputConfig {
 	return OutputConfig{
-		CommonConfig: config.CommonConfig{
-			Type: ModuleName,
+		OutputConfig: config.OutputConfig{
+			CommonConfig: config.CommonConfig{
+				Type: ModuleName,
+			},
 		},
 		Key:               "gogstash",
 		DataType:          "list",
 		Timeout:           5,
 		ReconnectInterval: 1,
 
-		chEvent: make(chan config.LogEvent),
+		evchan: make(chan logevent.LogEvent),
 	}
 }
 
-func init() {
-	config.RegistOutputHandler(ModuleName, func(mapraw map[string]interface{}) (retconf config.TypeOutputConfig, err error) {
-		conf := DefaultOutputConfig()
-		if err = config.ReflectConfig(mapraw, &conf); err != nil {
-			return
-		}
-
-		go conf.loop()
-		if err = conf.initRedisClient(); err != nil {
-			return
-		}
-
-		retconf = &conf
+func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeOutputConfig, err error) {
+	conf := DefaultOutputConfig()
+	if err = config.ReflectConfig(confraw, &conf); err != nil {
 		return
-	})
+	}
+
+	go conf.loop()
+	if err = conf.initRedisClient(); err != nil {
+		return
+	}
+
+	retconf = &conf
+	return
 }
 
-func (self *OutputConfig) Event(event config.LogEvent) (err error) {
-	self.chEvent <- event
+func (self *OutputConfig) Event(event logevent.LogEvent) (err error) {
+	self.evchan <- event
 	return
 }
 
 func (self *OutputConfig) loop() (err error) {
-	var (
-		event config.LogEvent
-	)
-
 	for {
-		event = <-self.chEvent
+		event := <-self.evchan
 		self.sendEvent(event)
 	}
 
@@ -116,7 +113,7 @@ func (self *OutputConfig) closeRedisClient() (err error) {
 	return
 }
 
-func (self *OutputConfig) sendEvent(event config.LogEvent) (err error) {
+func (self *OutputConfig) sendEvent(event logevent.LogEvent) (err error) {
 	var (
 		client *redis.Client
 		raw    []byte

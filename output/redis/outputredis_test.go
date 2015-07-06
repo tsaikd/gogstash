@@ -5,55 +5,56 @@ import (
 	"testing"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/tsaikd/KDGoLib/logrusutil"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 func Test_main(t *testing.T) {
-	var (
-		assert   = assert.New(t)
-		err      error
-		conftest config.Config
-	)
+	assert := assert.New(t)
 
-	log.SetLevel(log.DebugLevel)
+	logger := logrusutil.DefaultConsoleLogger
+	logger.Level = logrus.DebugLevel
+	config.RegistOutputHandler(ModuleName, InitHandler)
 
-	conftest, err = config.LoadConfig("config_test.json")
+	conf, err := config.LoadFromString(`{
+		"output": [{
+			"type": "redis",
+			"host": ["127.0.0.1:6379"]
+		}]
+	}`)
+	assert.NoError(err)
+	conf.Map(logger)
+
+	evchan := make(chan logevent.LogEvent, 10)
+	conf.Map(evchan)
+
+	err = conf.RunOutputs(evchan, logger)
 	assert.NoError(err)
 
-	outputs := conftest.Output()
-	assert.Len(outputs, 1)
-	if len(outputs) > 0 {
-		output := outputs[0].(*OutputConfig)
-		assert.IsType(&OutputConfig{}, output)
-		assert.Equal("redis", output.GetType())
-
-		output.Event(config.LogEvent{
-			Timestamp: time.Now(),
-			Message:   "outputredis test message",
-		})
-
-		// test random time event only
-		//test_random_time_event(t, output)
+	evchan <- logevent.LogEvent{
+		Timestamp: time.Now(),
+		Message:   "outputstdout test message",
 	}
+
+	// test random time event only
+	//test_random_time_event(t, output)
 }
 
-func test_random_time_event(t *testing.T, output *OutputConfig) {
-	var (
-		assert = assert.New(t)
-		ch     = make(chan int, 5)
-	)
+func test_random_time_event(t *testing.T, evchan chan logevent.LogEvent) {
+	ch := make(chan int, 5)
 
 	rand.Seed(time.Now().UnixNano())
 	for j := 0; j < 5; j++ {
 		go func() {
 			for i := 1; i < 120; i++ {
-				assert.NoError(output.Event(config.LogEvent{
+				evchan <- logevent.LogEvent{
 					Timestamp: time.Now(),
 					Message:   "outputredis test message",
-				}))
+				}
 
 				time.Sleep(time.Duration(rand.Intn(2000)) * time.Millisecond)
 			}

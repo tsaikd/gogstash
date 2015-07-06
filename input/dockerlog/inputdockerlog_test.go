@@ -1,4 +1,4 @@
-package outputelastic
+package inputdockerlog
 
 import (
 	"testing"
@@ -17,15 +17,12 @@ func Test_main(t *testing.T) {
 
 	logger := logrusutil.DefaultConsoleLogger
 	logger.Level = logrus.DebugLevel
-	config.RegistOutputHandler(ModuleName, InitHandler)
+	config.RegistInputHandler(ModuleName, InitHandler)
 
 	conf, err := config.LoadFromString(`{
-		"output": [{
-			"type": "elastic",
-			"url": "http://127.0.0.1:9200",
-			"index": "testindex",
-			"document_type": "testtype",
-			"document_id": "%{fieldstring}"
+		"input": [{
+			"type": "dockerlog",
+			"dockerurl": "unix:///var/run/docker.sock"
 		}]
 	}`)
 	assert.NoError(err)
@@ -34,15 +31,17 @@ func Test_main(t *testing.T) {
 	evchan := make(chan logevent.LogEvent, 10)
 	conf.Map(evchan)
 
-	err = conf.RunOutputs(evchan, logger)
+	err = conf.RunInputs(evchan)
 	assert.NoError(err)
 
-	evchan <- logevent.LogEvent{
-		Timestamp: time.Now(),
-		Message:   "outputstdout test message",
-		Extra: map[string]interface{}{
-			"fieldstring": "ABC",
-			"fieldnumber": 123,
-		},
-	}
+	go func() {
+		for {
+			event := <-evchan
+			logger.Debugln(event)
+		}
+	}()
+
+	waitsec := 10
+	logger.Debugf("Wait for %d seconds", waitsec)
+	time.Sleep(time.Duration(waitsec) * time.Second)
 }

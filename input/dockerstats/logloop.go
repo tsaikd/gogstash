@@ -1,27 +1,27 @@
 package inputdockerstats
 
 import (
-	"log"
 	"strings"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/tsaikd/KDGoLib/errutil"
-	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/input/docker"
+	"github.com/tsaikd/gogstash/config/logevent"
+	"github.com/tsaikd/gogstash/input/dockerlog"
 )
 
 var (
 	containerMap = map[string]interface{}{}
 )
 
-func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time) (err error) {
+func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, evchan chan logevent.LogEvent, logger *logrus.Logger) (err error) {
 	defer func() {
 		if err != nil {
-			log.Println(err)
+			logger.Errorln(err)
 		}
 	}()
-	id, name, err := inputdocker.GetContainerInfo(container)
+	id, name, err := inputdockerlog.GetContainerInfo(container)
 	if err != nil {
 		return errutil.New("get container info failed", err)
 	}
@@ -51,7 +51,7 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time) 
 						stats.MemoryStats.Stats.HierarchicalMemoryLimit = 0
 					}
 
-					event := config.LogEvent{
+					event := logevent.LogEvent{
 						Timestamp: time.Now(),
 						Extra: map[string]interface{}{
 							"host":          t.hostname,
@@ -61,14 +61,15 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time) 
 						},
 					}
 					*since = time.Now()
-					t.EventChan <- event
+					evchan <- event
 				}
 			}
 		}()
 
 		err = t.client.Stats(docker.StatsOptions{
-			ID:    id,
-			Stats: statsChan,
+			ID:     id,
+			Stats:  statsChan,
+			Stream: true,
 		})
 		if err != nil && strings.Contains(err.Error(), "connection refused") {
 			retry--

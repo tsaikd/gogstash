@@ -3,24 +3,43 @@ package config
 import (
 	"testing"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/tsaikd/KDGoLib/logrusutil"
 )
 
 func Test_LoadConfig(t *testing.T) {
-	var (
-		assert = assert.New(t)
-		err    error
-		config Config
-	)
+	assert := assert.New(t)
 
-	config, err = LoadConfig("config_test.json")
+	logger := logrusutil.DefaultConsoleLogger
+	logger.Level = logrus.DebugLevel
+
+	conf, err := LoadFromString(`{
+		"input": [{
+			"type": "exec",
+			"command": "uptime",
+			"args": [],
+			"interval": 3,
+			"message_prefix": "%{@timestamp} "
+		},{
+			"type": "exec",
+			"command": "whoami",
+			"args": [],
+			"interval": 4,
+			"message_prefix": "%{@timestamp} "
+		}],
+		"output": [{
+			"type": "stdout"
+		}]
+	}`)
 	assert.NoError(err)
+	conf.Map(logger)
 
-	inputs := config.Input()
+	inputs, err := conf.getInputs(nil)
+	assert.Error(err)
 	assert.Len(inputs, 0)
 
-	outputs := config.Output()
+	outputs, err := conf.getOutputs()
+	assert.Error(err)
 	assert.Len(outputs, 0)
-
-	t.Log("Previous error log is correct, because of no import necessary module in this testing")
 }

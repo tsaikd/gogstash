@@ -1,15 +1,16 @@
-package inputdocker
+package inputdockerlog
 
 import (
 	"errors"
-	"log"
 	"reflect"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 var (
@@ -35,10 +36,10 @@ func GetContainerInfo(container interface{}) (id string, name string, err error)
 	return
 }
 
-func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time) (err error) {
+func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, evchan chan logevent.LogEvent, logger *logrus.Logger) (err error) {
 	defer func() {
 		if err != nil {
-			log.Println(err)
+			logger.Errorln(err)
 		}
 	}()
 	id, name, err := GetContainerInfo(container)
@@ -57,7 +58,7 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time) 
 	}
 
 	retry := 5
-	stream := NewContainerLogStream(t.EventChan, id, eventExtra, since, nil)
+	stream := NewContainerLogStream(evchan, id, eventExtra, since, nil)
 
 	for err == nil || retry > 0 {
 		err = t.client.Logs(docker.LogsOptions{

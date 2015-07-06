@@ -1,9 +1,8 @@
-package inputdockerstats
+package inputdockerlog
 
 import (
 	"os"
 	"regexp"
-	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/fsouza/go-dockerclient"
@@ -13,7 +12,7 @@ import (
 )
 
 const (
-	ModuleName = "dockerstats"
+	ModuleName = "dockerlog"
 )
 
 type InputConfig struct {
@@ -21,16 +20,14 @@ type InputConfig struct {
 	DockerURL               string   `json:"dockerurl"`
 	IncludePatterns         []string `json:"include_patterns"`
 	ExcludePatterns         []string `json:"exclude_patterns"`
-	StatInterval            int      `json:"stat_interval"`
+	SincePath               string   `json:"sincepath"`
 	ConnectionRetryInterval int      `json:"connection_retry_interval,omitempty"`
 
-	ZeroHierarchicalMemoryLimit bool `json:"zero_hierarchical_memory_limit,omitempty"`
-
-	sincemap map[string]*time.Time `json:"-"`
-	includes []*regexp.Regexp      `json:"-"`
-	excludes []*regexp.Regexp      `json:"-"`
-	hostname string                `json:"-"`
-	client   *docker.Client        `json:"-"`
+	sincedb  *SinceDB         `json:"-"`
+	includes []*regexp.Regexp `json:"-"`
+	excludes []*regexp.Regexp `json:"-"`
+	hostname string           `json:"-"`
+	client   *docker.Client   `json:"-"`
 }
 
 func DefaultInputConfig() InputConfig {
@@ -41,10 +38,9 @@ func DefaultInputConfig() InputConfig {
 			},
 		},
 		DockerURL:               "unix:///var/run/docker.sock",
-		StatInterval:            15,
 		ConnectionRetryInterval: 10,
-
-		sincemap: map[string]*time.Time{},
+		ExcludePatterns:         []string{"gogstash"},
+		SincePath:               "sincedb",
 	}
 }
 
@@ -59,6 +55,9 @@ func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err
 	}
 	for _, pattern := range conf.ExcludePatterns {
 		conf.excludes = append(conf.excludes, regexp.MustCompile(pattern))
+	}
+	if conf.sincedb, err = NewSinceDB(conf.SincePath); err != nil {
+		return
 	}
 	if conf.hostname, err = os.Hostname(); err != nil {
 		err = errutil.New("get hostname failed", err)
@@ -93,10 +92,9 @@ func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent
 		if !t.isValidContainer(container.Names) {
 			continue
 		}
-		since, ok := t.sincemap[container.ID]
-		if !ok || since == nil {
-			since = &time.Time{}
-			t.sincemap[container.ID] = since
+		since, err := t.sincedb.Get(container.ID)
+		if err != nil {
+			return errutil.New("get sincedb failed", err)
 		}
 		go t.containerLogLoop(container, since, evchan, logger)
 	}
@@ -118,10 +116,9 @@ func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent
 				if !t.isValidContainer([]string{container.Name}) {
 					return errutil.New("invalid container name " + container.Name)
 				}
-				since, ok := t.sincemap[container.ID]
-				if !ok || since == nil {
-					since = &time.Time{}
-					t.sincemap[container.ID] = since
+				since, err := t.sincedb.Get(dockerEvent.ID)
+				if err != nil {
+					return errutil.New("get sincedb failed", err)
 				}
 				go t.containerLogLoop(container, since, evchan, logger)
 			}

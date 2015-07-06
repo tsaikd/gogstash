@@ -6,62 +6,48 @@ import (
 	"io/ioutil"
 	"regexp"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/inject"
+	"github.com/tsaikd/KDGoLib/errutil"
 )
 
 type Config struct {
-	InputRaw  []map[string]interface{} `json:"input,omitempty"`
-	FilterRaw []map[string]interface{} `json:"filter,omitempty"`
-	OutputRaw []map[string]interface{} `json:"output,omitempty"`
+	inject.Injector `json:"-"`
+	InputRaw        []ConfigRaw `json:"input,omitempty"`
+	FilterRaw       []ConfigRaw `json:"filter,omitempty"`
+	OutputRaw       []ConfigRaw `json:"output,omitempty"`
 }
 
-type CommonConfig struct {
-	Type string `json:"type"`
-}
-
-func (t *CommonConfig) GetType() string {
-	return t.Type
-}
-
-type TypeConfig interface {
-	GetType() string
-}
-
-func (config *Config) Filter() (filters []interface{}) {
-	for _, mapraw := range config.FilterRaw {
-		switch mapraw["type"] {
-		default:
-			log.Errorf("Unknown type: %q", mapraw["type"])
-		}
+func LoadFromFile(path string) (config Config, err error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		err = errutil.New("Failed to read config file, "+path, err)
+		return
 	}
+
+	return LoadFromData(data)
+}
+
+func LoadFromString(text string) (config Config, err error) {
+	return LoadFromData([]byte(text))
+}
+
+func LoadFromData(data []byte) (config Config, err error) {
+	if data, err = StripComments(data); err != nil {
+		err = errutil.New("Failed to strip comments from json", err)
+		return
+	}
+
+	if err = json.Unmarshal(data, &config); err != nil {
+		err = errutil.New("Failed unmarshalling json", err)
+		return
+	}
+
+	config.Injector = inject.New()
 	return
 }
 
-func LoadConfig(path string) (config Config, err error) {
-	var (
-		buffer []byte
-	)
-
-	if buffer, err = ioutil.ReadFile(path); err != nil {
-		log.Errorf("Failed to read config file %q\n%s", path, err)
-		return
-	}
-
-	if buffer, err = StripComments(buffer); err != nil {
-		log.Errorf("Failed to strip comments from json\n%s", err)
-		return
-	}
-
-	if err = json.Unmarshal(buffer, &config); err != nil {
-		log.Errorf("Failed unmarshalling json\n%s", err)
-		return
-	}
-
-	return
-}
-
-func ReflectConfig(mapraw map[string]interface{}, conf interface{}) (err error) {
-	data, err := json.Marshal(mapraw)
+func ReflectConfig(confraw *ConfigRaw, conf interface{}) (err error) {
+	data, err := json.Marshal(confraw)
 	if err != nil {
 		return
 	}

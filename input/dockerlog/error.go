@@ -1,4 +1,4 @@
-package inputdocker
+package inputdockerlog
 
 type ErrorContainerLogLoopRunning struct {
 	ID string

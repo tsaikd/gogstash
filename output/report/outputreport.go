@@ -1,12 +1,12 @@
 package outputreport
 
 import (
-	"fmt"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 )
 
 type OutputConfig struct {
-	config.CommonConfig
+	config.OutputConfig
 	Interval   int    `json:"interval,omitempty"`
 	TimeFormat string `json:"time_format,omitempty"`
 
@@ -23,37 +23,37 @@ type OutputConfig struct {
 
 func DefaultOutputConfig() OutputConfig {
 	return OutputConfig{
-		CommonConfig: config.CommonConfig{
-			Type: ModuleName,
+		OutputConfig: config.OutputConfig{
+			CommonConfig: config.CommonConfig{
+				Type: ModuleName,
+			},
 		},
 		Interval:   5,
 		TimeFormat: "[2/Jan/2006:15:04:05 -0700]",
 	}
 }
 
-func init() {
-	config.RegistOutputHandler(ModuleName, func(mapraw map[string]interface{}) (retconf config.TypeOutputConfig, err error) {
-		conf := DefaultOutputConfig()
-		if err = config.ReflectConfig(mapraw, &conf); err != nil {
-			return
-		}
-
-		go conf.ReportLoop()
-
-		retconf = &conf
+func InitHandler(confraw *config.ConfigRaw, logger *logrus.Logger) (retconf config.TypeOutputConfig, err error) {
+	conf := DefaultOutputConfig()
+	if err = config.ReflectConfig(confraw, &conf); err != nil {
 		return
-	})
+	}
+
+	go conf.ReportLoop(logger)
+
+	retconf = &conf
+	return
 }
 
-func (self *OutputConfig) Event(event config.LogEvent) (err error) {
+func (self *OutputConfig) Event(event logevent.LogEvent) (err error) {
 	self.ProcessCount++
 	return
 }
 
-func (self *OutputConfig) ReportLoop() (err error) {
+func (self *OutputConfig) ReportLoop(logger *logrus.Logger) (err error) {
 	for {
-		if err = self.Report(); err != nil {
-			log.Errorf("ReportLoop failed: %v", err)
+		if err = self.Report(logger); err != nil {
+			logger.Errorf("ReportLoop failed: %v", err)
 			return
 		}
 		time.Sleep(time.Duration(self.Interval) * time.Second)
@@ -61,9 +61,9 @@ func (self *OutputConfig) ReportLoop() (err error) {
 	return
 }
 
-func (self *OutputConfig) Report() (err error) {
+func (self *OutputConfig) Report(logger *logrus.Logger) (err error) {
 	if self.ProcessCount > 0 {
-		fmt.Printf("%s Process %d events\n", time.Now().Format(self.TimeFormat), self.ProcessCount)
+		logger.Infof("%s Process %d events\n", time.Now().Format(self.TimeFormat), self.ProcessCount)
 		self.ProcessCount = 0
 	}
 	return

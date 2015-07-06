@@ -1,4 +1,4 @@
-package config
+package logevent
 
 import (
 	"encoding/json"

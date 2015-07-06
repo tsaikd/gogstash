@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 const (
@@ -11,30 +12,30 @@ const (
 )
 
 type OutputConfig struct {
-	config.CommonConfig
+	config.OutputConfig
 }
 
 func DefaultOutputConfig() OutputConfig {
 	return OutputConfig{
-		CommonConfig: config.CommonConfig{
-			Type: ModuleName,
+		OutputConfig: config.OutputConfig{
+			CommonConfig: config.CommonConfig{
+				Type: ModuleName,
+			},
 		},
 	}
 }
 
-func init() {
-	config.RegistOutputHandler(ModuleName, func(mapraw map[string]interface{}) (retconf config.TypeOutputConfig, err error) {
-		conf := DefaultOutputConfig()
-		if err = config.ReflectConfig(mapraw, &conf); err != nil {
-			return
-		}
-
-		retconf = &conf
+func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeOutputConfig, err error) {
+	conf := DefaultOutputConfig()
+	if err = config.ReflectConfig(confraw, &conf); err != nil {
 		return
-	})
+	}
+
+	retconf = &conf
+	return
 }
 
-func (t *OutputConfig) Event(event config.LogEvent) (err error) {
+func (t *OutputConfig) Event(event logevent.LogEvent) (err error) {
 	raw, err := event.MarshalIndent()
 	if err != nil {
 		return

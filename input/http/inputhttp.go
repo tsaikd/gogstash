@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 const (
@@ -18,60 +19,47 @@ const (
 )
 
 type InputConfig struct {
-	config.CommonConfig
+	config.InputConfig
 	Method   string `json:"method,omitempty"` // one of ["HEAD", "GET"]
 	Url      string `json:"url"`
 	Interval int    `json:"interval,omitempty"`
 
-	EventChan chan config.LogEvent `json:"-"`
+	hostname string `json:"-"`
 }
 
 func DefaultInputConfig() InputConfig {
 	return InputConfig{
-		CommonConfig: config.CommonConfig{
-			Type: ModuleName,
+		InputConfig: config.InputConfig{
+			CommonConfig: config.CommonConfig{
+				Type: ModuleName,
+			},
 		},
 		Method:   "GET",
 		Interval: 60,
 	}
 }
 
-func init() {
-	config.RegistInputHandler(ModuleName, func(mapraw map[string]interface{}) (retconf config.TypeInputConfig, err error) {
-		conf := DefaultInputConfig()
-		if err = config.ReflectConfig(mapraw, &conf); err != nil {
-			return
-		}
-
-		retconf = &conf
-		return
-	})
-}
-
-func (self *InputConfig) Event(eventChan chan config.LogEvent) (err error) {
-	if self.EventChan != nil {
-		err = errors.New("Event chan already inited")
-		log.Error(err)
+func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err error) {
+	conf := DefaultInputConfig()
+	if err = config.ReflectConfig(confraw, &conf); err != nil {
 		return
 	}
-	self.EventChan = eventChan
 
-	go self.RequestLoop()
+	if conf.hostname, err = os.Hostname(); err != nil {
+		return
+	}
 
+	retconf = &conf
 	return
 }
 
-func (self *InputConfig) RequestLoop() {
-	var (
-		hostname  string
-		err       error
-		startChan = make(chan bool) // startup tick
-		ticker    = time.NewTicker(time.Duration(self.Interval) * time.Second)
-	)
+func (t *InputConfig) Start() {
+	t.Invoke(t.start)
+}
 
-	if hostname, err = os.Hostname(); err != nil {
-		log.Errorf("Get hostname failed: %v", err)
-	}
+func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent) (err error) {
+	startChan := make(chan bool) // startup tick
+	ticker := time.NewTicker(time.Duration(t.Interval) * time.Second)
 
 	go func() {
 		startChan <- true
@@ -80,29 +68,24 @@ func (self *InputConfig) RequestLoop() {
 	for {
 		select {
 		case <-startChan:
-			self.Request(hostname)
+			t.Request(logger, evchan)
 		case <-ticker.C:
-			self.Request(hostname)
+			t.Request(logger, evchan)
 		}
 	}
 
 	return
 }
 
-func (self *InputConfig) Request(hostname string) {
-	var (
-		err  error
-		data string
-	)
+func (t *InputConfig) Request(logger *logrus.Logger, evchan chan logevent.LogEvent) {
+	data, err := t.SendRequest()
 
-	data, err = self.SendRequest()
-
-	event := config.LogEvent{
+	event := logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   data,
 		Extra: map[string]interface{}{
-			"host": hostname,
-			"url":  self.Url,
+			"host": t.hostname,
+			"url":  t.Url,
 		},
 	}
 
@@ -110,8 +93,8 @@ func (self *InputConfig) Request(hostname string) {
 		event.AddTag("inputhttp_failed")
 	}
 
-	log.Debugf("%v", event)
-	self.EventChan <- event
+	logger.Debugf("%v", event)
+	evchan <- event
 
 	return
 }

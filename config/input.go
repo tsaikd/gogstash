@@ -1,15 +1,24 @@
 package config
 
 import (
-	log "github.com/Sirupsen/logrus"
+	"fmt"
+
+	"github.com/codegangsta/inject"
+	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/KDGoLib/injectutil"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 type TypeInputConfig interface {
 	TypeConfig
-	Event(evchan chan LogEvent) (err error)
+	Start()
 }
 
-type InputHandler func(mapraw map[string]interface{}) (conf TypeInputConfig, err error)
+type InputConfig struct {
+	CommonConfig
+}
+
+type InputHandler interface{}
 
 var (
 	mapInputHandler = map[string]InputHandler{}
@@ -19,23 +28,44 @@ func RegistInputHandler(name string, handler InputHandler) {
 	mapInputHandler[name] = handler
 }
 
-func (config *Config) Input() (inputs []TypeInputConfig) {
-	var (
-		conf    TypeInputConfig
-		err     error
-		handler InputHandler
-		ok      bool
-	)
-	for _, mapraw := range config.InputRaw {
-		if handler, ok = mapInputHandler[mapraw["type"].(string)]; !ok {
-			log.Errorf("unknown input config type %q", mapraw["type"])
-			continue
+func (t *Config) RunInputs(evchan chan logevent.LogEvent) (err error) {
+	inputs, err := t.getInputs(evchan)
+	if err != nil {
+		return errutil.New("get config inputs failed", err)
+	}
+	for _, input := range inputs {
+		go input.Start()
+	}
+	return
+}
+
+func (config *Config) getInputs(evchan chan logevent.LogEvent) (inputs []TypeInputConfig, err error) {
+	for _, confraw := range config.InputRaw {
+		handler, ok := mapInputHandler[confraw["type"].(string)]
+		if !ok {
+			err = fmt.Errorf("unknown input config type: %q", confraw["type"])
+			return
 		}
-		if conf, err = handler(mapraw); err != nil {
-			log.Errorf("handle input config failed: %q\n%s", mapraw, err)
-			continue
+
+		inj := inject.New()
+		inj.SetParent(config)
+		inj.Map(&confraw)
+		inj.Map(evchan)
+		refvs, err := injectutil.Invoke(inj, handler)
+		if err != nil {
+			err = errutil.NewErrorSlice(fmt.Errorf("handle input config failed: %q", confraw), err)
+			return []TypeInputConfig{}, err
 		}
-		inputs = append(inputs, conf)
+
+		for _, refv := range refvs {
+			if !refv.CanInterface() {
+				continue
+			}
+			if conf, ok := refv.Interface().(TypeInputConfig); ok {
+				conf.SetInjector(inj)
+				inputs = append(inputs, conf)
+			}
+		}
 	}
 	return
 }

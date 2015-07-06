@@ -3,17 +3,19 @@ package inputfile
 import (
 	"bufio"
 	"bytes"
-	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/go-fsnotify/fsnotify"
 
+	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 const (
@@ -21,13 +23,13 @@ const (
 )
 
 type InputConfig struct {
-	config.CommonConfig
+	config.InputConfig
 	Path                 string `json:"path"`
 	StartPos             string `json:"start_position,omitempty"` // one of ["beginning", "end"]
 	SinceDBPath          string `json:"sincedb_path,omitempty"`
 	SinceDBWriteInterval int    `json:"sincedb_write_interval,omitempty"`
 
-	EventChan           chan config.LogEvent    `json:"-"`
+	hostname            string                  `json:"-"`
 	SinceDBInfos        map[string]*SinceDBInfo `json:"-"`
 	sinceDBLastInfosRaw []byte                  `json:"-"`
 	SinceDBLastSaveTime time.Time               `json:"-"`
@@ -35,8 +37,10 @@ type InputConfig struct {
 
 func DefaultInputConfig() InputConfig {
 	return InputConfig{
-		CommonConfig: config.CommonConfig{
-			Type: ModuleName,
+		InputConfig: config.InputConfig{
+			CommonConfig: config.CommonConfig{
+				Type: ModuleName,
+			},
 		},
 		StartPos:             "end",
 		SinceDBPath:          ".sincedb.json",
@@ -46,69 +50,75 @@ func DefaultInputConfig() InputConfig {
 	}
 }
 
-func init() {
-	config.RegistInputHandler(ModuleName, func(mapraw map[string]interface{}) (retconf config.TypeInputConfig, err error) {
-		conf := DefaultInputConfig()
-		if err = config.ReflectConfig(mapraw, &conf); err != nil {
-			return
-		}
-
-		retconf = &conf
+func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err error) {
+	conf := DefaultInputConfig()
+	if err = config.ReflectConfig(confraw, &conf); err != nil {
 		return
-	})
+	}
+
+	if conf.hostname, err = os.Hostname(); err != nil {
+		return
+	}
+
+	retconf = &conf
+	return
 }
 
-func (self *InputConfig) Event(eventChan chan config.LogEvent) (err error) {
+func (t *InputConfig) Start() {
+	t.Invoke(t.start)
+}
+
+func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent) (err error) {
+	defer func() {
+		if err != nil {
+			logger.Errorln(err)
+		}
+	}()
+
 	var (
 		matches []string
 		fi      os.FileInfo
 	)
 
-	if self.EventChan != nil {
-		err = errors.New("Event chan already inited")
-		log.Error(err)
-		return
-	}
-	self.EventChan = eventChan
-
-	if err = self.LoadSinceDBInfos(); err != nil {
+	if err = t.LoadSinceDBInfos(); err != nil {
 		return
 	}
 
-	if matches, err = filepath.Glob(self.Path); err != nil {
-		log.Errorf("glob(%q) failed\n%s", self.Path, err)
-		return
+	if matches, err = filepath.Glob(t.Path); err != nil {
+		return errutil.NewErrorSlice(fmt.Errorf("glob(%q) failed", t.Path), err)
 	}
 
-	go self.CheckSaveSinceDBInfosLoop()
+	go t.CheckSaveSinceDBInfosLoop()
 
 	for _, fpath := range matches {
 		if fpath, err = filepath.EvalSymlinks(fpath); err != nil {
-			log.Errorf("Get symlinks failed: %q\n%v", fpath, err)
+			logger.Errorf("Get symlinks failed: %q\n%v", fpath, err)
 			continue
 		}
 
 		if fi, err = os.Stat(fpath); err != nil {
-			log.Errorf("stat(%q) failed\n%s", self.Path, err)
+			logger.Errorf("stat(%q) failed\n%s", t.Path, err)
 			continue
 		}
 
 		if fi.IsDir() {
-			log.Infof("Skipping directory: %q", self.Path)
+			logger.Infof("Skipping directory: %q", t.Path)
 			continue
 		}
 
 		readEventChan := make(chan fsnotify.Event, 10)
-		go self.fileReadLoop(readEventChan, fpath)
-		go self.fileWatchLoop(readEventChan, fpath, fsnotify.Create|fsnotify.Write)
+		go t.fileReadLoop(readEventChan, fpath, logger, evchan)
+		go t.fileWatchLoop(readEventChan, fpath, fsnotify.Create|fsnotify.Write)
 	}
 
 	return
 }
 
-func (self *InputConfig) fileReadLoop(
+func (t *InputConfig) fileReadLoop(
 	readEventChan chan fsnotify.Event,
 	fpath string,
+	logger *logrus.Logger,
+	evchan chan logevent.LogEvent,
 ) (err error) {
 	var (
 		since     *SinceDBInfo
@@ -119,23 +129,22 @@ func (self *InputConfig) fileReadLoop(
 		reader    *bufio.Reader
 		line      string
 		size      int
-		hostname  string
 
 		buffer = &bytes.Buffer{}
 	)
 
 	if fpath, err = filepath.EvalSymlinks(fpath); err != nil {
-		log.Errorf("Get symlinks failed: %q\n%v", fpath, err)
+		logger.Errorf("Get symlinks failed: %q\n%v", fpath, err)
 		return
 	}
 
-	if since, ok = self.SinceDBInfos[fpath]; !ok {
-		self.SinceDBInfos[fpath] = &SinceDBInfo{}
-		since = self.SinceDBInfos[fpath]
+	if since, ok = t.SinceDBInfos[fpath]; !ok {
+		t.SinceDBInfos[fpath] = &SinceDBInfo{}
+		since = t.SinceDBInfos[fpath]
 	}
 
 	if since.Offset == 0 {
-		if self.StartPos == "end" {
+		if t.StartPos == "end" {
 			whence = os.SEEK_END
 		} else {
 			whence = os.SEEK_SET
@@ -153,25 +162,21 @@ func (self *InputConfig) fileReadLoop(
 		return
 	}
 	if truncated {
-		log.Warnf("File truncated, seeking to beginning: %q", fpath)
+		logger.Warnf("File truncated, seeking to beginning: %q", fpath)
 		since.Offset = 0
 		if _, err = fp.Seek(since.Offset, os.SEEK_SET); err != nil {
-			log.Errorf("seek file failed: %q", fpath)
+			logger.Errorf("seek file failed: %q", fpath)
 			return
 		}
-	}
-
-	if hostname, err = os.Hostname(); err != nil {
-		log.Errorf("Get hostname failed: %v", err)
 	}
 
 	for {
 		if line, size, err = readline(reader, buffer); err != nil {
 			if err == io.EOF {
 				watchev := <-readEventChan
-				log.Debug("fileReadLoop recv:", watchev)
+				logger.Debug("fileReadLoop recv:", watchev)
 				if watchev.Op&fsnotify.Create == fsnotify.Create {
-					log.Warnf("File recreated, seeking to beginning: %q", fpath)
+					logger.Warnf("File recreated, seeking to beginning: %q", fpath)
 					fp.Close()
 					since.Offset = 0
 					if fp, reader, err = openfile(fpath, since.Offset, os.SEEK_SET); err != nil {
@@ -182,26 +187,26 @@ func (self *InputConfig) fileReadLoop(
 					return
 				}
 				if truncated {
-					log.Warnf("File truncated, seeking to beginning: %q", fpath)
+					logger.Warnf("File truncated, seeking to beginning: %q", fpath)
 					since.Offset = 0
 					if _, err = fp.Seek(since.Offset, os.SEEK_SET); err != nil {
-						log.Errorf("seek file failed: %q", fpath)
+						logger.Errorf("seek file failed: %q", fpath)
 						return
 					}
 					continue
 				}
-				log.Debugf("watch %q %q %v", watchev.Name, fpath, watchev)
+				logger.Debugf("watch %q %q %v", watchev.Name, fpath, watchev)
 				continue
 			} else {
 				return
 			}
 		}
 
-		event := config.LogEvent{
+		event := logevent.LogEvent{
 			Timestamp: time.Now(),
 			Message:   line,
 			Extra: map[string]interface{}{
-				"host":   hostname,
+				"host":   t.hostname,
 				"path":   fpath,
 				"offset": since.Offset,
 			},
@@ -209,10 +214,10 @@ func (self *InputConfig) fileReadLoop(
 
 		since.Offset += int64(size)
 
-		log.Debugf("%q %v", event.Message, event)
-		self.EventChan <- event
+		logger.Debugf("%q %v", event.Message, event)
+		evchan <- event
 		//self.SaveSinceDBInfos()
-		self.CheckSaveSinceDBInfos()
+		t.CheckSaveSinceDBInfos()
 	}
 
 	return
@@ -236,7 +241,7 @@ func isFileTruncated(fp *os.File, since *SinceDBInfo) (truncated bool, err error
 		fi os.FileInfo
 	)
 	if fi, err = fp.Stat(); err != nil {
-		log.Errorf("stat file failed: %q\n%s", fp.Name(), err)
+		err = errutil.New("stat file failed: "+fp.Name(), err)
 		return
 	}
 	if fi.Size() < since.Offset {
@@ -248,14 +253,13 @@ func isFileTruncated(fp *os.File, since *SinceDBInfo) (truncated bool, err error
 }
 
 func openfile(fpath string, offset int64, whence int) (fp *os.File, reader *bufio.Reader, err error) {
-	log.Debugf("openfile %q offset=%d whence=%d", fpath, offset, whence)
 	if fp, err = os.Open(fpath); err != nil {
-		log.Errorf("open file failed: %q\n%v", fpath, err)
+		err = errutil.New("open file failed: "+fpath, err)
 		return
 	}
 
 	if _, err = fp.Seek(offset, whence); err != nil {
-		log.Errorf("seek file failed: %q", fpath)
+		err = errutil.New("seek file failed: " + fpath)
 		return
 	}
 
@@ -271,13 +275,13 @@ func readline(reader *bufio.Reader, buffer *bytes.Buffer) (line string, size int
 	for {
 		if segment, err = reader.ReadBytes('\n'); err != nil {
 			if err != io.EOF {
-				log.Errorf("read line failed: %s", err)
+				err = errutil.New("read line failed", err)
 			}
 			return
 		}
 
 		if _, err = buffer.Write(segment); err != nil {
-			log.Errorf("write buffer failed: %s", err)
+			err = errutil.New("write buffer failed", err)
 			return
 		}
 
@@ -317,21 +321,21 @@ func waitWatchEvent(fpath string, op fsnotify.Op) (event fsnotify.Event, err err
 	)
 
 	if fpath, err = filepath.EvalSymlinks(fpath); err != nil {
-		log.Errorf("Get symlinks failed: %q\n%v", fpath, err)
+		err = errutil.New("Get symlinks failed: "+fpath, err)
 		return
 	}
 
 	fdir = filepath.Dir(fpath)
 
 	if watcher, ok = mapWatcher[fdir]; !ok {
-		log.Debugf("create new watcher for %q", fdir)
+		//		logger.Debugf("create new watcher for %q", fdir)
 		if watcher, err = fsnotify.NewWatcher(); err != nil {
-			log.Errorf("create new watcher failed: %q\n%s", fdir, err)
+			err = errutil.New("create new watcher failed: "+fdir, err)
 			return
 		}
 		mapWatcher[fdir] = watcher
 		if err = watcher.Add(fdir); err != nil {
-			log.Errorf("add new watch path failed: %q\n%s", fdir, err)
+			err = errutil.New("add new watch path failed: "+fdir, err)
 			return
 		}
 	}
@@ -349,7 +353,7 @@ func waitWatchEvent(fpath string, op fsnotify.Op) (event fsnotify.Event, err err
 				}
 			}
 		case err = <-watcher.Errors:
-			log.Errorf("watcher error: %s", err)
+			err = errutil.New("watcher error", err)
 			return
 		}
 	}

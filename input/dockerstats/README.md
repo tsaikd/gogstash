@@ -9,8 +9,8 @@ gogstash input dockerstats
 		{
 			"type": "docker",
 
-			// (optional), host of docker endpoint, default: "unix:///var/run/docker.sock"
-			"host": "unix:///var/run/docker.sock",
+			// (optional), docker endpoint, default: "unix:///var/run/docker.sock"
+			"dockerurl": "unix:///var/run/docker.sock",
 
 			// (optional), include docker name pattern, support regular expression of golang, default: []
 			"include_patterns": [],

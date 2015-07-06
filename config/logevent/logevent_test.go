@@ -1,23 +1,16 @@
-package config
+package logevent
 
 import (
 	"testing"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_Format(t *testing.T) {
-	var (
-		assert   = assert.New(t)
-		logevent LogEvent
-		out      string
-	)
+	assert := assert.New(t)
 
-	log.SetLevel(log.DebugLevel)
-
-	logevent = LogEvent{
+	logevent := LogEvent{
 		Timestamp: time.Now(),
 		Message:   "Test Message",
 		Extra: map[string]interface{}{
@@ -28,7 +21,7 @@ func Test_Format(t *testing.T) {
 		},
 	}
 
-	out = logevent.Format("%{message}")
+	out := logevent.Format("%{message}")
 	assert.Equal("Test Message", out)
 
 	out = logevent.Format("%{@timestamp}")

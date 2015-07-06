@@ -4,48 +4,51 @@ import (
 	"testing"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/tsaikd/KDGoLib/logrusutil"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 func Test_main(t *testing.T) {
-	var (
-		assert   = assert.New(t)
-		err      error
-		conftest config.Config
-	)
+	assert := assert.New(t)
 
-	log.SetLevel(log.DebugLevel)
+	logger := logrusutil.DefaultConsoleLogger
+	logger.Level = logrus.DebugLevel
+	config.RegistOutputHandler(ModuleName, InitHandler)
 
-	conftest, err = config.LoadConfig("config_test.json")
+	conf, err := config.LoadFromString(`{
+		"output": [{
+			"type": "report",
+			"interval": 1
+		}]
+	}`)
+	assert.NoError(err)
+	conf.Map(logger)
+
+	evchan := make(chan logevent.LogEvent, 10)
+	conf.Map(evchan)
+
+	err = conf.RunOutputs(evchan, logger)
 	assert.NoError(err)
 
-	outputs := conftest.Output()
-	assert.Len(outputs, 1)
-	if len(outputs) > 0 {
-		output := outputs[0].(*OutputConfig)
-		assert.IsType(&OutputConfig{}, output)
-		assert.Equal("report", output.GetType())
-		assert.Equal(1, output.Interval)
-
-		event := config.LogEvent{
-			Timestamp: time.Now(),
-			Message:   "outputreport test message",
-		}
-
-		output.Event(event)
-		output.Event(event)
-		time.Sleep(2 * time.Second)
-
-		output.Event(event)
-		time.Sleep(2 * time.Second)
-
-		output.Event(event)
-		output.Event(event)
-		output.Event(event)
-		output.Event(event)
-		time.Sleep(2 * time.Second)
+	event := logevent.LogEvent{
+		Timestamp: time.Now(),
+		Message:   "outputreport test message",
 	}
+
+	evchan <- event
+	evchan <- event
+	time.Sleep(2 * time.Second)
+
+	evchan <- event
+	time.Sleep(2 * time.Second)
+
+	evchan <- event
+	evchan <- event
+	evchan <- event
+	evchan <- event
+	time.Sleep(2 * time.Second)
 }

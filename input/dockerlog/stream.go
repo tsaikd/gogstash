@@ -1,20 +1,16 @@
-package inputdocker
+package inputdockerlog
 
 import (
 	"bytes"
 	"io"
-	"log"
-	"os"
 	"regexp"
 	"time"
 
-	"github.com/tsaikd/gogstash/config"
+	"github.com/Sirupsen/logrus"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
-func NewContainerLogStream(eventChan chan config.LogEvent, id string, eventExtra map[string]interface{}, since *time.Time, logger *log.Logger) ContainerLogStream {
-	if logger == nil {
-		logger = log.New(os.Stdout, "", log.LstdFlags)
-	}
+func NewContainerLogStream(eventChan chan logevent.LogEvent, id string, eventExtra map[string]interface{}, since *time.Time, logger *logrus.Logger) ContainerLogStream {
 	return ContainerLogStream{
 		ID:         id,
 		eventChan:  eventChan,
@@ -29,9 +25,9 @@ func NewContainerLogStream(eventChan chan config.LogEvent, id string, eventExtra
 type ContainerLogStream struct {
 	io.Writer
 	ID         string
-	eventChan  chan config.LogEvent
+	eventChan  chan logevent.LogEvent
 	eventExtra map[string]interface{}
-	logger     *log.Logger
+	logger     *logrus.Logger
 	buffer     *bytes.Buffer
 	since      *time.Time
 }
@@ -66,7 +62,7 @@ func (t *ContainerLogStream) sendEvent(data []byte) (err error) {
 		eventTime time.Time
 	)
 
-	event := config.LogEvent{
+	event := logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   string(data),
 		Extra:     t.eventExtra,

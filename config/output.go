@@ -1,15 +1,26 @@
 package config
 
 import (
-	log "github.com/Sirupsen/logrus"
+	"fmt"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/codegangsta/inject"
+	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/KDGoLib/injectutil"
+
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 type TypeOutputConfig interface {
 	TypeConfig
-	Event(event LogEvent) (err error)
+	Event(event logevent.LogEvent) (err error)
 }
 
-type OutputHandler func(mapraw map[string]interface{}) (conf TypeOutputConfig, err error)
+type OutputConfig struct {
+	CommonConfig
+}
+
+type OutputHandler interface{}
 
 var (
 	mapOutputHandler = map[string]OutputHandler{}
@@ -19,23 +30,52 @@ func RegistOutputHandler(name string, handler OutputHandler) {
 	mapOutputHandler[name] = handler
 }
 
-func (config *Config) Output() (outputs []TypeOutputConfig) {
-	var (
-		conf    TypeOutputConfig
-		err     error
-		handler OutputHandler
-		ok      bool
-	)
-	for _, mapraw := range config.OutputRaw {
-		if handler, ok = mapOutputHandler[mapraw["type"].(string)]; !ok {
-			log.Errorf("unknown output config type %q", mapraw["type"])
-			continue
+func (t *Config) RunOutputs(evchan chan logevent.LogEvent, logger *logrus.Logger) (err error) {
+	outputs, err := t.getOutputs()
+	if err != nil {
+		return errutil.New("get config output failed", err)
+	}
+	go func() {
+		for {
+			select {
+			case event := <-evchan:
+				for _, output := range outputs {
+					if err = output.Event(event); err != nil {
+						logger.Errorf("output failed: %v", err)
+					}
+				}
+			}
 		}
-		if conf, err = handler(mapraw); err != nil {
-			log.Errorf("handle output config failed: %q\n%s", mapraw, err)
-			continue
+	}()
+	return
+}
+
+func (config *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
+	for _, confraw := range config.OutputRaw {
+		handler, ok := mapOutputHandler[confraw["type"].(string)]
+		if !ok {
+			err = fmt.Errorf("unknown output config type: %q", confraw["type"])
+			return
 		}
-		outputs = append(outputs, conf)
+
+		inj := inject.New()
+		inj.SetParent(config)
+		inj.Map(&confraw)
+		refvs, err := injectutil.Invoke(inj, handler)
+		if err != nil {
+			err = errutil.NewErrorSlice(fmt.Errorf("handle output config failed: %q", confraw), err)
+			return []TypeOutputConfig{}, err
+		}
+
+		for _, refv := range refvs {
+			if !refv.CanInterface() {
+				continue
+			}
+			if conf, ok := refv.Interface().(TypeOutputConfig); ok {
+				conf.SetInjector(inj)
+				outputs = append(outputs, conf)
+			}
+		}
 	}
 	return
 }
