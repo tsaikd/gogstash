@@ -20,6 +20,9 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, 
 		if err != nil {
 			logger.Errorln(err)
 		}
+		if recov := recover(); recov != nil {
+			logger.Errorln(recov)
+		}
 	}()
 	id, name, err := inputdockerlog.GetContainerInfo(container)
 	if err != nil {
