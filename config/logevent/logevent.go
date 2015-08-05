@@ -85,12 +85,22 @@ func (t LogEvent) GetString(field string) (v string) {
 	return
 }
 
-var revar = regexp.MustCompile(`%{([\w@]+)}`)
+var (
+	retime = regexp.MustCompile(`%{\+([^}]+)}`)
+	revar  = regexp.MustCompile(`%{([\w@]+)}`)
+)
 
 // format string with LogEvent field, ex: %{hostname}
 func (t LogEvent) Format(format string) (out string) {
 	out = format
-	matches := revar.FindAllStringSubmatch(out, -1)
+
+	matches := retime.FindAllStringSubmatch(out, -1)
+	for _, submatches := range matches {
+		value := time.Now().Format(submatches[1])
+		out = strings.Replace(out, submatches[0], value, -1)
+	}
+
+	matches = revar.FindAllStringSubmatch(out, -1)
 	for _, submatches := range matches {
 		field := submatches[1]
 		value := t.GetString(field)
@@ -98,5 +108,6 @@ func (t LogEvent) Format(format string) (out string) {
 			out = strings.Replace(out, submatches[0], value, -1)
 		}
 	}
+
 	return
 }

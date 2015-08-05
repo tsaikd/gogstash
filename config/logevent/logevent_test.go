@@ -37,6 +37,10 @@ func Test_Format(t *testing.T) {
 	out = logevent.Format("%{string}")
 	assert.Equal("Test String", out)
 
+	out = logevent.Format("time string %{+2006-01-02}")
+	nowdatestring := time.Now().Format("2006-01-02")
+	assert.Equal("time string "+nowdatestring, out)
+
 	out = logevent.Format("%{null}")
 	assert.Equal("%{null}", out)
 

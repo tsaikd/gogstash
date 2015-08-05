@@ -12,9 +12,9 @@ if ! type godep &>/dev/null ; then
 	go get -v "github.com/tools/godep"
 fi
 
-go get -v
-
 godep restore
+
+go get -v
 
 if [ "${BUILDTIME}" ] && [ "${GITHASH}" ] ; then
 	go build -ldflags "-X github.com/tsaikd/KDGoLib/version.BUILDTIME ${BUILDTIME} -X github.com/tsaikd/KDGoLib/version.GITCOMMIT ${GITHASH}" -o "gogstash-$(uname -s)-$(uname -m)"
