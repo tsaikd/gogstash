@@ -1,6 +1,7 @@
 package outputreport
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -53,7 +54,7 @@ func (self *OutputConfig) Event(event logevent.LogEvent) (err error) {
 func (self *OutputConfig) ReportLoop(logger *logrus.Logger) (err error) {
 	for {
 		if err = self.Report(logger); err != nil {
-			logger.Errorf("ReportLoop failed: %v", err)
+			logger.Errorln(fmt.Sprintf("ReportLoop failed: %v", err))
 			return
 		}
 		time.Sleep(time.Duration(self.Interval) * time.Second)
@@ -63,7 +64,11 @@ func (self *OutputConfig) ReportLoop(logger *logrus.Logger) (err error) {
 
 func (self *OutputConfig) Report(logger *logrus.Logger) (err error) {
 	if self.ProcessCount > 0 {
-		logger.Infof("%s Process %d events\n", time.Now().Format(self.TimeFormat), self.ProcessCount)
+		logger.Infoln(fmt.Sprintf(
+			"%s Process %d events",
+			time.Now().Format(self.TimeFormat),
+			self.ProcessCount,
+		))
 		self.ProcessCount = 0
 	}
 	return
