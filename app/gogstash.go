@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/codegangsta/cli"
+	"github.com/tsaikd/KDGoLib/cliutil/cmdutil"
+	"github.com/tsaikd/KDGoLib/cliutil/flagutil"
 	"github.com/tsaikd/KDGoLib/errutil"
-	"github.com/tsaikd/KDGoLib/flagutil"
 	"github.com/tsaikd/KDGoLib/version"
-
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 
@@ -25,10 +25,6 @@ var (
 	})
 )
 
-func init() {
-	version.VERSION = "0.1.4"
-}
-
 func Main() {
 	app := cli.NewApp()
 	app.Name = "gogstash"
@@ -36,6 +32,7 @@ func Main() {
 	app.Version = version.String()
 	app.Action = actionWrapper(MainAction)
 	app.Flags = flagutil.AllFlags()
+	app.Commands = cmdutil.AllCommands()
 
 	app.Run(os.Args)
 }

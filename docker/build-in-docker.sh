@@ -4,21 +4,32 @@ set -e
 
 PN="${BASH_SOURCE[0]##*/}"
 PD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+projorg="tsaikd"
+projname="gogstash"
 
 renice 15 $$
 cd "${PD}/.."
 
-if ! type godep &>/dev/null ; then
-	go get -v "github.com/tools/godep"
+if ! type gobuilder &>/dev/null ; then
+	go get -v "github.com/tsaikd/gobuilder"
 fi
 
-godep restore
+gobuilder
 
-go get -v
-
-if [ "${BUILDTIME}" ] && [ "${GITHASH}" ] ; then
-	go build -ldflags "-X github.com/tsaikd/KDGoLib/version.BUILDTIME ${BUILDTIME} -X github.com/tsaikd/KDGoLib/version.GITCOMMIT ${GITHASH}" -o "gogstash-$(uname -s)-$(uname -m)"
-else
-	go build -o "gogstash-$(uname -s)-$(uname -m)"
+if [ "${GITHUB_TOKEN}" ] ; then
+	echo "[$(date -Iseconds)] ${projname} release on github"
+	if ! type github-release &>/dev/null ; then
+		go get -v "github.com/aktau/github-release"
+	fi
+	version="$(./${projname} -v | grep -Eo "version [0-9\.]+" | cut -c9-)"
+	github-release release \
+		--user "${projorg}" \
+		--repo "${projname}" \
+		--tag "${version}"
+	github-release upload \
+		--user "${projorg}" \
+		--repo "${projname}" \
+		--tag "${version}" \
+		--name "${projname}-$(uname -s)-$(uname -m)" \
+		--file "${projname}"
 fi
-
