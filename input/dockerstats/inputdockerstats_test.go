@@ -6,18 +6,21 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/tsaikd/KDGoLib/logrusutil"
 	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/logevent"
 )
+
+var (
+	logger = config.Logger
+)
+
+func init() {
+	logger.Level = logrus.DebugLevel
+	config.RegistInputHandler(ModuleName, InitHandler)
+}
 
 func Test_main(t *testing.T) {
 	assert := assert.New(t)
-
-	logger := logrusutil.DefaultConsoleLogger
-	logger.Level = logrus.DebugLevel
-	config.RegistInputHandler(ModuleName, InitHandler)
+	assert.NotNil(assert)
 
 	conf, err := config.LoadFromString(`{
 		"input": [{
@@ -27,20 +30,9 @@ func Test_main(t *testing.T) {
 		}]
 	}`)
 	assert.NoError(err)
-	conf.Map(logger)
 
-	evchan := make(chan logevent.LogEvent, 10)
-	conf.Map(evchan)
-
-	err = conf.RunInputs(evchan)
+	err = conf.RunInputs()
 	assert.NoError(err)
-
-	go func() {
-		for {
-			event := <-evchan
-			logger.Debugln(event)
-		}
-	}()
 
 	waitsec := 10
 	logger.Debugf("Wait for %d seconds", waitsec)

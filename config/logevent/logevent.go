@@ -3,6 +3,7 @@ package logevent
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -90,6 +91,28 @@ var (
 	revar  = regexp.MustCompile(`%{([\w@]+)}`)
 )
 
+// FormatWithEnv format string with environment value, ex: %{HOSTNAME}
+func FormatWithEnv(text string) (result string) {
+	result = text
+
+	matches := retime.FindAllStringSubmatch(result, -1)
+	for _, submatches := range matches {
+		value := time.Now().Format(submatches[1])
+		result = strings.Replace(result, submatches[0], value, -1)
+	}
+
+	matches = revar.FindAllStringSubmatch(result, -1)
+	for _, submatches := range matches {
+		field := submatches[1]
+		value := os.Getenv(field)
+		if value != "" {
+			result = strings.Replace(result, submatches[0], value, -1)
+		}
+	}
+
+	return
+}
+
 // format string with LogEvent field, ex: %{hostname}
 func (t LogEvent) Format(format string) (out string) {
 	out = format
@@ -108,6 +131,8 @@ func (t LogEvent) Format(format string) (out string) {
 			out = strings.Replace(out, submatches[0], value, -1)
 		}
 	}
+
+	out = FormatWithEnv(out)
 
 	return
 }

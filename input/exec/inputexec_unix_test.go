@@ -6,13 +6,11 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/tsaikd/KDGoLib/logutil"
 	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 var (
-	logger = logutil.DefaultLogger
+	logger = config.Logger
 )
 
 func init() {
@@ -40,10 +38,8 @@ func Test_text(t *testing.T) {
 		}]
 	}`)
 	assert.NoError(err)
-	conf.Map(logger)
 
-	eventChan := make(chan logevent.LogEvent, 10)
-	err = conf.RunInputs(eventChan)
+	err = conf.RunInputs()
 	assert.NoError(err)
 
 	waitsec := 7
@@ -64,10 +60,8 @@ func Test_json(t *testing.T) {
 		}]
 	}`)
 	assert.NoError(err)
-	conf.Map(logger)
 
-	eventChan := make(chan logevent.LogEvent, 10)
-	err = conf.RunInputs(eventChan)
+	err = conf.RunInputs()
 	assert.NoError(err)
 
 	waitsec := 3

@@ -4,14 +4,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-
 	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/logevent"
 )
+
+func init() {
+	logger.Level = logrus.DebugLevel
+}
 
 func Test_main(t *testing.T) {
 	assert := assert.New(t)
+	assert.NotNil(assert)
 
 	conf, err := config.LoadFromString(`{
 		"input": [{
@@ -32,10 +36,6 @@ func Test_main(t *testing.T) {
 		}]
 	}`)
 	assert.NoError(err)
-	conf.Map(logger)
-
-	evchan := make(chan logevent.LogEvent, 100)
-	conf.Map(evchan)
 
 	_, err = conf.Invoke(conf.RunInputs)
 	assert.NoError(err)

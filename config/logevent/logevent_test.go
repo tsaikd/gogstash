@@ -9,6 +9,7 @@ import (
 
 func Test_Format(t *testing.T) {
 	assert := assert.New(t)
+	assert.NotNil(assert)
 
 	logevent := LogEvent{
 		Timestamp: time.Now(),

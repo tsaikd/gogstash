@@ -40,7 +40,7 @@ func DefaultInputConfig() InputConfig {
 		DockerURL:               "unix:///var/run/docker.sock",
 		ConnectionRetryInterval: 10,
 		ExcludePatterns:         []string{"gogstash"},
-		SincePath:               "sincedb",
+		SincePath:               "sincedb-%{HOSTNAME}",
 	}
 }
 

@@ -28,7 +28,12 @@ func RegistInputHandler(name string, handler InputHandler) {
 	mapInputHandler[name] = handler
 }
 
-func (t *Config) RunInputs(evchan chan logevent.LogEvent) (err error) {
+func (t *Config) RunInputs() (err error) {
+	_, err = t.Invoke(t.runInputs)
+	return
+}
+
+func (t *Config) runInputs(evchan chan logevent.LogEvent) (err error) {
 	inputs, err := t.getInputs(evchan)
 	if err != nil {
 		return errutil.New("get config inputs failed", err)
@@ -39,8 +44,8 @@ func (t *Config) RunInputs(evchan chan logevent.LogEvent) (err error) {
 	return
 }
 
-func (config *Config) getInputs(evchan chan logevent.LogEvent) (inputs []TypeInputConfig, err error) {
-	for _, confraw := range config.InputRaw {
+func (t *Config) getInputs(evchan chan logevent.LogEvent) (inputs []TypeInputConfig, err error) {
+	for _, confraw := range t.InputRaw {
 		handler, ok := mapInputHandler[confraw["type"].(string)]
 		if !ok {
 			err = fmt.Errorf("unknown input config type: %q", confraw["type"])
@@ -48,7 +53,7 @@ func (config *Config) getInputs(evchan chan logevent.LogEvent) (inputs []TypeInp
 		}
 
 		inj := inject.New()
-		inj.SetParent(config)
+		inj.SetParent(t)
 		inj.Map(&confraw)
 		inj.Map(evchan)
 		refvs, err := injectutil.Invoke(inj, handler)

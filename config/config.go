@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"reflect"
 	"regexp"
 
 	"github.com/codegangsta/inject"
 	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 type Config struct {
@@ -43,6 +45,14 @@ func LoadFromData(data []byte) (config Config, err error) {
 	}
 
 	config.Injector = inject.New()
+	config.Map(Logger)
+
+	evchan := make(chan logevent.LogEvent, 100)
+	config.Map(evchan)
+
+	rv := reflect.ValueOf(&config)
+	formatReflect(rv)
+
 	return
 }
 
@@ -56,7 +66,35 @@ func ReflectConfig(confraw *ConfigRaw, conf interface{}) (err error) {
 		return
 	}
 
+	rv := reflect.ValueOf(conf).Elem()
+	formatReflect(rv)
+
 	return
+}
+
+func formatReflect(rv reflect.Value) {
+	if !rv.IsValid() {
+		return
+	}
+
+	switch rv.Kind() {
+	case reflect.Ptr:
+		if !rv.IsNil() {
+			formatReflect(rv.Elem())
+		}
+	case reflect.Struct:
+		for i := 0; i < rv.NumField(); i++ {
+			field := rv.Field(i)
+			formatReflect(field)
+		}
+	case reflect.String:
+		if !rv.CanSet() {
+			return
+		}
+		value := rv.Interface().(string)
+		value = logevent.FormatWithEnv(value)
+		rv.SetString(value)
+	}
 }
 
 // Supported comment formats

@@ -2,11 +2,11 @@ package gogstash
 
 import (
 	"github.com/codegangsta/cli"
-	"github.com/tsaikd/KDGoLib/logutil"
+	"github.com/tsaikd/gogstash/config"
 )
 
 var (
-	logger = logutil.DefaultLogger
+	logger = config.Logger
 )
 
 func actionWrapper(action func(context *cli.Context) error) func(context *cli.Context) {

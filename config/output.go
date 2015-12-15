@@ -7,7 +7,6 @@ import (
 	"github.com/codegangsta/inject"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/injectutil"
-
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -30,7 +29,12 @@ func RegistOutputHandler(name string, handler OutputHandler) {
 	mapOutputHandler[name] = handler
 }
 
-func (t *Config) RunOutputs(evchan chan logevent.LogEvent, logger *logrus.Logger) (err error) {
+func (t *Config) RunOutputs() (err error) {
+	_, err = t.Invoke(t.runOutputs)
+	return
+}
+
+func (t *Config) runOutputs(evchan chan logevent.LogEvent, logger *logrus.Logger) (err error) {
 	outputs, err := t.getOutputs()
 	if err != nil {
 		return errutil.New("get config output failed", err)
@@ -50,8 +54,8 @@ func (t *Config) RunOutputs(evchan chan logevent.LogEvent, logger *logrus.Logger
 	return
 }
 
-func (config *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
-	for _, confraw := range config.OutputRaw {
+func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
+	for _, confraw := range t.OutputRaw {
 		handler, ok := mapOutputHandler[confraw["type"].(string)]
 		if !ok {
 			err = fmt.Errorf("unknown output config type: %q", confraw["type"])
@@ -59,7 +63,7 @@ func (config *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
 		}
 
 		inj := inject.New()
-		inj.SetParent(config)
+		inj.SetParent(t)
 		inj.Map(&confraw)
 		refvs, err := injectutil.Invoke(inj, handler)
 		if err != nil {
