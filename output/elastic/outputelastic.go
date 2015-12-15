@@ -1,14 +1,9 @@
 package outputelastic
 
 import (
-	"net/url"
-	"strings"
-
-	"github.com/mattbaird/elastigo/lib"
-	"github.com/tsaikd/KDGoLib/errutil"
-
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
+	"gopkg.in/olivere/elastic.v3"
 )
 
 const (
@@ -22,7 +17,9 @@ type OutputConfig struct {
 	DocumentType string `json:"document_type"`
 	DocumentID   string `json:"document_id"`
 
-	conn *elastigo.Conn
+	Sniff bool `json:"sniff"` // find all nodes of your cluster, https://github.com/olivere/elastic/wiki/Sniffing
+
+	client *elastic.Client
 }
 
 func DefaultOutputConfig() OutputConfig {
@@ -41,19 +38,11 @@ func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeOutputConfig, er
 		return
 	}
 
-	// elastic
-	elasticurl, err := url.Parse(conf.URL)
+	conf.client, err = elastic.NewClient(
+		elastic.SetURL(conf.URL),
+		elastic.SetSniff(conf.Sniff),
+	)
 	if err != nil {
-		err = errutil.New("parse elastic url failed", err)
-		return
-	}
-
-	conf.conn = elastigo.NewConn()
-	conf.conn.Protocol = elasticurl.Scheme
-	conf.conn.Domain = strings.Split(elasticurl.Host, ":")[0]
-	conf.conn.Port = strings.Split(elasticurl.Host, ":")[1]
-	if _, err = conf.conn.Health(); err != nil {
-		err = errutil.New("test elastic connection failed", err)
 		return
 	}
 
@@ -65,8 +54,12 @@ func (t *OutputConfig) Event(event logevent.LogEvent) (err error) {
 	index := event.Format(t.Index)
 	doctype := event.Format(t.DocumentType)
 	id := event.Format(t.DocumentID)
-	if _, err = t.conn.Index(index, doctype, id, nil, event); err != nil {
-		return
-	}
+
+	_, err = t.client.Index().
+		Index(index).
+		Type(doctype).
+		Id(id).
+		BodyJson(event).
+		Do()
 	return
 }
