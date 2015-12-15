@@ -2,6 +2,7 @@ package inputexec
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"os"
 	"os/exec"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 
+	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
@@ -24,7 +26,8 @@ type InputConfig struct {
 	Args      []string `json:"args,omitempty"`           // Arguments of command
 	Interval  int      `json:"interval,omitempty"`       // Second, default: 60
 	MsgTrim   string   `json:"message_trim,omitempty"`   // default: " \t\r\n"
-	MsgPrefix string   `json:"message_prefix,omitempty"` // e.g. "%{@timestamp} [uptime] "
+	MsgPrefix string   `json:"message_prefix,omitempty"` // only in text type, e.g. "%{@timestamp} [uptime] "
+	MsgType   MsgType  `json:"message_type,omitempty"`   // default: "text"
 
 	hostname string `json:"-"`
 }
@@ -38,6 +41,7 @@ func DefaultInputConfig() InputConfig {
 		},
 		Interval: 60,
 		MsgTrim:  " \t\r\n",
+		MsgType:  MsgTypeText,
 	}
 }
 
@@ -74,21 +78,39 @@ func (self *InputConfig) Start() {
 }
 
 func (self *InputConfig) Exec(evchan chan logevent.LogEvent, logger *logrus.Logger) {
-	data, err := self.doExec()
+	errs := []error{}
+
+	message, err := self.doExec()
+	if err != nil {
+		errs = append(errs, err)
+	}
+	extra := map[string]interface{}{
+		"host": self.hostname,
+	}
+
+	switch self.MsgType {
+	case MsgTypeJson:
+		if err = json.Unmarshal([]byte(message), &extra); err != nil {
+			errs = append(errs, err)
+		} else {
+			message = ""
+		}
+	}
 
 	event := logevent.LogEvent{
 		Timestamp: time.Now(),
-		Message:   data,
-		Extra: map[string]interface{}{
-			"host": self.hostname,
-		},
+		Message:   message,
+		Extra:     extra,
 	}
 
-	event.Message = event.Format(self.MsgPrefix) + event.Message
+	switch self.MsgType {
+	case MsgTypeText:
+		event.Message = event.Format(self.MsgPrefix) + event.Message
+	}
 
-	if err != nil {
+	if len(errs) > 0 {
 		event.AddTag("inputexec_failed")
-		event.Extra["error"] = err.Error()
+		event.Extra["error"] = errutil.NewErrorSlice(errs...).Error()
 	}
 
 	logger.Debugf("%+v", event)
