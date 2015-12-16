@@ -3,6 +3,7 @@ package inputdockerlog
 import (
 	"os"
 	"regexp"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/fsouza/go-dockerclient"
@@ -21,13 +22,14 @@ type InputConfig struct {
 	IncludePatterns         []string `json:"include_patterns"`
 	ExcludePatterns         []string `json:"exclude_patterns"`
 	SincePath               string   `json:"sincepath"`
+	StartPos                string   `json:"start_position,omitempty"` // one of ["beginning", "end"]
 	ConnectionRetryInterval int      `json:"connection_retry_interval,omitempty"`
 
-	sincedb  *SinceDB         `json:"-"`
-	includes []*regexp.Regexp `json:"-"`
-	excludes []*regexp.Regexp `json:"-"`
-	hostname string           `json:"-"`
-	client   *docker.Client   `json:"-"`
+	sincedb  *SinceDB
+	includes []*regexp.Regexp
+	excludes []*regexp.Regexp
+	hostname string
+	client   *docker.Client
 }
 
 func DefaultInputConfig() InputConfig {
@@ -41,6 +43,7 @@ func DefaultInputConfig() InputConfig {
 		ConnectionRetryInterval: 10,
 		ExcludePatterns:         []string{"gogstash"},
 		SincePath:               "sincedb-%{HOSTNAME}",
+		StartPos:                "beginning",
 	}
 }
 
@@ -92,9 +95,9 @@ func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent
 		if !t.isValidContainer(container.Names) {
 			continue
 		}
-		since, err := t.sincedb.Get(container.ID)
+		since, err := t.getSince(container.ID)
 		if err != nil {
-			return errutil.New("get sincedb failed", err)
+			return err
 		}
 		go t.containerLogLoop(container, since, evchan, logger)
 	}
@@ -116,15 +119,25 @@ func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent
 				if !t.isValidContainer([]string{container.Name}) {
 					return errutil.New("invalid container name " + container.Name)
 				}
-				since, err := t.sincedb.Get(dockerEvent.ID)
+				since, err := t.getSince(dockerEvent.ID)
 				if err != nil {
-					return errutil.New("get sincedb failed", err)
+					return err
 				}
 				go t.containerLogLoop(container, since, evchan, logger)
 			}
 		}
 	}
+}
 
+func (t *InputConfig) getSince(containerID string) (since *time.Time, err error) {
+	since, err = t.sincedb.Get(containerID)
+	if err != nil {
+		return nil, errutil.New("get sincedb failed", err)
+	}
+	if since.IsZero() && t.StartPos == "end" {
+		now := time.Now()
+		since = &now
+	}
 	return
 }
 
@@ -141,9 +154,9 @@ func (t *InputConfig) isValidContainer(names []string) bool {
 			}
 		}
 	}
+
 	if len(t.includes) > 0 {
 		return false
-	} else {
-		return true
 	}
+	return true
 }
