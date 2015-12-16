@@ -16,8 +16,9 @@ const (
 
 type OutputConfig struct {
 	config.OutputConfig
-	Interval   int    `json:"interval,omitempty"`
-	TimeFormat string `json:"time_format,omitempty"`
+	Interval     int    `json:"interval,omitempty"`
+	TimeFormat   string `json:"time_format,omitempty"`
+	ReportPrefix string `json:"report_prefix,omitempty"`
 
 	ProcessCount int `json:"-"`
 }
@@ -46,30 +47,30 @@ func InitHandler(confraw *config.ConfigRaw, logger *logrus.Logger) (retconf conf
 	return
 }
 
-func (self *OutputConfig) Event(event logevent.LogEvent) (err error) {
-	self.ProcessCount++
+func (t *OutputConfig) Event(event logevent.LogEvent) (err error) {
+	t.ProcessCount++
 	return
 }
 
-func (self *OutputConfig) ReportLoop(logger *logrus.Logger) (err error) {
+func (t *OutputConfig) ReportLoop(logger *logrus.Logger) (err error) {
 	for {
-		if err = self.Report(logger); err != nil {
+		if err = t.Report(logger); err != nil {
 			logger.Errorln(fmt.Sprintf("ReportLoop failed: %v", err))
 			return
 		}
-		time.Sleep(time.Duration(self.Interval) * time.Second)
+		time.Sleep(time.Duration(t.Interval) * time.Second)
 	}
-	return
 }
 
-func (self *OutputConfig) Report(logger *logrus.Logger) (err error) {
-	if self.ProcessCount > 0 {
-		logger.Infoln(fmt.Sprintf(
-			"%s Process %d events",
-			time.Now().Format(self.TimeFormat),
-			self.ProcessCount,
-		))
-		self.ProcessCount = 0
+func (t *OutputConfig) Report(logger *logrus.Logger) (err error) {
+	if t.ProcessCount > 0 {
+		fmt.Printf(
+			"%s %sProcess %d events\n",
+			time.Now().Format(t.TimeFormat),
+			t.ReportPrefix,
+			t.ProcessCount,
+		)
+		t.ProcessCount = 0
 	}
 	return
 }
