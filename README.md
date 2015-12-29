@@ -8,7 +8,7 @@ Logstash like, written in golang
 * Use docker image [tsaikd/gogstash](https://registry.hub.docker.com/u/tsaikd/gogstash/)
 
 ```
-curl 'https://github.com/tsaikd/gogstash/raw/0.0.8/gogstash-Linux-x86_64' -SLo gogstash && chmod +x gogstash
+curl 'https://github.com/tsaikd/gogstash/releases/download/0.1.6/gogstash-Linux-x86_64' -SLo gogstash && chmod +x gogstash
 ```
 
 * Configure for nginx.json (example)
@@ -22,7 +22,6 @@ curl 'https://github.com/tsaikd/gogstash/raw/0.0.8/gogstash-Linux-x86_64' -SLo g
 			"sincedb_path": ".sincedb.nginx.json"
 		}
 	],
-	"filter": [],
 	"output": [
 		{
 			"type": "report"
@@ -76,7 +75,6 @@ curl 'https://github.com/tsaikd/gogstash/raw/0.0.8/gogstash-Linux-x86_64' -SLo g
 			"args": ["-c", "cat /proc/meminfo"]
 		}
 	],
-	"filter": [],
 	"output": [
 		{
 			"type": "report"
@@ -90,15 +88,14 @@ curl 'https://github.com/tsaikd/gogstash/raw/0.0.8/gogstash-Linux-x86_64' -SLo g
 }
 ```
 
-* Configure for docker.json (example)
+* Configure for dockerstats.json (example)
 ```
 {
 	"input": [
 		{
-			"type": "docker"
+			"type": "dockerstats"
 		}
 	],
-	"filter": [],
 	"output": [
 		{
 			"type": "report"
@@ -117,27 +114,32 @@ curl 'https://github.com/tsaikd/gogstash/raw/0.0.8/gogstash-Linux-x86_64' -SLo g
 GOMAXPROCS=4 ./gogstash --CONFIG nginx.json
 ```
 
-* Run gogstash for docker example (docker image)
+* Run gogstash for dockerstats example (docker image)
 ```
 docker run -it --rm \
 	--name gogstash \
 	--hostname gogstash \
 	-e GOMAXPROCS=4 \
 	-v "/var/run/docker.sock:/var/run/docker.sock" \
-	-v "${PWD}/docker.json:/gogstash/config.json:ro" \
-	-v "${PWD}/sincedb:/gogstash/sincedb" \
-	tsaikd/gogstash:latest
+	-v "${PWD}/dockerstats.json:/gogstash/config.json:ro" \
+	tsaikd/gogstash:0.1.6
 ```
 
 ## Supported inputs
 
-* [docker](input/docker)
+See [input module](input) for more information
+
+* [docker log](input/dockerlog)
+* [docker stats](input/dockerstats)
 * [exec](input/exec)
 * [file](input/file)
 * [http](input/http)
 
 ## Supported outputs
 
+See [output module](output) for more information
+
+* [elastic](output/elastic)
 * [redis](output/redis)
 * [report](output/report)
 * [stdout](output/stdout)
