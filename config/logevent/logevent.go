@@ -34,7 +34,7 @@ func (t *LogEvent) AddTag(tags ...string) {
 	}
 }
 
-func (t LogEvent) getJsonMap() map[string]interface{} {
+func (t LogEvent) getJSONMap() map[string]interface{} {
 	event := map[string]interface{}{
 		"@timestamp": t.Timestamp.UTC().Format(timeFormat),
 	}
@@ -51,12 +51,12 @@ func (t LogEvent) getJsonMap() map[string]interface{} {
 }
 
 func (t LogEvent) MarshalJSON() (data []byte, err error) {
-	event := t.getJsonMap()
+	event := t.getJSONMap()
 	return json.Marshal(event)
 }
 
 func (t LogEvent) MarshalIndent() (data []byte, err error) {
-	event := t.getJsonMap()
+	event := t.getJSONMap()
 	return json.MarshalIndent(event, "", "\t")
 }
 
@@ -95,13 +95,7 @@ var (
 func FormatWithEnv(text string) (result string) {
 	result = text
 
-	matches := retime.FindAllStringSubmatch(result, -1)
-	for _, submatches := range matches {
-		value := time.Now().Format(submatches[1])
-		result = strings.Replace(result, submatches[0], value, -1)
-	}
-
-	matches = revar.FindAllStringSubmatch(result, -1)
+	matches := revar.FindAllStringSubmatch(result, -1)
 	for _, submatches := range matches {
 		field := submatches[1]
 		value := os.Getenv(field)
@@ -113,17 +107,26 @@ func FormatWithEnv(text string) (result string) {
 	return
 }
 
-// format string with LogEvent field, ex: %{hostname}
+// FormatWithTime format string with current time, ex: %{+2006-01-02}
+func FormatWithTime(text string) (result string) {
+	result = text
+
+	matches := retime.FindAllStringSubmatch(result, -1)
+	for _, submatches := range matches {
+		value := time.Now().Format(submatches[1])
+		result = strings.Replace(result, submatches[0], value, -1)
+	}
+
+	return
+}
+
+// Format return string with current time / LogEvent field / ENV, ex: %{hostname}
 func (t LogEvent) Format(format string) (out string) {
 	out = format
 
-	matches := retime.FindAllStringSubmatch(out, -1)
-	for _, submatches := range matches {
-		value := time.Now().Format(submatches[1])
-		out = strings.Replace(out, submatches[0], value, -1)
-	}
+	out = FormatWithTime(out)
 
-	matches = revar.FindAllStringSubmatch(out, -1)
+	matches := revar.FindAllStringSubmatch(out, -1)
 	for _, submatches := range matches {
 		field := submatches[1]
 		value := t.GetString(field)

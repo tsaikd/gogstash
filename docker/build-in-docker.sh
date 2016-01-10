@@ -14,7 +14,9 @@ if ! type gobuilder &>/dev/null ; then
 	go get -v "github.com/tsaikd/gobuilder"
 fi
 
-gobuilder
+gobuilder -t --godep-version v37
+
+go test ./config/...
 
 if [ "${GITHUB_TOKEN}" ] ; then
 	echo "[$(date -Iseconds)] ${projname} release on github"

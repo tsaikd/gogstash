@@ -1,11 +1,39 @@
 package logevent
 
 import (
+	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func Test_FormatWithEnv(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+
+	key := "TESTENV"
+
+	originenv := os.Getenv(key)
+	defer func() {
+		os.Setenv(key, originenv)
+	}()
+
+	err := os.Setenv(key, "Testing ENV")
+	assert.NoError(err)
+
+	out := FormatWithEnv("prefix %{TESTENV} suffix")
+	assert.Equal("prefix Testing ENV suffix", out)
+}
+
+func Test_FormatWithTime(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+
+	out := FormatWithTime("prefix %{+2006-01-02} suffix")
+	nowdatestring := time.Now().Format("2006-01-02")
+	assert.Equal("prefix "+nowdatestring+" suffix", out)
+}
 
 func Test_Format(t *testing.T) {
 	assert := assert.New(t)

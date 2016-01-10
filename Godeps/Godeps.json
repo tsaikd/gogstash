@@ -6,6 +6,14 @@
 			"ImportPath": "github.com/codegangsta/cli",
 			"Comment": "1.2.0-112-g2272dad",
 			"Rev": "2272dad83ef28967ad46bf27470b56be95840ada"
+		},
+		{
+			"_comment": "for test",
+			"ImportPath": "github.com/stretchr/testify/assert"
+		},
+		{
+			"_comment": "prepare for godep bug, it load some unused packages",
+			"ImportPath": "golang.org/x/sys/unix"
 		}
 	]
 }

@@ -38,11 +38,3 @@ func Test_LoadConfig(t *testing.T) {
 	assert.Error(err)
 	assert.Len(outputs, 0)
 }
-
-func Test_FormatWithEnv(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
-
-	path := FormatWithEnv("%{PATH}")
-	assert.NotEqual("%{PATH}", path)
-}
