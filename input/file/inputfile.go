@@ -85,7 +85,7 @@ func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent
 	}
 
 	if matches, err = filepath.Glob(t.Path); err != nil {
-		return errutil.NewErrorSlice(fmt.Errorf("glob(%q) failed", t.Path), err)
+		return errutil.NewErrors(fmt.Errorf("glob(%q) failed", t.Path), err)
 	}
 
 	go t.CheckSaveSinceDBInfosLoop()

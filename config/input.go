@@ -58,7 +58,7 @@ func (t *Config) getInputs(evchan chan logevent.LogEvent) (inputs []TypeInputCon
 		inj.Map(evchan)
 		refvs, err := injectutil.Invoke(inj, handler)
 		if err != nil {
-			err = errutil.NewErrorSlice(fmt.Errorf("handle input config failed: %q", confraw), err)
+			err = errutil.NewErrors(fmt.Errorf("handle input config failed: %q", confraw), err)
 			return []TypeInputConfig{}, err
 		}
 

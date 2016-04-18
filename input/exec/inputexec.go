@@ -110,7 +110,7 @@ func (self *InputConfig) Exec(evchan chan logevent.LogEvent, logger *logrus.Logg
 
 	if len(errs) > 0 {
 		event.AddTag("inputexec_failed")
-		event.Extra["error"] = errutil.NewErrorSlice(errs...).Error()
+		event.Extra["error"] = errutil.NewErrors(errs...).Error()
 	}
 
 	logger.Debugf("%+v", event)
