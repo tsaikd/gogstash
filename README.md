@@ -3,12 +3,14 @@ gogstash
 
 Logstash like, written in golang
 
+[![Build Status](https://travis-ci.org/tsaikd/gogstash.svg?branch=master)](https://travis-ci.org/tsaikd/gogstash)
+
 * Download gogstash from github
 	* [check latest version](https://github.com/tsaikd/gogstash/releases)
 * Use docker image [tsaikd/gogstash](https://registry.hub.docker.com/u/tsaikd/gogstash/)
 
 ```
-curl 'https://github.com/tsaikd/gogstash/releases/download/0.1.6/gogstash-Linux-x86_64' -SLo gogstash && chmod +x gogstash
+curl 'https://github.com/tsaikd/gogstash/releases/download/0.1.8/gogstash-Linux-x86_64' -SLo gogstash && chmod +x gogstash
 ```
 
 * Configure for nginx.json (example)
@@ -122,7 +124,7 @@ docker run -it --rm \
 	-e GOMAXPROCS=4 \
 	-v "/var/run/docker.sock:/var/run/docker.sock" \
 	-v "${PWD}/dockerstats.json:/gogstash/config.json:ro" \
-	tsaikd/gogstash:0.1.6
+	tsaikd/gogstash:0.1.8
 ```
 
 ## Supported inputs
