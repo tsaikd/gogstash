@@ -67,7 +67,7 @@ func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
 		inj.Map(&confraw)
 		refvs, err := injectutil.Invoke(inj, handler)
 		if err != nil {
-			err = errutil.NewErrorSlice(fmt.Errorf("handle output config failed: %q", confraw), err)
+			err = errutil.NewErrors(fmt.Errorf("handle output config failed: %q", confraw), err)
 			return []TypeOutputConfig{}, err
 		}
 
