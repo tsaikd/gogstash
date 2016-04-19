@@ -1,0 +1,12 @@
+language: go
+
+go:
+  - 1.5
+  - 1.6
+  - tip
+
+install:
+  - go get github.com/tsaikd/gobuilder
+  - gobuilder --test --all
+
+script: go test -v ./config/...
