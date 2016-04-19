@@ -7,6 +7,7 @@ import (
 	"github.com/tsaikd/gogstash/input/exec"
 	"github.com/tsaikd/gogstash/input/file"
 	"github.com/tsaikd/gogstash/input/http"
+	"github.com/tsaikd/gogstash/output/amqp"
 	"github.com/tsaikd/gogstash/output/elastic"
 	"github.com/tsaikd/gogstash/output/redis"
 	"github.com/tsaikd/gogstash/output/report"
@@ -24,4 +25,5 @@ func init() {
 	config.RegistOutputHandler(outputelastic.ModuleName, outputelastic.InitHandler)
 	config.RegistOutputHandler(outputredis.ModuleName, outputredis.InitHandler)
 	config.RegistOutputHandler(outputreport.ModuleName, outputreport.InitHandler)
+	config.RegistOutputHandler(outputamqp.ModuleName, outputamqp.InitHandler)
 }
