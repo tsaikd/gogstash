@@ -29,8 +29,7 @@ func RegistInputHandler(name string, handler InputHandler) {
 }
 
 func (t *Config) RunInputs() (err error) {
-	_, err = t.Invoke(t.runInputs)
-	return
+	return t.InvokeSimple(t.runInputs)
 }
 
 func (t *Config) runInputs(evchan chan logevent.LogEvent) (err error) {

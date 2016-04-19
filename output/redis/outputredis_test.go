@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
@@ -22,8 +22,8 @@ func init() {
 }
 
 func Test_main(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	conf, err := config.LoadFromString(`{
 		"output": [{
@@ -31,10 +31,10 @@ func Test_main(t *testing.T) {
 			"host": ["127.0.0.1:6379"]
 		}]
 	}`)
-	assert.NoError(err)
+	require.NoError(err)
 
 	err = conf.RunOutputs()
-	assert.NoError(err)
+	require.NoError(err)
 
 	evchan := conf.Get(reflect.TypeOf(make(chan logevent.LogEvent))).
 		Interface().(chan logevent.LogEvent)

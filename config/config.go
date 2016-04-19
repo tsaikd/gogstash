@@ -9,6 +9,7 @@ import (
 
 	"github.com/codegangsta/inject"
 	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/KDGoLib/injectutil"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -118,5 +119,10 @@ func StripComments(data []byte) (out []byte, err error) {
 	}
 
 	out = bytes.Join(filtered, []byte("\n"))
+	return
+}
+
+func (t *Config) InvokeSimple(arg interface{}) (err error) {
+	_, err = injectutil.Invoke(t.Injector, arg)
 	return
 }

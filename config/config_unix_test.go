@@ -3,12 +3,12 @@ package config
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func Test_LoadConfig(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+func Test_load_config_without_regist_module(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(require)
 
 	conf, err := LoadFromString(`{
 		"input": [{
@@ -28,13 +28,13 @@ func Test_LoadConfig(t *testing.T) {
 			"type": "stdout"
 		}]
 	}`)
-	assert.NoError(err)
+	require.NoError(err)
 
 	inputs, err := conf.getInputs(nil)
-	assert.Error(err)
-	assert.Len(inputs, 0)
+	require.Error(err)
+	require.Len(inputs, 0)
 
 	outputs, err := conf.getOutputs()
-	assert.Error(err)
-	assert.Len(outputs, 0)
+	require.Error(err)
+	require.Len(outputs, 0)
 }

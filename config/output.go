@@ -30,14 +30,13 @@ func RegistOutputHandler(name string, handler OutputHandler) {
 }
 
 func (t *Config) RunOutputs() (err error) {
-	_, err = t.Invoke(t.runOutputs)
-	return
+	return t.InvokeSimple(t.runOutputs)
 }
 
 func (t *Config) runOutputs(evchan chan logevent.LogEvent, logger *logrus.Logger) (err error) {
 	outputs, err := t.getOutputs()
 	if err != nil {
-		return errutil.New("get config output failed", err)
+		return errutil.New("get outputs failed", err)
 	}
 	go func() {
 		for {
@@ -45,7 +44,7 @@ func (t *Config) runOutputs(evchan chan logevent.LogEvent, logger *logrus.Logger
 			case event := <-evchan:
 				for _, output := range outputs {
 					if err = output.Event(event); err != nil {
-						logger.Errorf("output failed: %v", err)
+						logger.Errorf("output failed: %v\n", err)
 					}
 				}
 			}

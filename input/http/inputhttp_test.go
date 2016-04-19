@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
 )
 
@@ -19,8 +19,8 @@ func init() {
 }
 
 func Test_main(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	conf, err := config.LoadFromString(`{
 		"input": [{
@@ -30,10 +30,10 @@ func Test_main(t *testing.T) {
 			"interval": 3
 		}]
 	}`)
-	assert.NoError(err)
+	require.NoError(err)
 
 	err = conf.RunInputs()
-	assert.NoError(err)
+	require.NoError(err)
 
 	waitsec := 10
 	logger.Infof("Wait for %d seconds", waitsec)
