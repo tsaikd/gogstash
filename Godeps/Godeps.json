@@ -1,19 +1,26 @@
 {
 	"ImportPath": "github.com/tsaikd/gogstash",
-	"GoVersion": "go1.4.2",
+	"GoVersion": "go1.6",
 	"Deps": [
 		{
-			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0-112-g2272dad",
-			"Rev": "2272dad83ef28967ad46bf27470b56be95840ada"
+			"ImportPath": "github.com/fsouza/go-dockerclient",
+			"Rev": "ff3d4ee4753705a048db1855113026395c26a79a"
 		},
 		{
-			"_comment": "for test",
-			"ImportPath": "github.com/stretchr/testify/assert"
+			"ImportPath": "github.com/fzzy/radix",
+			"Rev": "3528e87a910c6730810cec1be187f989d7d9442a"
 		},
 		{
-			"_comment": "prepare for godep bug, it load some unused packages",
-			"ImportPath": "golang.org/x/sys/unix"
+			"ImportPath": "github.com/go-fsnotify/fsnotify",
+			"Rev": "836bfd95fecc0f1511dd66bdbf2b5b61ab8b00b6"
+		},
+		{
+			"ImportPath": "github.com/tsaikd/KDGoLib",
+			"Rev": "d67b76beb588007ee6b7eb7f09d40ef778331d42"
+		},
+		{
+			"ImportPath": "gopkg.in/olivere/elastic.v3",
+			"Rev": "2594d14da9d16fb44b8153d2db83dbea04b504e8"
 		}
 	]
 }
