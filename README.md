@@ -136,11 +136,13 @@ See [input module](input) for more information
 * [exec](input/exec)
 * [file](input/file)
 * [http](input/http)
+* [socket](input/socket)
 
 ## Supported outputs
 
 See [output module](output) for more information
 
+* [amqp](output/amqp)
 * [elastic](output/elastic)
 * [redis](output/redis)
 * [report](output/report)
