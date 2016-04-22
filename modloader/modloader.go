@@ -7,6 +7,7 @@ import (
 	"github.com/tsaikd/gogstash/input/exec"
 	"github.com/tsaikd/gogstash/input/file"
 	"github.com/tsaikd/gogstash/input/http"
+	"github.com/tsaikd/gogstash/input/socket"
 	"github.com/tsaikd/gogstash/output/amqp"
 	"github.com/tsaikd/gogstash/output/elastic"
 	"github.com/tsaikd/gogstash/output/redis"
@@ -20,6 +21,7 @@ func init() {
 	config.RegistInputHandler(inputdockerstats.ModuleName, inputdockerstats.InitHandler)
 	config.RegistInputHandler(inputfile.ModuleName, inputfile.InitHandler)
 	config.RegistInputHandler(inputhttp.ModuleName, inputhttp.InitHandler)
+	config.RegistInputHandler(inputsocket.ModuleName, inputsocket.InitHandler)
 
 	config.RegistOutputHandler(outputstdout.ModuleName, outputstdout.InitHandler)
 	config.RegistOutputHandler(outputelastic.ModuleName, outputelastic.InitHandler)
