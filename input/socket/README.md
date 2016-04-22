@@ -10,11 +10,11 @@ socket input
 			"type": "socket",
 
 			// Socket type. Must be one of ["tcp", "unix", "unixpacket"].
-      "socket": "tcp",
+			"socket": "tcp",
 
-      // For TCP, address must have the form `host:port`.
-      // For Unix networks, the address must be a file system path.
-      "address": "localhost:9999"
+			// For TCP, address must have the form `host:port`.
+			// For Unix networks, the address must be a file system path.
+			"address": "localhost:9999"
 		}
 	]
 }
