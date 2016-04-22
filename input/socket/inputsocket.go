@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"time"
@@ -75,21 +74,27 @@ func parse(conn net.Conn, logger *logrus.Logger, evchan chan logevent.LogEvent) 
 	defer conn.Close()
 
 	// Duplicate buffer to be able to read it even after failed json decoding
-	buf, _ := ioutil.ReadAll(conn)
-	js := bytes.NewBuffer(buf)
-	raw := bytes.NewBuffer(buf)
+	var streamCopy bytes.Buffer
+	stream := io.TeeReader(conn, &streamCopy)
 
-	dec := json.NewDecoder(js)
+	dec := json.NewDecoder(stream)
 	for {
 		// Assume first the message is JSON and try to decode it
 		var jsonMsg map[string]interface{}
 		if err := dec.Decode(&jsonMsg); err == io.EOF {
 			break
 		} else if err != nil {
-			// if decoding fail, use raw message in LogEvent "Message" field
-			evchan <- logevent.LogEvent{
-				Timestamp: time.Now(),
-				Message:   raw.String(),
+			// If decoding fail, split raw message by line
+			// and send a log event per line
+			for {
+				line, err := streamCopy.ReadString('\n')
+				evchan <- logevent.LogEvent{
+					Timestamp: time.Now(),
+					Message:   line,
+				}
+				if err != nil {
+					break
+				}
 			}
 			break
 		}
