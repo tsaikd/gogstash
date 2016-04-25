@@ -1,13 +1,18 @@
 package config
 
 import (
-	"fmt"
-
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/inject"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/injectutil"
 	"github.com/tsaikd/gogstash/config/logevent"
+)
+
+// errors
+var (
+	ErrorGetOutputs         = errutil.NewFactory("get outputs from config failed")
+	ErrorUnknownOutputType1 = errutil.NewFactory("unknown output config type: %q")
+	ErrorRunOutput1         = errutil.NewFactory("run output module failed: %q")
 )
 
 type TypeOutputConfig interface {
@@ -36,7 +41,7 @@ func (t *Config) RunOutputs() (err error) {
 func (t *Config) runOutputs(evchan chan logevent.LogEvent, logger *logrus.Logger) (err error) {
 	outputs, err := t.getOutputs()
 	if err != nil {
-		return errutil.New("get outputs failed", err)
+		return ErrorGetOutputs.New(err)
 	}
 	go func() {
 		for {
@@ -57,7 +62,7 @@ func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
 	for _, confraw := range t.OutputRaw {
 		handler, ok := mapOutputHandler[confraw["type"].(string)]
 		if !ok {
-			err = fmt.Errorf("unknown output config type: %q", confraw["type"])
+			err = ErrorUnknownOutputType1.New(nil, confraw["type"])
 			return
 		}
 
@@ -66,7 +71,7 @@ func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
 		inj.Map(&confraw)
 		refvs, err := injectutil.Invoke(inj, handler)
 		if err != nil {
-			err = errutil.NewErrors(fmt.Errorf("handle output config failed: %q", confraw), err)
+			err = ErrorRunOutput1.New(err, confraw)
 			return []TypeOutputConfig{}, err
 		}
 

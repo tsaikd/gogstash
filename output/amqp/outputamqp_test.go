@@ -7,6 +7,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
@@ -20,17 +21,40 @@ func init() {
 	config.RegistOutputHandler(ModuleName, InitHandler)
 }
 
+func Test_WithoutAMQPServer(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(require)
+
+	conf, err := config.LoadFromString(`{
+		"output": [{
+			"type": "amqp",
+			"urls": ["amqp://guest:guest@localhost:5566/"],
+			"exchange": "amq.topic",
+			"exchange_type": "topic"
+		}]
+	}`)
+	require.NoError(err)
+
+	err = conf.RunOutputs()
+	require.Error(err)
+	require.True(config.ErrorGetOutputs.Match(err))
+	require.True(config.ErrorRunOutput1.In(err))
+	require.True(ErrorNoValidConn.In(err))
+	require.Implements((*errutil.ErrorObject)(nil), err)
+	require.True(ErrorNoValidConn.Match(err.(errutil.ErrorObject).Parent().Parent()))
+}
+
 func Test_main(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
 	conf, err := config.LoadFromString(`{
 		"output": [{
-      "type": "amqp",
-      "urls": ["amqp://guest:guest@localhost:5672/"],
-      "exchange": "amq.topic",
-      "exchange_type": "topic"
-    }]
+			"type": "amqp",
+			"urls": ["amqp://guest:guest@localhost:5672/"],
+			"exchange": "amq.topic",
+			"exchange_type": "topic"
+		}]
 	}`)
 	require.NoError(err)
 

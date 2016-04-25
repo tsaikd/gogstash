@@ -13,6 +13,12 @@ import (
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
+// errors
+var (
+	ErrorReadConfigFile1 = errutil.NewFactory("Failed to read config file: %q")
+	ErrorUnmarshalConfig = errutil.NewFactory("Failed unmarshalling config json")
+)
+
 type Config struct {
 	inject.Injector `json:"-"`
 	InputRaw        []ConfigRaw `json:"input,omitempty"`
@@ -23,7 +29,7 @@ type Config struct {
 func LoadFromFile(path string) (config Config, err error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		err = errutil.New("Failed to read config file, "+path, err)
+		err = ErrorReadConfigFile1.New(err, path)
 		return
 	}
 
@@ -35,13 +41,12 @@ func LoadFromString(text string) (config Config, err error) {
 }
 
 func LoadFromData(data []byte) (config Config, err error) {
-	if data, err = StripComments(data); err != nil {
-		err = errutil.New("Failed to strip comments from json", err)
+	if data, err = CleanComments(data); err != nil {
 		return
 	}
 
 	if err = json.Unmarshal(data, &config); err != nil {
-		err = errutil.New("Failed unmarshalling json", err)
+		err = ErrorUnmarshalConfig.New(err)
 		return
 	}
 
@@ -98,15 +103,16 @@ func formatReflect(rv reflect.Value) {
 	}
 }
 
+// CleanComments used for remove non-standard json comments.
 // Supported comment formats
 // format 1: ^\s*#
 // format 2: ^\s*//
-func StripComments(data []byte) (out []byte, err error) {
+func CleanComments(data []byte) (out []byte, err error) {
 	reForm1 := regexp.MustCompile(`^\s*#`)
 	reForm2 := regexp.MustCompile(`^\s*//`)
 	data = bytes.Replace(data, []byte("\r"), []byte(""), 0) // Windows
 	lines := bytes.Split(data, []byte("\n"))
-	filtered := make([][]byte, 0)
+	var filtered [][]byte
 
 	for _, line := range lines {
 		if reForm1.Match(line) {

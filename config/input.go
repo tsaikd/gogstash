@@ -1,12 +1,17 @@
 package config
 
 import (
-	"fmt"
-
 	"github.com/codegangsta/inject"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/injectutil"
 	"github.com/tsaikd/gogstash/config/logevent"
+)
+
+// errors
+var (
+	ErrorGetInputs         = errutil.NewFactory("get inputs from config failed")
+	ErrorUnknownInputType1 = errutil.NewFactory("unknown input config type: %q")
+	ErrorRunInput1         = errutil.NewFactory("run input module failed: %q")
 )
 
 type TypeInputConfig interface {
@@ -35,7 +40,7 @@ func (t *Config) RunInputs() (err error) {
 func (t *Config) runInputs(evchan chan logevent.LogEvent) (err error) {
 	inputs, err := t.getInputs(evchan)
 	if err != nil {
-		return errutil.New("get config inputs failed", err)
+		return ErrorGetInputs.New(err)
 	}
 	for _, input := range inputs {
 		go input.Start()
@@ -47,7 +52,7 @@ func (t *Config) getInputs(evchan chan logevent.LogEvent) (inputs []TypeInputCon
 	for _, confraw := range t.InputRaw {
 		handler, ok := mapInputHandler[confraw["type"].(string)]
 		if !ok {
-			err = fmt.Errorf("unknown input config type: %q", confraw["type"])
+			err = ErrorUnknownInputType1.New(nil, confraw["type"])
 			return
 		}
 
@@ -57,7 +62,7 @@ func (t *Config) getInputs(evchan chan logevent.LogEvent) (inputs []TypeInputCon
 		inj.Map(evchan)
 		refvs, err := injectutil.Invoke(inj, handler)
 		if err != nil {
-			err = errutil.NewErrors(fmt.Errorf("handle input config failed: %q", confraw), err)
+			err = ErrorRunInput1.New(err, confraw)
 			return []TypeInputConfig{}, err
 		}
 

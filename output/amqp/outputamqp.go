@@ -1,18 +1,23 @@
 package outputamqp
 
 import (
-	"errors"
 	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/bitly/go-hostpool"
 	"github.com/streadway/amqp"
+	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 // ModuleName is the name used in config file
 const ModuleName = "amqp"
+
+// errors
+var (
+	ErrorNoValidConn = errutil.NewFactory("no valid amqp server connection found")
+)
 
 // OutputConfig holds the output configuration json fields and internal objects
 type OutputConfig struct {
@@ -96,7 +101,7 @@ func (o *OutputConfig) initAmqpClients() error {
 	}
 
 	if len(hosts) == 0 {
-		return errors.New("no valid amqp server connection found")
+		return ErrorNoValidConn.New(nil)
 	}
 
 	o.hostPool = hostpool.New(hosts)
