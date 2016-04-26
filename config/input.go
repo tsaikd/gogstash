@@ -9,7 +9,6 @@ import (
 
 // errors
 var (
-	ErrorGetInputs         = errutil.NewFactory("get inputs from config failed")
 	ErrorUnknownInputType1 = errutil.NewFactory("unknown input config type: %q")
 	ErrorRunInput1         = errutil.NewFactory("run input module failed: %q")
 )
@@ -40,7 +39,7 @@ func (t *Config) RunInputs() (err error) {
 func (t *Config) runInputs(evchan chan logevent.LogEvent) (err error) {
 	inputs, err := t.getInputs(evchan)
 	if err != nil {
-		return ErrorGetInputs.New(err)
+		return
 	}
 	for _, input := range inputs {
 		go input.Start()

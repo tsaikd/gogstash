@@ -37,11 +37,10 @@ func Test_WithoutAMQPServer(t *testing.T) {
 
 	err = conf.RunOutputs()
 	require.Error(err)
-	require.True(config.ErrorGetOutputs.Match(err))
-	require.True(config.ErrorRunOutput1.In(err))
+	require.True(config.ErrorRunOutput1.Match(err))
 	require.True(ErrorNoValidConn.In(err))
 	require.Implements((*errutil.ErrorObject)(nil), err)
-	require.True(ErrorNoValidConn.Match(err.(errutil.ErrorObject).Parent().Parent()))
+	require.True(ErrorNoValidConn.Match(err.(errutil.ErrorObject).Parent()))
 }
 
 func Test_main(t *testing.T) {

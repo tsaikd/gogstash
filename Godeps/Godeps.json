@@ -16,7 +16,7 @@
 		},
 		{
 			"ImportPath": "github.com/tsaikd/KDGoLib",
-			"Rev": "d67b76beb588007ee6b7eb7f09d40ef778331d42"
+			"Rev": "421306dbd8ce43191bad6b993f0f5523e4e30b85"
 		},
 		{
 			"ImportPath": "gopkg.in/olivere/elastic.v3",

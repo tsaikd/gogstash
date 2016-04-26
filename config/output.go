@@ -10,7 +10,6 @@ import (
 
 // errors
 var (
-	ErrorGetOutputs         = errutil.NewFactory("get outputs from config failed")
 	ErrorUnknownOutputType1 = errutil.NewFactory("unknown output config type: %q")
 	ErrorRunOutput1         = errutil.NewFactory("run output module failed: %q")
 )
@@ -41,7 +40,7 @@ func (t *Config) RunOutputs() (err error) {
 func (t *Config) runOutputs(evchan chan logevent.LogEvent, logger *logrus.Logger) (err error) {
 	outputs, err := t.getOutputs()
 	if err != nil {
-		return ErrorGetOutputs.New(err)
+		return
 	}
 	go func() {
 		for {
