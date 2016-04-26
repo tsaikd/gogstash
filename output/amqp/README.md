@@ -34,7 +34,10 @@ gogstash output amqp
 			"persistent": false,
 
 			// Number of attempts for sending a message. Defaults to 3.
-			"retry_count": 3
+			"retries": 3,
+
+			// Delay between each attempt to reconnect to AMQP server. Defaults to 30 seconds.
+			"reconnect_delay": 30
 		}
 	]
 }

@@ -32,7 +32,7 @@ type OutputConfig struct {
 	Retries            int      `json:"retries,omitempty"`              // Number of attempts to send a message. Defaults to 3.
 	ReconnectDelay     int      `json:"reconnect_delay,omitempty"`      // Delay between each attempt to reconnect to AMQP server. Defaults to 30 seconds.
 	hostPool           hostpool.HostPool
-	amqpClients        map[string]*amqp.Channel
+	amqpClients        map[string]amqpClient
 	evchan             chan logevent.LogEvent
 }
 
@@ -55,10 +55,15 @@ func DefaultOutputConfig() OutputConfig {
 		Persistent:         false,
 		Retries:            3,
 		ReconnectDelay:     30,
-		amqpClients:        map[string]*amqp.Channel{},
 
-		evchan: make(chan logevent.LogEvent),
+		amqpClients: map[string]amqpClient{},
+		evchan:      make(chan logevent.LogEvent),
 	}
+}
+
+type amqpClient struct {
+	client    *amqp.Channel
+	reconnect chan hostpool.HostPoolResponse
 }
 
 // InitHandler initialize the output plugin
@@ -82,7 +87,6 @@ func (o *OutputConfig) initAmqpClients() error {
 	for _, url := range o.URLs {
 		if conn, err := amqp.Dial(url); err == nil {
 			if ch, err := conn.Channel(); err == nil {
-				o.amqpClients[url] = ch
 				err := ch.ExchangeDeclare(
 					o.Exchange,
 					o.ExchangeType,
@@ -95,6 +99,11 @@ func (o *OutputConfig) initAmqpClients() error {
 				if err != nil {
 					return err
 				}
+				o.amqpClients[url] = amqpClient{
+					client:    ch,
+					reconnect: make(chan hostpool.HostPoolResponse, 1),
+				}
+				go o.reconnect(url)
 				hosts = append(hosts, url)
 			}
 		}
@@ -121,7 +130,7 @@ func (o *OutputConfig) Event(event logevent.LogEvent) (err error) {
 
 	for i := 0; i <= o.Retries; i++ {
 		hp := o.hostPool.Get()
-		err = o.amqpClients[hp.Host()].Publish(
+		if err := o.amqpClients[hp.Host()].client.Publish(
 			exchange,
 			routingKey,
 			false,
@@ -130,14 +139,9 @@ func (o *OutputConfig) Event(event logevent.LogEvent) (err error) {
 				ContentType: "application/json",
 				Body:        raw,
 			},
-		)
-		if err != nil {
+		); err != nil {
 			hp.Mark(err)
-			if len(o.amqpClients) > 1 {
-				go o.reconnect(hp)
-			} else {
-				o.reconnect(hp)
-			}
+			o.amqpClients[hp.Host()].reconnect <- hp
 		} else {
 			break
 		}
@@ -146,27 +150,40 @@ func (o *OutputConfig) Event(event logevent.LogEvent) (err error) {
 	return
 }
 
-func (o *OutputConfig) reconnect(hp hostpool.HostPoolResponse) {
+func (o *OutputConfig) reconnect(url string) {
 	for {
-		time.Sleep(time.Duration(o.ReconnectDelay) * time.Second)
-		logrus.Info("Reconnecting to ", hp.Host())
-		if conn, err := amqp.Dial(hp.Host()); err == nil {
-			if ch, err := conn.Channel(); err == nil {
-				err := ch.ExchangeDeclare(
-					o.Exchange,
-					o.ExchangeType,
-					o.ExchangeDurable,
-					o.ExchangeAutoDelete,
-					false,
-					false,
-					nil,
-				)
-				if err == nil {
-					hp.Mark(nil)
-					logrus.Info("Reconnected to ", hp.Host())
-					o.amqpClients[hp.Host()] = ch
-					break
+		select {
+		case poolResponse := <-o.amqpClients[url].reconnect:
+			// When a reconnect event is received
+			// start reconnect loop until reconnected
+			for {
+				time.Sleep(time.Duration(o.ReconnectDelay) * time.Second)
+
+				logrus.Info("Reconnecting to ", poolResponse.Host())
+
+				if conn, err := amqp.Dial(poolResponse.Host()); err == nil {
+					if ch, err := conn.Channel(); err == nil {
+						if err := ch.ExchangeDeclare(
+							o.Exchange,
+							o.ExchangeType,
+							o.ExchangeDurable,
+							o.ExchangeAutoDelete,
+							false,
+							false,
+							nil,
+						); err == nil {
+							logrus.Info("Reconnected to ", poolResponse.Host())
+							o.amqpClients[poolResponse.Host()] = amqpClient{
+								client:    ch,
+								reconnect: make(chan hostpool.HostPoolResponse, 1),
+							}
+							poolResponse.Mark(nil)
+							break
+						}
+					}
 				}
+
+				logrus.Info("Failed to reconnect to ", url, ". Waiting ", o.ReconnectDelay, " seconds...")
 			}
 		}
 	}
