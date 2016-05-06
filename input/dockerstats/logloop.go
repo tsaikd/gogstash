@@ -7,6 +7,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"github.com/tsaikd/gogstash/input/dockerlog"
 )
@@ -15,7 +16,7 @@ var (
 	containerMap = map[string]interface{}{}
 )
 
-func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, evchan chan logevent.LogEvent, logger *logrus.Logger) (err error) {
+func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, inchan config.InChan, logger *logrus.Logger) (err error) {
 	defer func() {
 		if err != nil {
 			logger.Errorln(err)
@@ -64,7 +65,7 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, 
 						},
 					}
 					*since = time.Now()
-					evchan <- event
+					inchan <- event
 				}
 			}
 		}()

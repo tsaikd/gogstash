@@ -9,7 +9,6 @@ import (
 	"github.com/fsouza/go-dockerclient"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 const (
@@ -77,7 +76,7 @@ func (t *InputConfig) Start() {
 	t.Invoke(t.start)
 }
 
-func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent) (err error) {
+func (t *InputConfig) start(logger *logrus.Logger, inchan config.InChan) (err error) {
 	defer func() {
 		if err != nil {
 			logger.Errorln(err)
@@ -98,7 +97,7 @@ func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent
 			since = &time.Time{}
 			t.sincemap[container.ID] = since
 		}
-		go t.containerLogLoop(container, since, evchan, logger)
+		go t.containerLogLoop(container, since, inchan, logger)
 	}
 
 	dockerEventChan := make(chan *docker.APIEvents)
@@ -123,7 +122,7 @@ func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent
 					since = &time.Time{}
 					t.sincemap[container.ID] = since
 				}
-				go t.containerLogLoop(container, since, evchan, logger)
+				go t.containerLogLoop(container, since, inchan, logger)
 			}
 		}
 	}

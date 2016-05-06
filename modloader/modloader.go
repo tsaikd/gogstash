@@ -2,6 +2,7 @@ package modloader
 
 import (
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/filter/addfield"
 	"github.com/tsaikd/gogstash/input/dockerlog"
 	"github.com/tsaikd/gogstash/input/dockerstats"
 	"github.com/tsaikd/gogstash/input/exec"
@@ -22,6 +23,8 @@ func init() {
 	config.RegistInputHandler(inputfile.ModuleName, inputfile.InitHandler)
 	config.RegistInputHandler(inputhttp.ModuleName, inputhttp.InitHandler)
 	config.RegistInputHandler(inputsocket.ModuleName, inputsocket.InitHandler)
+
+	config.RegistFilterHandler(filteraddfield.ModuleName, filteraddfield.InitHandler)
 
 	config.RegistOutputHandler(outputstdout.ModuleName, outputstdout.InitHandler)
 	config.RegistOutputHandler(outputelastic.ModuleName, outputelastic.InitHandler)

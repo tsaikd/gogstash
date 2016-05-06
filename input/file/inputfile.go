@@ -67,7 +67,7 @@ func (t *InputConfig) Start() {
 	t.Invoke(t.start)
 }
 
-func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent) (err error) {
+func (t *InputConfig) start(logger *logrus.Logger, inchan config.InChan) (err error) {
 	defer func() {
 		if err != nil {
 			logger.Errorln(err)
@@ -106,7 +106,7 @@ func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent
 		}
 
 		readEventChan := make(chan fsnotify.Event, 10)
-		go t.fileReadLoop(readEventChan, fpath, logger, evchan)
+		go t.fileReadLoop(readEventChan, fpath, logger, inchan)
 		go t.fileWatchLoop(readEventChan, fpath, fsnotify.Create|fsnotify.Write)
 	}
 
@@ -117,7 +117,7 @@ func (t *InputConfig) fileReadLoop(
 	readEventChan chan fsnotify.Event,
 	fpath string,
 	logger *logrus.Logger,
-	evchan chan logevent.LogEvent,
+	inchan config.InChan,
 ) (err error) {
 	var (
 		since     *SinceDBInfo
@@ -214,12 +214,10 @@ func (t *InputConfig) fileReadLoop(
 		since.Offset += int64(size)
 
 		logger.Debugf("%q %v", event.Message, event)
-		evchan <- event
+		inchan <- event
 		//self.SaveSinceDBInfos()
 		t.CheckSaveSinceDBInfos()
 	}
-
-	return
 }
 
 func (self *InputConfig) fileWatchLoop(readEventChan chan fsnotify.Event, fpath string, op fsnotify.Op) (err error) {

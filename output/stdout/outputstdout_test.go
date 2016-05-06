@@ -34,9 +34,9 @@ func Test_main(t *testing.T) {
 	err = conf.RunOutputs()
 	require.NoError(err)
 
-	evchan := conf.Get(reflect.TypeOf(make(chan logevent.LogEvent))).
-		Interface().(chan logevent.LogEvent)
-	evchan <- logevent.LogEvent{
+	outchan := conf.Get(reflect.TypeOf(make(config.OutChan))).
+		Interface().(config.OutChan)
+	outchan <- logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   "outputstdout test message",
 	}

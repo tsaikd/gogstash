@@ -33,7 +33,6 @@ type OutputConfig struct {
 	ReconnectDelay     int      `json:"reconnect_delay,omitempty"`      // Delay between each attempt to reconnect to AMQP server. Defaults to 30 seconds.
 	hostPool           hostpool.HostPool
 	amqpClients        map[string]amqpClient
-	evchan             chan logevent.LogEvent
 }
 
 type amqpConn struct {
@@ -57,7 +56,6 @@ func DefaultOutputConfig() OutputConfig {
 		ReconnectDelay:     30,
 
 		amqpClients: map[string]amqpClient{},
-		evchan:      make(chan logevent.LogEvent),
 	}
 }
 

@@ -4,7 +4,6 @@ import (
 	"github.com/codegangsta/inject"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/injectutil"
-	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 // errors
@@ -36,8 +35,8 @@ func (t *Config) RunInputs() (err error) {
 	return t.InvokeSimple(t.runInputs)
 }
 
-func (t *Config) runInputs(evchan chan logevent.LogEvent) (err error) {
-	inputs, err := t.getInputs(evchan)
+func (t *Config) runInputs(inchan InChan) (err error) {
+	inputs, err := t.getInputs(inchan)
 	if err != nil {
 		return
 	}
@@ -47,7 +46,7 @@ func (t *Config) runInputs(evchan chan logevent.LogEvent) (err error) {
 	return
 }
 
-func (t *Config) getInputs(evchan chan logevent.LogEvent) (inputs []TypeInputConfig, err error) {
+func (t *Config) getInputs(inchan InChan) (inputs []TypeInputConfig, err error) {
 	for _, confraw := range t.InputRaw {
 		handler, ok := mapInputHandler[confraw["type"].(string)]
 		if !ok {
@@ -58,7 +57,7 @@ func (t *Config) getInputs(evchan chan logevent.LogEvent) (inputs []TypeInputCon
 		inj := inject.New()
 		inj.SetParent(t)
 		inj.Map(&confraw)
-		inj.Map(evchan)
+		inj.Map(inchan)
 		refvs, err := injectutil.Invoke(inj, handler)
 		if err != nil {
 			err = ErrorRunInput1.New(err, confraw)

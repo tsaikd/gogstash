@@ -35,23 +35,23 @@ func Test_main(t *testing.T) {
 	err = conf.RunOutputs()
 	require.NoError(err)
 
-	evchan := conf.Get(reflect.TypeOf(make(chan logevent.LogEvent))).
-		Interface().(chan logevent.LogEvent)
+	outchan := conf.Get(reflect.TypeOf(make(config.OutChan))).
+		Interface().(config.OutChan)
 	event := logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   "outputreport test message",
 	}
 
-	evchan <- event
-	evchan <- event
+	outchan <- event
+	outchan <- event
 	time.Sleep(2 * time.Second)
 
-	evchan <- event
+	outchan <- event
 	time.Sleep(2 * time.Second)
 
-	evchan <- event
-	evchan <- event
-	evchan <- event
-	evchan <- event
+	outchan <- event
+	outchan <- event
+	outchan <- event
+	outchan <- event
 	time.Sleep(2 * time.Second)
 }

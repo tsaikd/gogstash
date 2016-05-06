@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
-func NewContainerLogStream(eventChan chan logevent.LogEvent, id string, eventExtra map[string]interface{}, since *time.Time, logger *logrus.Logger) ContainerLogStream {
+func NewContainerLogStream(inchan config.InChan, id string, eventExtra map[string]interface{}, since *time.Time, logger *logrus.Logger) ContainerLogStream {
 	return ContainerLogStream{
 		ID:         id,
-		eventChan:  eventChan,
+		eventChan:  inchan,
 		eventExtra: eventExtra,
 		logger:     logger,
 		buffer:     bytes.NewBuffer(nil),
@@ -25,7 +26,7 @@ func NewContainerLogStream(eventChan chan logevent.LogEvent, id string, eventExt
 type ContainerLogStream struct {
 	io.Writer
 	ID         string
-	eventChan  chan logevent.LogEvent
+	eventChan  config.InChan
 	eventExtra map[string]interface{}
 	logger     *logrus.Logger
 	buffer     *bytes.Buffer
