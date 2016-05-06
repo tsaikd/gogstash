@@ -10,7 +10,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/tsaikd/KDGoLib/errutil"
-	"github.com/tsaikd/gogstash/config/logevent"
+	"github.com/tsaikd/gogstash/config"
 )
 
 var (
@@ -36,7 +36,7 @@ func GetContainerInfo(container interface{}) (id string, name string, err error)
 	return
 }
 
-func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, evchan chan logevent.LogEvent, logger *logrus.Logger) (err error) {
+func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, inchan config.InChan, logger *logrus.Logger) (err error) {
 	defer func() {
 		if err != nil {
 			logger.Errorln(err)
@@ -61,7 +61,7 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, 
 	}
 
 	retry := 5
-	stream := NewContainerLogStream(evchan, id, eventExtra, since, nil)
+	stream := NewContainerLogStream(inchan, id, eventExtra, since, nil)
 
 	for err == nil || retry > 0 {
 		err = t.client.Logs(docker.LogsOptions{

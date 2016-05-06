@@ -37,7 +37,7 @@ func (t *Config) RunOutputs() (err error) {
 	return t.InvokeSimple(t.runOutputs)
 }
 
-func (t *Config) runOutputs(evchan chan logevent.LogEvent, logger *logrus.Logger) (err error) {
+func (t *Config) runOutputs(outchan OutChan, logger *logrus.Logger) (err error) {
 	outputs, err := t.getOutputs()
 	if err != nil {
 		return
@@ -45,7 +45,7 @@ func (t *Config) runOutputs(evchan chan logevent.LogEvent, logger *logrus.Logger
 	go func() {
 		for {
 			select {
-			case event := <-evchan:
+			case event := <-outchan:
 				for _, output := range outputs {
 					if err = output.Event(event); err != nil {
 						logger.Errorf("output failed: %v\n", err)

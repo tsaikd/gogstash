@@ -57,7 +57,7 @@ func (t *InputConfig) Start() {
 	t.Invoke(t.start)
 }
 
-func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent) (err error) {
+func (t *InputConfig) start(logger *logrus.Logger, inchan config.InChan) {
 	startChan := make(chan bool) // startup tick
 	ticker := time.NewTicker(time.Duration(t.Interval) * time.Second)
 
@@ -68,16 +68,14 @@ func (t *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent
 	for {
 		select {
 		case <-startChan:
-			t.Request(logger, evchan)
+			t.Request(logger, inchan)
 		case <-ticker.C:
-			t.Request(logger, evchan)
+			t.Request(logger, inchan)
 		}
 	}
-
-	return
 }
 
-func (t *InputConfig) Request(logger *logrus.Logger, evchan chan logevent.LogEvent) {
+func (t *InputConfig) Request(logger *logrus.Logger, inchan config.InChan) {
 	data, err := t.SendRequest()
 
 	event := logevent.LogEvent{
@@ -94,7 +92,7 @@ func (t *InputConfig) Request(logger *logrus.Logger, evchan chan logevent.LogEve
 	}
 
 	logger.Debugf("%v", event)
-	evchan <- event
+	inchan <- event
 
 	return
 }

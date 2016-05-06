@@ -53,6 +53,10 @@ func mainAction(c *cli.Context) (err error) {
 		return
 	}
 
+	if err = conf.RunFilters(); err != nil {
+		return
+	}
+
 	if err = conf.RunOutputs(); err != nil {
 		return
 	}

@@ -76,7 +76,7 @@ func (self *InputConfig) Start() {
 	}
 }
 
-func (self *InputConfig) Exec(evchan chan logevent.LogEvent, logger *logrus.Logger) {
+func (self *InputConfig) Exec(inchan config.InChan, logger *logrus.Logger) {
 	errs := []error{}
 
 	message, err := self.doExec()
@@ -113,7 +113,7 @@ func (self *InputConfig) Exec(evchan chan logevent.LogEvent, logger *logrus.Logg
 	}
 
 	logger.Debugf("%+v", event)
-	evchan <- event
+	inchan <- event
 
 	return
 }

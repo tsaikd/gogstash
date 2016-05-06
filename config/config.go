@@ -26,6 +26,9 @@ type Config struct {
 	OutputRaw       []ConfigRaw `json:"output,omitempty"`
 }
 
+type InChan chan logevent.LogEvent
+type OutChan chan logevent.LogEvent
+
 func LoadFromFile(path string) (config Config, err error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -53,8 +56,10 @@ func LoadFromData(data []byte) (config Config, err error) {
 	config.Injector = inject.New()
 	config.Map(Logger)
 
-	evchan := make(chan logevent.LogEvent, 100)
-	config.Map(evchan)
+	inchan := make(InChan, 100)
+	outchan := make(OutChan, 100)
+	config.Map(inchan)
+	config.Map(outchan)
 
 	rv := reflect.ValueOf(&config)
 	formatReflect(rv)
