@@ -10,6 +10,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 
+	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
@@ -50,17 +51,40 @@ func (i *InputConfig) Start() {
 }
 
 func (i *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent) {
+	var l net.Listener
 
 	switch i.Socket {
 	case "unix", "unixpacket":
 		// Remove existing unix socket
 		os.Remove(i.Address)
+		// Listen to socket
+		address, err := net.ResolveUnixAddr(i.Socket, i.Address)
+		if err != nil {
+			logger.Fatal(err)
+		}
+		l, err = net.ListenUnix(i.Socket, address)
+		if err != nil {
+			logger.Fatal(err)
+		}
+		// Set socket permissions.
+		if err = os.Chmod(i.Address, 0777); err != nil {
+			logger.Fatal(err)
+		}
+
+	case "tcp":
+		address, err := net.ResolveTCPAddr(i.Socket, i.Address)
+		if err != nil {
+			logger.Fatal(err)
+		}
+		l, err = net.ListenTCP(i.Socket, address)
+		if err != nil {
+			logger.Fatal(err)
+		}
+
+	default:
+		logger.Fatal(errutil.NewFactory(i.Socket + " is not a valid socket type."))
 	}
 
-	l, err := net.Listen(i.Socket, i.Address)
-	if err != nil {
-		logger.Error(ModuleName, ": Unable to listen to socket.", err)
-	}
 	for {
 		conn, err := l.Accept()
 		if err != nil {
