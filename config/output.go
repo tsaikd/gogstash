@@ -47,9 +47,11 @@ func (t *Config) runOutputs(outchan OutChan, logger *logrus.Logger) (err error) 
 			select {
 			case event := <-outchan:
 				for _, output := range outputs {
-					if err = output.Event(event); err != nil {
-						logger.Errorf("output failed: %v\n", err)
-					}
+					go func(o TypeOutputConfig, e logevent.LogEvent) {
+						if err = o.Event(e); err != nil {
+							logger.Errorf("output failed: %v\n", err)
+						}
+					}(output, event)
 				}
 			}
 		}
