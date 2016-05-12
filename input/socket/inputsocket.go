@@ -50,7 +50,7 @@ func (i *InputConfig) Start() {
 	i.Invoke(i.start)
 }
 
-func (i *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent) {
+func (i *InputConfig) start(logger *logrus.Logger, inchan config.InChan) {
 	var l net.Listener
 
 	switch i.Socket {
@@ -90,11 +90,11 @@ func (i *InputConfig) start(logger *logrus.Logger, evchan chan logevent.LogEvent
 		if err != nil {
 			logger.Error(ModuleName, ": socket accept error.", err)
 		}
-		go parse(conn, logger, evchan)
+		go parse(conn, logger, inchan)
 	}
 }
 
-func parse(conn net.Conn, logger *logrus.Logger, evchan chan logevent.LogEvent) {
+func parse(conn net.Conn, logger *logrus.Logger, inchan config.InChan) {
 	defer conn.Close()
 
 	// Duplicate buffer to be able to read it even after failed json decoding
@@ -112,7 +112,7 @@ func parse(conn net.Conn, logger *logrus.Logger, evchan chan logevent.LogEvent) 
 			// and send a log event per line
 			for {
 				line, err := streamCopy.ReadString('\n')
-				evchan <- logevent.LogEvent{
+				inchan <- logevent.LogEvent{
 					Timestamp: time.Now(),
 					Message:   line,
 				}
@@ -122,6 +122,6 @@ func parse(conn net.Conn, logger *logrus.Logger, evchan chan logevent.LogEvent) 
 			}
 			break
 		}
-		evchan <- logevent.LogEvent{Extra: jsonMsg}
+		inchan <- logevent.LogEvent{Extra: jsonMsg}
 	}
 }
