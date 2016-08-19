@@ -23,13 +23,13 @@ type InputConfig struct {
 	StatInterval            int      `json:"stat_interval"`
 	ConnectionRetryInterval int      `json:"connection_retry_interval,omitempty"`
 
-	ZeroHierarchicalMemoryLimit bool `json:"zero_hierarchical_memory_limit,omitempty"`
+	LogMode Mode `json:"log_mode,omitempty"`
 
-	sincemap map[string]*time.Time `json:"-"`
-	includes []*regexp.Regexp      `json:"-"`
-	excludes []*regexp.Regexp      `json:"-"`
-	hostname string                `json:"-"`
-	client   *docker.Client        `json:"-"`
+	sincemap map[string]*time.Time
+	includes []*regexp.Regexp
+	excludes []*regexp.Regexp
+	hostname string
+	client   *docker.Client
 }
 
 func DefaultInputConfig() InputConfig {
@@ -42,6 +42,7 @@ func DefaultInputConfig() InputConfig {
 		DockerURL:               "unix:///var/run/docker.sock",
 		StatInterval:            15,
 		ConnectionRetryInterval: 10,
+		LogMode:                 ModeFull,
 
 		sincemap: map[string]*time.Time{},
 	}
@@ -126,8 +127,6 @@ func (t *InputConfig) start(logger *logrus.Logger, inchan config.InChan) (err er
 			}
 		}
 	}
-
-	return
 }
 
 func (t *InputConfig) isValidContainer(names []string) bool {
@@ -145,7 +144,6 @@ func (t *InputConfig) isValidContainer(names []string) bool {
 	}
 	if len(t.includes) > 0 {
 		return false
-	} else {
-		return true
 	}
+	return true
 }

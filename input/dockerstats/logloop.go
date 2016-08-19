@@ -1,6 +1,7 @@
 package inputdockerstats
 
 import (
+	"reflect"
 	"strings"
 	"time"
 
@@ -51,9 +52,7 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, 
 						continue
 					}
 
-					if t.ZeroHierarchicalMemoryLimit {
-						stats.MemoryStats.Stats.HierarchicalMemoryLimit = 0
-					}
+					filterStatsByMode(stats, t.LogMode)
 
 					event := logevent.LogEvent{
 						Timestamp: time.Now(),
@@ -84,4 +83,33 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, 
 	}
 
 	return
+}
+
+func filterStatsByMode(stats *docker.Stats, mode Mode) {
+	switch mode {
+	case ModeSimple:
+		clearNetworkStats(&stats.Network)
+		for name, network := range stats.Networks {
+			clearNetworkStats(&network)
+			stats.Networks[name] = network
+		}
+		clear(&stats.MemoryStats.Stats)
+		clear(&stats.BlkioStats)
+		clear(&stats.CPUStats.CPUUsage.PercpuUsage)
+		clear(&stats.CPUStats.CPUUsage.UsageInKernelmode)
+		clear(&stats.CPUStats.CPUUsage.UsageInUsermode)
+		clear(&stats.CPUStats.SystemCPUUsage)
+	}
+}
+
+func clearNetworkStats(network *docker.NetworkStats) {
+	*network = docker.NetworkStats{
+		RxBytes: network.RxBytes,
+		TxBytes: network.TxBytes,
+	}
+}
+
+func clear(v interface{}) {
+	p := reflect.ValueOf(v).Elem()
+	p.Set(reflect.Zero(p.Type()))
 }

@@ -24,8 +24,8 @@ gogstash input dockerstats
 			// (optional), in seconds, docker connection retry interval, default: 10
 			"connection_retry_interval": 10
 
-			// (optional), zero hierarchical_memory_limit in docker stats, sometimes it will cause elastic exception 'JsonParseException Numeric value out of range of long', default: false
-			"zero_hierarchical_memory_limit": false
+			// (optional), filter the output by mode, available value: "full" | "simple", "simple" mode will remove some messages to make the log smaller, default: "full"
+			"log_mode": "full"
 		}
 	]
 }

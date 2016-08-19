@@ -1,12 +1,13 @@
 package logevent
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/tsaikd/KDGoLib/jsonex"
 )
 
 type LogEvent struct {
@@ -52,12 +53,12 @@ func (t LogEvent) getJSONMap() map[string]interface{} {
 
 func (t LogEvent) MarshalJSON() (data []byte, err error) {
 	event := t.getJSONMap()
-	return json.Marshal(event)
+	return jsonex.Marshal(event)
 }
 
 func (t LogEvent) MarshalIndent() (data []byte, err error) {
 	event := t.getJSONMap()
-	return json.MarshalIndent(event, "", "\t")
+	return jsonex.MarshalIndent(event, "", "\t")
 }
 
 func (t LogEvent) Get(field string) (v interface{}) {
