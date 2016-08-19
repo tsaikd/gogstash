@@ -4,7 +4,7 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
-			"Rev": "ff3d4ee4753705a048db1855113026395c26a79a"
+			"Rev": "0436d420da98515cfe6370c9c5cdde868415637b"
 		},
 		{
 			"ImportPath": "github.com/fzzy/radix",
@@ -12,15 +12,15 @@
 		},
 		{
 			"ImportPath": "github.com/go-fsnotify/fsnotify",
-			"Rev": "836bfd95fecc0f1511dd66bdbf2b5b61ab8b00b6"
+			"Rev": "f12c6236fe7b5cf6bcf30e5935d08cb079d78334"
 		},
 		{
 			"ImportPath": "github.com/tsaikd/KDGoLib",
-			"Rev": "421306dbd8ce43191bad6b993f0f5523e4e30b85"
+			"Rev": "8a973fb15a1e5006f700ae9c6624f70335503711"
 		},
 		{
 			"ImportPath": "gopkg.in/olivere/elastic.v3",
-			"Rev": "2594d14da9d16fb44b8153d2db83dbea04b504e8"
+			"Rev": "787ebbb5a7600662bca364e4e8ca959f315e442f"
 		}
 	]
 }

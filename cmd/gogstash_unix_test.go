@@ -1,34 +1,31 @@
-package gogstash
+package cmd
 
 import (
 	"testing"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
 )
 
-func init() {
-	logger.Level = logrus.DebugLevel
-}
-
-func Test_main(t *testing.T) {
+func Test_gogstash(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
+
+	logger := config.Logger
 
 	conf, err := config.LoadFromString(`{
 		"input": [{
 			"type": "exec",
 			"command": "uptime",
 			"args": [],
-			"interval": 3,
+			"interval": 2,
 			"message_prefix": "%{@timestamp} "
 		},{
 			"type": "exec",
 			"command": "whoami",
 			"args": [],
-			"interval": 4,
+			"interval": 3,
 			"message_prefix": "%{@timestamp} "
 		}],
 		"output": [{
@@ -43,7 +40,7 @@ func Test_main(t *testing.T) {
 	_, err = conf.Invoke(conf.RunOutputs)
 	require.NoError(err)
 
-	waitsec := 10
+	waitsec := 5
 	logger.Infof("Wait for %d seconds", waitsec)
 	time.Sleep(time.Duration(waitsec) * time.Second)
 }

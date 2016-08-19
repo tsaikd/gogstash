@@ -10,24 +10,29 @@ projname="gogstash"
 renice 15 $$
 cd "${PD}/.."
 
-if ! type gobuilder &>/dev/null ; then
-	go get -v "github.com/tsaikd/gobuilder"
-fi
+gobuilder version -c ">=0.1.3" &>/dev/null || go get -u -v "github.com/tsaikd/gobuilder"
 
-gobuilder --test --all
-
-go test ./config/...
+gobuilder checkerror
+gobuilder checkfmt
+gobuilder checkredundant
+gobuilder restore
+gobuilder get --test --all
+gobuilder build
+go test -v ./cmd/... ./config/... ./filter/...
 
 if [ "${GITHUB_TOKEN}" ] ; then
 	echo "[$(date -Iseconds)] ${projname} release on github"
 	if ! type github-release &>/dev/null ; then
 		go get -v "github.com/aktau/github-release"
 	fi
-	version="$(./${projname} -v | grep -Eo "version [0-9\.]+" | cut -c9-)"
+	rev="$(git rev-parse HEAD)"
+	version="$(./${projname} version -n)"
 	github-release release \
 		--user "${projorg}" \
 		--repo "${projname}" \
-		--tag "${version}"
+		--tag "${version}" \
+		--target "${rev}" \
+		--description "curl 'https://github.com/${projorg}/${projname}/releases/download/${version}/${projname}-$(uname -s)-$(uname -m)' -SLo ${projname} && chmod +x ${projname}"
 	github-release upload \
 		--user "${projorg}" \
 		--repo "${projname}" \

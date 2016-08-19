@@ -1,9 +1,7 @@
 package main
 
-import (
-	"github.com/tsaikd/gogstash/app"
-)
+import "github.com/tsaikd/gogstash/cmd"
 
 func main() {
-	gogstash.Main()
+	cmd.Module.MustMainRun()
 }

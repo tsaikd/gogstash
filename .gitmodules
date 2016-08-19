@@ -1,0 +1,15 @@
+[submodule "vendor/github.com/fsouza/go-dockerclient"]
+	path = vendor/github.com/fsouza/go-dockerclient
+	url = https://github.com/fsouza/go-dockerclient
+[submodule "vendor/github.com/fzzy/radix"]
+	path = vendor/github.com/fzzy/radix
+	url = https://github.com/fzzy/radix
+[submodule "vendor/github.com/go-fsnotify/fsnotify"]
+	path = vendor/github.com/go-fsnotify/fsnotify
+	url = https://github.com/go-fsnotify/fsnotify
+[submodule "vendor/github.com/tsaikd/KDGoLib"]
+	path = vendor/github.com/tsaikd/KDGoLib
+	url = https://github.com/tsaikd/KDGoLib
+[submodule "vendor/gopkg.in/olivere/elastic.v3"]
+	path = vendor/gopkg.in/olivere/elastic.v3
+	url = https://gopkg.in/olivere/elastic.v3
