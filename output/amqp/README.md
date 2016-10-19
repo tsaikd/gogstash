@@ -15,6 +15,24 @@ gogstash output amqp
 				"amqp://guest:guest@localhost:5672//vhost"
 			],
 
+			// CA Certs to verify self-signed certificates
+			"tls_ca_certs": [
+				"cacert.pem"
+			],
+
+			// Certs to use to connect to TLS host
+			"tls_certs": [
+				"cert.pem"
+			],
+
+			// Cert Keys to connect to TLS host
+			"tls_cert_keys": [
+				"key.pem"
+			],
+
+			// Skip verification of certificates
+			"tls_skip_verify": true,
+
 			// The message routing key used to bind the queue to the exchange. Defaults to empty string.
 			"routing_key": "%{fieldstring}"
 

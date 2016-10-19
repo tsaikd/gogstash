@@ -1,6 +1,10 @@
 package outputamqp
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
+	"strings"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -23,6 +27,10 @@ var (
 type OutputConfig struct {
 	config.OutputConfig
 	URLs               []string `json:"urls"`                           // Array of AMQP connection strings formatted per the [RabbitMQ URI Spec](http://www.rabbitmq.com/uri-spec.html).
+	TLSCACerts         []string `json:"tls_ca_certs,omitempty"`         // Array of CA Certificates to load for TLS connections
+	TLSCerts           []string `json:"tls_certs,omitempty"`            // Array of Certificates to load for TLS connections
+	TLSCertKeys        []string `json:"tls_cert_keys,omitempty"`        // Array of Certificate Keys to load for TLS connections (Must NOT be password protected)
+	TLSSkipVerify      bool     `json:"tls_cert_skip_verify,omitempty"` // Skip verification of certifcates. Defaults to false.
 	RoutingKey         string   `json:"routing_key,omitempty"`          // The message routing key used to bind the queue to the exchange. Defaults to empty string.
 	Exchange           string   `json:"exchange"`                       // AMQP exchange name
 	ExchangeType       string   `json:"exchange_type"`                  // AMQP exchange type (fanout, direct, topic or headers).
@@ -48,6 +56,7 @@ func DefaultOutputConfig() OutputConfig {
 				Type: ModuleName,
 			},
 		},
+		TLSSkipVerify:      false,
 		RoutingKey:         "",
 		ExchangeDurable:    false,
 		ExchangeAutoDelete: true,
@@ -83,7 +92,7 @@ func (o *OutputConfig) initAmqpClients() error {
 	var hosts []string
 
 	for _, url := range o.URLs {
-		if conn, err := amqp.Dial(url); err == nil {
+		if conn, err := o.getConnection(url); err == nil {
 			if ch, err := conn.Channel(); err == nil {
 				err := ch.ExchangeDeclare(
 					o.Exchange,
@@ -159,7 +168,7 @@ func (o *OutputConfig) reconnect(url string) {
 
 				logrus.Info("Reconnecting to ", poolResponse.Host())
 
-				if conn, err := amqp.Dial(poolResponse.Host()); err == nil {
+				if conn, err := o.getConnection(poolResponse.Host()); err == nil {
 					if ch, err := conn.Channel(); err == nil {
 						if err := ch.ExchangeDeclare(
 							o.Exchange,
@@ -185,4 +194,33 @@ func (o *OutputConfig) reconnect(url string) {
 			}
 		}
 	}
+}
+
+func (o *OutputConfig) getConnection(url string) (c *amqp.Connection, e error) {
+	if strings.HasPrefix(url, "amqps") {
+		cfg := new(tls.Config)
+		cfg.RootCAs = x509.NewCertPool()
+
+		cfg.InsecureSkipVerify = false
+		if o.TLSSkipVerify == true {
+			cfg.InsecureSkipVerify = true
+		}
+
+		for _, ca := range o.TLSCACerts {
+			if cert, err := ioutil.ReadFile(ca); err == nil {
+				cfg.RootCAs.AppendCertsFromPEM(cert)
+			}
+		}
+
+		for index, cert := range o.TLSCerts {
+			if cert, err := tls.LoadX509KeyPair(cert, o.TLSCertKeys[index]); err == nil {
+				cfg.Certificates = append(cfg.Certificates, cert)
+			}
+		}
+
+		conn, err := amqp.DialTLS(url, cfg)
+		return conn, err
+	}
+	conn, err := amqp.Dial(url)
+	return conn, err
 }
