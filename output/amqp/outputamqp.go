@@ -30,7 +30,7 @@ type OutputConfig struct {
 	TLSCACerts         []string `json:"tls_ca_certs,omitempty"`         // Array of CA Certificates to load for TLS connections
 	TLSCerts           []string `json:"tls_certs,omitempty"`            // Array of Certificates to load for TLS connections
 	TLSCertKeys        []string `json:"tls_cert_keys,omitempty"`        // Array of Certificate Keys to load for TLS connections (Must NOT be password protected)
-	TLSSkipVerify      bool     `json:"tls_cert_skip_verify,omitempty"` // Skip verification of certifcates
+	TLSSkipVerify      bool     `json:"tls_cert_skip_verify,omitempty"` // Skip verification of certifcates. Defaults to false.
 	RoutingKey         string   `json:"routing_key,omitempty"`          // The message routing key used to bind the queue to the exchange. Defaults to empty string.
 	Exchange           string   `json:"exchange"`                       // AMQP exchange name
 	ExchangeType       string   `json:"exchange_type"`                  // AMQP exchange type (fanout, direct, topic or headers).
@@ -56,6 +56,7 @@ func DefaultOutputConfig() OutputConfig {
 				Type: ModuleName,
 			},
 		},
+		TLSSkipVerify:      false,
 		RoutingKey:         "",
 		ExchangeDurable:    false,
 		ExchangeAutoDelete: true,
