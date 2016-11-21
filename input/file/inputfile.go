@@ -23,10 +23,10 @@ const (
 
 type InputConfig struct {
 	config.InputConfig
-	Path                 string `json:"path"`
-	StartPos             string `json:"start_position,omitempty"` // one of ["beginning", "end"]
-	SinceDBPath          string `json:"sincedb_path,omitempty"`
-	SinceDBWriteInterval int    `json:"sincedb_write_interval,omitempty"`
+	Path                 []string `json:"path"`
+	StartPos             string   `json:"start_position,omitempty"` // one of ["beginning", "end"]
+	SinceDBPath          string   `json:"sincedb_path,omitempty"`
+	SinceDBWriteInterval int      `json:"sincedb_write_interval,omitempty"`
 
 	hostname            string                  `json:"-"`
 	SinceDBInfos        map[string]*SinceDBInfo `json:"-"`
@@ -75,16 +75,19 @@ func (t *InputConfig) start(logger *logrus.Logger, inchan config.InChan) (err er
 	}()
 
 	var (
-		matches []string
-		fi      os.FileInfo
+		fi os.FileInfo
 	)
 
 	if err = t.LoadSinceDBInfos(); err != nil {
 		return
 	}
-
-	if matches, err = filepath.Glob(t.Path); err != nil {
-		return errutil.NewErrors(fmt.Errorf("glob(%q) failed", t.Path), err)
+	matches := []string{}
+	for _, v := range t.Path {
+		var res []string
+		if res, err = filepath.Glob(v); err != nil {
+			return errutil.NewErrors(fmt.Errorf("glob(%q) failed", v), err)
+		}
+		matches = append(matches, res...)
 	}
 
 	go t.CheckSaveSinceDBInfosLoop()
@@ -107,7 +110,7 @@ func (t *InputConfig) start(logger *logrus.Logger, inchan config.InChan) (err er
 
 		readEventChan := make(chan fsnotify.Event, 10)
 		go t.fileReadLoop(readEventChan, fpath, logger, inchan)
-		go t.fileWatchLoop(readEventChan, fpath, fsnotify.Create|fsnotify.Write)
+		go t.fileWatchLoop(readEventChan, fpath, logger, fsnotify.Create|fsnotify.Write)
 	}
 
 	return
@@ -220,12 +223,12 @@ func (t *InputConfig) fileReadLoop(
 	}
 }
 
-func (self *InputConfig) fileWatchLoop(readEventChan chan fsnotify.Event, fpath string, op fsnotify.Op) (err error) {
+func (self *InputConfig) fileWatchLoop(readEventChan chan fsnotify.Event, fpath string, logger *logrus.Logger, op fsnotify.Op) (err error) {
 	var (
 		event fsnotify.Event
 	)
 	for {
-		if event, err = waitWatchEvent(fpath, op); err != nil {
+		if event, err = waitWatchEvent(logger, fpath, op); err != nil {
 			return
 		}
 		readEventChan <- event
@@ -310,9 +313,8 @@ var (
 	mapWatcher = map[string]*fsnotify.Watcher{}
 )
 
-func waitWatchEvent(fpath string, op fsnotify.Op) (event fsnotify.Event, err error) {
+func waitWatchEvent(logger *logrus.Logger, fpath string, op fsnotify.Op) (event fsnotify.Event, err error) {
 	var (
-		fdir    string
 		watcher *fsnotify.Watcher
 		ok      bool
 	)
@@ -322,17 +324,15 @@ func waitWatchEvent(fpath string, op fsnotify.Op) (event fsnotify.Event, err err
 		return
 	}
 
-	fdir = filepath.Dir(fpath)
-
-	if watcher, ok = mapWatcher[fdir]; !ok {
-		//		logger.Debugf("create new watcher for %q", fdir)
+	if watcher, ok = mapWatcher[fpath]; !ok {
+		logger.Debugf("create new watcher for %q", fpath)
 		if watcher, err = fsnotify.NewWatcher(); err != nil {
-			err = errutil.New("create new watcher failed: "+fdir, err)
+			err = errutil.New("create new watcher failed: "+fpath, err)
 			return
 		}
-		mapWatcher[fdir] = watcher
-		if err = watcher.Add(fdir); err != nil {
-			err = errutil.New("add new watch path failed: "+fdir, err)
+		mapWatcher[fpath] = watcher
+		if err = watcher.Add(fpath); err != nil {
+			err = errutil.New("add new watch path failed: "+fpath, err)
 			return
 		}
 	}

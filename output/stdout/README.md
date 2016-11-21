@@ -18,4 +18,4 @@ gogstash output stdout
 Used for debug
 
 * type
-	* Must be **"redis"**
+	* Must be **"stdout"**

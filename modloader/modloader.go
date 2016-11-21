@@ -11,6 +11,7 @@ import (
 	"github.com/tsaikd/gogstash/input/socket"
 	"github.com/tsaikd/gogstash/output/amqp"
 	"github.com/tsaikd/gogstash/output/elastic"
+	"github.com/tsaikd/gogstash/output/email"
 	"github.com/tsaikd/gogstash/output/prometheus"
 	"github.com/tsaikd/gogstash/output/redis"
 	"github.com/tsaikd/gogstash/output/report"
@@ -33,4 +34,5 @@ func init() {
 	config.RegistOutputHandler(outputreport.ModuleName, outputreport.InitHandler)
 	config.RegistOutputHandler(outputamqp.ModuleName, outputamqp.InitHandler)
 	config.RegistOutputHandler(outputprometheus.ModuleName, outputprometheus.InitHandler)
+	config.RegistOutputHandler(outputemail.ModuleName, outputemail.InitHandler)
 }
