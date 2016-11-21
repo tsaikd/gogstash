@@ -10,7 +10,7 @@ gogstash input file
 			"type": "file",
 
 			// (required)
-			"path": "",
+			"path": [""],
 
 			// (optional), one of ["beginning", "end"], default: "end"
 			"start_position": "end",

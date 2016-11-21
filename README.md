@@ -19,7 +19,7 @@ curl 'https://github.com/tsaikd/gogstash/releases/download/0.1.8/gogstash-Linux-
 	"input": [
 		{
 			"type": "file",
-			"path": "/var/log/nginx/access.log",
+			"path": ["/var/log/nginx/access.log"],
 			"start_position": "beginning",
 			"sincedb_path": ".sincedb.nginx.json"
 		}
