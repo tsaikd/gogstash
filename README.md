@@ -147,3 +147,4 @@ See [output module](output) for more information
 * [redis](output/redis)
 * [report](output/report)
 * [stdout](output/stdout)
+* [email](output/email)
