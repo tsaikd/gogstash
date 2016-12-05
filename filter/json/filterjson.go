@@ -1,10 +1,11 @@
 package filterjson
 
 import (
-	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/logevent"
 	"encoding/json"
 	"time"
+
+	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 const (
@@ -13,8 +14,8 @@ const (
 
 type FilterConfig struct {
 	config.FilterConfig
-	Msgfield   string `json:"message"`
-	Tsfield string `json:"timestamp"`
+	Msgfield string `json:"message"`
+	Tsfield  string `json:"timestamp"`
 	Tsformat string `json:"timeformat"`
 }
 
@@ -64,4 +65,3 @@ func (f *FilterConfig) Event(event logevent.LogEvent) logevent.LogEvent {
 
 	return event
 }
-
