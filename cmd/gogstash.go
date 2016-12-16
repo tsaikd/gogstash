@@ -8,10 +8,15 @@ import (
 
 	// module loader
 	_ "github.com/tsaikd/gogstash/modloader"
+	"github.com/Sirupsen/logrus"
 )
 
-func gogstash(confpath string) (err error) {
+func gogstash(confpath string, debug bool) (err error) {
 	logger := config.Logger
+
+	if debug {
+		logger.Level = logrus.DebugLevel
+	}
 
 	if runtime.GOMAXPROCS(0) == 1 && runtime.NumCPU() > 1 {
 		logger.Warnf("set GOMAXPROCS = %d to get better performance", runtime.NumCPU())
@@ -33,6 +38,8 @@ func gogstash(confpath string) (err error) {
 	if err = conf.RunOutputs(); err != nil {
 		return
 	}
+
+	logger.Info("gogstash started...")
 
 	for {
 		// all event run in routine, go into infinite sleep
