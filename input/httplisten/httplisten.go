@@ -14,13 +14,14 @@ const ModuleName = "httplisten"
 
 const invalidMethodError = "Method not allowed: '%v'"
 const invalidJsonError = "Invalid JSON received on HTTP listener. Decoder error: %+v"
+const invalidAccessToken = "Invalid access token. Access denied."
 
 // InputConfig holds the output configuration json fields
 type InputConfig struct {
 	config.InputConfig
 	Address string `json:"address"`	// host:port to listen on
 	Path	string `json:"path"` 	// The path to accept json HTTP POST requests on
-	RequireHeader	string `json:"require_header"` // Require this header to be present to accept the POST
+	RequireHeader	[]string `json:"require_header"` // Require this header to be present to accept the POST ("X-Access-Token: Potato")
 }
 
 // DefaultInputConfig returns an InputConfig struct with default values
@@ -33,7 +34,7 @@ func DefaultInputConfig() InputConfig {
 		},
 		Address: "0.0.0.0:8080",
 		Path: "/",
-		RequireHeader: "",
+		RequireHeader: []string{},
 	}
 }
 
@@ -61,6 +62,16 @@ func (i *InputConfig) start(logger *logrus.Logger, inchan config.InChan) {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			rw.Write([]byte(fmt.Sprintf(invalidMethodError, req.Method)))
 			return
+		}
+		// Check for header
+		if len(i.RequireHeader) == 2 {
+			// get returns empty string if header not found
+			if req.Header.Get(i.RequireHeader[0]) != i.RequireHeader[1] {
+				logger.Warn(invalidAccessToken)
+				rw.WriteHeader(http.StatusForbidden)
+				rw.Write([]byte(invalidAccessToken))
+				return
+			}
 		}
 		i.postHandler(logger, inchan, rw, req)
 	})
