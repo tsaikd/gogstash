@@ -95,7 +95,7 @@ func detectElasticVersion(config *OutputConfig, logger *logrus.Logger) int {
 	// yeah, i'd rather not make a struct just for this.
 	ver, _ := version.NewVersion(dest["version"].(map[string]interface{})["number"].(string))
 
-	v3constraint, _ := version.NewConstraint(">= 2.0.0, < 5.0.0")
+	v3constraint, _ := version.NewConstraint(">= 3.0.0, < 5.0.0")
 	v5constraint, _ := version.NewConstraint(">= 5.0.0")
 
 	if v3constraint.Check(ver) {
