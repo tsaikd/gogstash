@@ -7,8 +7,8 @@ import (
 	"github.com/tsaikd/gogstash/config"
 
 	// module loader
-	_ "github.com/tsaikd/gogstash/modloader"
 	"github.com/Sirupsen/logrus"
+	_ "github.com/tsaikd/gogstash/modloader"
 )
 
 func gogstash(confpath string, debug bool) (err error) {

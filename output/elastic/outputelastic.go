@@ -1,16 +1,16 @@
 package outputelastic
 
 import (
+	"encoding/json"
+	"github.com/Sirupsen/logrus"
+	"github.com/hashicorp/go-version"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
+	"golang.org/x/net/context"
 	elastic3 "gopkg.in/olivere/elastic.v3"
 	elastic5 "gopkg.in/olivere/elastic.v5"
-	"net/http"
-	"github.com/Sirupsen/logrus"
 	"io/ioutil"
-	"encoding/json"
-	"github.com/hashicorp/go-version"
-	"golang.org/x/net/context"
+	"net/http"
 )
 
 const (
@@ -19,16 +19,16 @@ const (
 
 type OutputConfig struct {
 	config.OutputConfig
-	URL          string `json:"url"`
-	Index        string `json:"index"`
-	DocumentType string `json:"document_type"`
-	DocumentID   string `json:"document_id"`
+	URL            string `json:"url"`
+	Index          string `json:"index"`
+	DocumentType   string `json:"document_type"`
+	DocumentID     string `json:"document_id"`
 	ElasticVersion string `json:"es_version"` // 3, 5, or auto.
 
 	Sniff bool `json:"sniff"` // find all nodes of your cluster, https://github.com/olivere/elastic/wiki/Sniffing
 
-	client interface{} // we'll cast this to the proper client type when we're ready.
-	clientVersion int // private var to hold client version to use after detection
+	client        interface{} // we'll cast this to the proper client type when we're ready.
+	clientVersion int         // private var to hold client version to use after detection
 }
 
 func DefaultOutputConfig() OutputConfig {
@@ -48,7 +48,7 @@ func InitHandler(confraw *config.ConfigRaw, logger *logrus.Logger) (retconf conf
 		return
 	}
 
-	switch (conf.ElasticVersion) {
+	switch conf.ElasticVersion {
 	case "auto":
 		conf.clientVersion = detectElasticVersion(&conf, logger)
 	case "3":
@@ -58,7 +58,6 @@ func InitHandler(confraw *config.ConfigRaw, logger *logrus.Logger) (retconf conf
 	default:
 		logger.Fatalf("Invalid config for es_version: expected one of [\"3\",\"5\",\"auto\"] but got: '%v'", conf.ElasticVersion)
 	}
-
 
 	if conf.clientVersion == 3 {
 		conf.client, err = elastic3.NewClient(

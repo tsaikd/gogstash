@@ -14,10 +14,10 @@ var (
 		EnvVar:  "CONFIG",
 	}
 	flagDebug = &cobrather.BoolFlag{
-		Name: 	"debug",
+		Name:    "debug",
 		Default: false,
-		Usage:	"Enable debug logging",
-		EnvVar:	"DEBUG",
+		Usage:   "Enable debug logging",
+		EnvVar:  "DEBUG",
 	}
 )
 

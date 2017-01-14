@@ -10,6 +10,7 @@ import (
 	"github.com/tsaikd/gogstash/input/file"
 	"github.com/tsaikd/gogstash/input/http"
 	"github.com/tsaikd/gogstash/input/httplisten"
+	"github.com/tsaikd/gogstash/input/redis"
 	"github.com/tsaikd/gogstash/input/socket"
 	"github.com/tsaikd/gogstash/output/amqp"
 	"github.com/tsaikd/gogstash/output/elastic"
@@ -18,7 +19,6 @@ import (
 	"github.com/tsaikd/gogstash/output/redis"
 	"github.com/tsaikd/gogstash/output/report"
 	"github.com/tsaikd/gogstash/output/stdout"
-	"github.com/tsaikd/gogstash/input/redis"
 )
 
 func init() {

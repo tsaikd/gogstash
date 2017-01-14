@@ -1,12 +1,12 @@
 package inputredis
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/Sirupsen/logrus"
+	"github.com/fzzy/radix/redis"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"github.com/fzzy/radix/redis"
-	"bytes"
 )
 
 // ModuleName is the name used in config file
@@ -17,11 +17,11 @@ const invalidJsonError = "Invalid JSON received from Redis input. Decoder error:
 // InputConfig holds the output configuration json fields
 type InputConfig struct {
 	config.InputConfig
-	Key               string   `json:"key"`
+	Key               string `json:"key"`
 	Host              string `json:"host"`
-	DataType          string   `json:"data_type,omitempty"` // one of ["list", "channel"] TODO!`
-	Connections 	  int	   `json:"connections"`
-	ReconnectInterval int      `json:"reconnect_interval,omitempty"` // TODO!
+	DataType          string `json:"data_type,omitempty"` // one of ["list", "channel"] TODO!`
+	Connections       int    `json:"connections"`
+	ReconnectInterval int    `json:"reconnect_interval,omitempty"` // TODO!
 
 	clients []*redis.Client // all configured clients
 }
@@ -36,7 +36,7 @@ func DefaultInputConfig() InputConfig {
 		},
 		Key:               "gogstash",
 		DataType:          "list",
-		Connections:	   5,
+		Connections:       5,
 		ReconnectInterval: 1,
 	}
 }
@@ -85,7 +85,6 @@ func (i *InputConfig) Start() {
 	i.Invoke(i.start)
 }
 
-
 // spawn all input handlers
 func (i *InputConfig) start(logger *logrus.Logger, inchan config.InChan) {
 	for _, client := range i.clients {
@@ -108,7 +107,7 @@ func (i *InputConfig) inputHandler(logger *logrus.Logger, inchan config.InChan, 
 
 		var jsonMsg map[string]interface{}
 
-		msg, err := reply.ListBytes();
+		msg, err := reply.ListBytes()
 		if err != nil {
 			// I got no idea, but somehow ListBytes gave me an error.
 			logger.Errorf("Error retrieving bytes from redis message: %+v", err)

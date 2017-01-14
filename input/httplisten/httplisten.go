@@ -2,11 +2,11 @@ package httplisten
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"net/http"
-	"fmt"
 )
 
 // ModuleName is the name used in config file
@@ -19,9 +19,9 @@ const invalidAccessToken = "Invalid access token. Access denied."
 // InputConfig holds the output configuration json fields
 type InputConfig struct {
 	config.InputConfig
-	Address string `json:"address"`	// host:port to listen on
-	Path	string `json:"path"` 	// The path to accept json HTTP POST requests on
-	RequireHeader	[]string `json:"require_header"` // Require this header to be present to accept the POST ("X-Access-Token: Potato")
+	Address       string   `json:"address"`        // host:port to listen on
+	Path          string   `json:"path"`           // The path to accept json HTTP POST requests on
+	RequireHeader []string `json:"require_header"` // Require this header to be present to accept the POST ("X-Access-Token: Potato")
 }
 
 // DefaultInputConfig returns an InputConfig struct with default values
@@ -32,8 +32,8 @@ func DefaultInputConfig() InputConfig {
 				Type: ModuleName,
 			},
 		},
-		Address: "0.0.0.0:8080",
-		Path: "/",
+		Address:       "0.0.0.0:8080",
+		Path:          "/",
 		RequireHeader: []string{},
 	}
 }
@@ -52,10 +52,9 @@ func (i *InputConfig) Start() {
 	i.Invoke(i.start)
 }
 
-
 // Start the HTTP listener and send all requests matching config to it
 func (i *InputConfig) start(logger *logrus.Logger, inchan config.InChan) {
-	http.HandleFunc(i.Path, func(rw http.ResponseWriter, req *http.Request){
+	http.HandleFunc(i.Path, func(rw http.ResponseWriter, req *http.Request) {
 		// Only allow POST requests (for now).
 		if req.Method != http.MethodPost {
 			logger.Warnf(invalidMethodError, req.Method)
