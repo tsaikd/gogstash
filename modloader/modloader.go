@@ -27,7 +27,7 @@ func init() {
 	config.RegistInputHandler(inputdockerstats.ModuleName, inputdockerstats.InitHandler)
 	config.RegistInputHandler(inputfile.ModuleName, inputfile.InitHandler)
 	config.RegistInputHandler(inputhttp.ModuleName, inputhttp.InitHandler)
-	config.RegistInputHandler(httplisten.ModuleName, httplisten.InitHandler)
+	config.RegistInputHandler(inputhttplisten.ModuleName, inputhttplisten.InitHandler)
 	config.RegistInputHandler(inputsocket.ModuleName, inputsocket.InitHandler)
 	config.RegistInputHandler(inputredis.ModuleName, inputredis.InitHandler)
 

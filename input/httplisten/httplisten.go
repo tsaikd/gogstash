@@ -1,12 +1,13 @@
-package httplisten
+package inputhttplisten
 
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"net/http"
 )
 
 // ModuleName is the name used in config file
