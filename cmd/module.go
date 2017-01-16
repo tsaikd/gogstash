@@ -13,6 +13,12 @@ var (
 		Usage:   "Path to configuration file",
 		EnvVar:  "CONFIG",
 	}
+	flagDebug = &cobrather.BoolFlag{
+		Name:    "debug",
+		Default: false,
+		Usage:   "Enable debug logging",
+		EnvVar:  "DEBUG",
+	}
 )
 
 // Module info
@@ -24,8 +30,9 @@ var Module = &cobrather.Module{
 	},
 	Flags: []cobrather.Flag{
 		flagConfig,
+		flagDebug,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return gogstash(flagConfig.String())
+		return gogstash(flagConfig.String(), flagDebug.Bool())
 	},
 }

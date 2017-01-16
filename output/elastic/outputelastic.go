@@ -1,9 +1,16 @@
 package outputelastic
 
 import (
+	"encoding/json"
+	"github.com/Sirupsen/logrus"
+	"github.com/hashicorp/go-version"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"gopkg.in/olivere/elastic.v3"
+	"golang.org/x/net/context"
+	elastic3 "gopkg.in/olivere/elastic.v3"
+	elastic5 "gopkg.in/olivere/elastic.v5"
+	"io/ioutil"
+	"net/http"
 )
 
 const (
@@ -12,14 +19,16 @@ const (
 
 type OutputConfig struct {
 	config.OutputConfig
-	URL          string `json:"url"`
-	Index        string `json:"index"`
-	DocumentType string `json:"document_type"`
-	DocumentID   string `json:"document_id"`
+	URL            string `json:"url"`
+	Index          string `json:"index"`
+	DocumentType   string `json:"document_type"`
+	DocumentID     string `json:"document_id"`
+	ElasticVersion string `json:"es_version"` // 3, 5, or auto.
 
 	Sniff bool `json:"sniff"` // find all nodes of your cluster, https://github.com/olivere/elastic/wiki/Sniffing
 
-	client *elastic.Client
+	client        interface{} // we'll cast this to the proper client type when we're ready.
+	clientVersion int         // private var to hold client version to use after detection
 }
 
 func DefaultOutputConfig() OutputConfig {
@@ -29,19 +38,39 @@ func DefaultOutputConfig() OutputConfig {
 				Type: ModuleName,
 			},
 		},
+		ElasticVersion: "auto",
 	}
 }
 
-func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeOutputConfig, err error) {
+func InitHandler(confraw *config.ConfigRaw, logger *logrus.Logger) (retconf config.TypeOutputConfig, err error) {
 	conf := DefaultOutputConfig()
 	if err = config.ReflectConfig(confraw, &conf); err != nil {
 		return
 	}
 
-	conf.client, err = elastic.NewClient(
-		elastic.SetURL(conf.URL),
-		elastic.SetSniff(conf.Sniff),
-	)
+	switch conf.ElasticVersion {
+	case "auto":
+		conf.clientVersion = detectElasticVersion(&conf, logger)
+	case "3":
+		conf.clientVersion = 3
+	case "5":
+		conf.clientVersion = 5
+	default:
+		logger.Fatalf("Invalid config for es_version: expected one of [\"3\",\"5\",\"auto\"] but got: '%v'", conf.ElasticVersion)
+	}
+
+	if conf.clientVersion == 3 {
+		conf.client, err = elastic3.NewClient(
+			elastic3.SetURL(conf.URL),
+			elastic3.SetSniff(conf.Sniff),
+		)
+	} else {
+		conf.client, err = elastic5.NewClient(
+			elastic5.SetURL(conf.URL),
+			elastic5.SetSniff(conf.Sniff),
+		)
+	}
+
 	if err != nil {
 		return
 	}
@@ -50,16 +79,57 @@ func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeOutputConfig, er
 	return
 }
 
+func detectElasticVersion(config *OutputConfig, logger *logrus.Logger) int {
+	response, err := http.Get(config.URL)
+	if err != nil {
+		logger.Errorf("Unable to detect contact Elasticsearch to determine version. Error: %+v", err)
+		return 0
+	}
+	defer response.Body.Close()
+	buf, _ := ioutil.ReadAll(response.Body)
+
+	var dest map[string]interface{}
+	json.Unmarshal(buf, &dest)
+
+	// yeah, i'd rather not make a struct just for this.
+	ver, _ := version.NewVersion(dest["version"].(map[string]interface{})["number"].(string))
+
+	v3constraint, _ := version.NewConstraint(">= 3.0.0, < 5.0.0")
+	v5constraint, _ := version.NewConstraint(">= 5.0.0")
+
+	if v3constraint.Check(ver) {
+		logger.Debug("Detected Elasticsearch version 3")
+		return 3
+	} else if v5constraint.Check(ver) {
+		logger.Debug("Detected Elasticsearch version 5")
+		return 5
+	} else {
+		logger.Errorf("Unable to determine Elasticsearch version from version string: '%+v'", ver)
+	}
+
+	return 0
+
+}
+
 func (t *OutputConfig) Event(event logevent.LogEvent) (err error) {
 	index := event.Format(t.Index)
 	doctype := event.Format(t.DocumentType)
 	id := event.Format(t.DocumentID)
 
-	_, err = t.client.Index().
-		Index(index).
-		Type(doctype).
-		Id(id).
-		BodyJson(event).
-		Do()
+	if t.clientVersion == 3 {
+		_, err = t.client.(*elastic3.Client).Index().
+			Index(index).
+			Type(doctype).
+			Id(id).
+			BodyJson(event).
+			Do()
+	} else if t.clientVersion == 5 {
+		_, err = t.client.(*elastic5.Client).Index().
+			Index(index).
+			Type(doctype).
+			Id(id).
+			BodyJson(event).
+			Do(context.TODO())
+	}
 	return
 }
