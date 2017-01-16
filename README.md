@@ -129,22 +129,32 @@ docker run -it --rm \
 
 ## Supported inputs
 
-See [input module](input) for more information
+See [input modules](input) for more information
 
 * [docker log](input/dockerlog)
 * [docker stats](input/dockerstats)
 * [exec](input/exec)
 * [file](input/file)
 * [http](input/http)
+* [httplisten](input/httplisten)
+* [redis](input/redis)
 * [socket](input/socket)
+
+## Supported filters
+
+See [filter modules](filter) for more information
+
+* [addfield](filter/addfield)
+* [json](filter/json)
 
 ## Supported outputs
 
-See [output module](output) for more information
+See [output modules](output) for more information
 
 * [amqp](output/amqp)
 * [elastic](output/elastic)
+* [email](output/email)
+* [prometheus](output/prometheus)
 * [redis](output/redis)
 * [report](output/report)
 * [stdout](output/stdout)
-* [email](output/email)
