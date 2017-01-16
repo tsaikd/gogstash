@@ -7,14 +7,15 @@ import (
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
-const (
-	ModuleName = "stdout"
-)
+// ModuleName is the name used in config file
+const ModuleName = "stdout"
 
+// OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
 }
 
+// DefaultOutputConfig returns an OutputConfig struct with default values
 func DefaultOutputConfig() OutputConfig {
 	return OutputConfig{
 		OutputConfig: config.OutputConfig{
@@ -25,6 +26,7 @@ func DefaultOutputConfig() OutputConfig {
 	}
 }
 
+// InitHandler initialize the output plugin
 func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeOutputConfig, err error) {
 	conf := DefaultOutputConfig()
 	if err = config.ReflectConfig(confraw, &conf); err != nil {

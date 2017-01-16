@@ -17,10 +17,10 @@ import (
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
-const (
-	ModuleName = "file"
-)
+// ModuleName is the name used in config file
+const ModuleName = "file"
 
+// InputConfig holds the configuration json fields and internal objects
 type InputConfig struct {
 	config.InputConfig
 	Path                 string `json:"path"`
@@ -28,12 +28,13 @@ type InputConfig struct {
 	SinceDBPath          string `json:"sincedb_path,omitempty"`
 	SinceDBWriteInterval int    `json:"sincedb_write_interval,omitempty"`
 
-	hostname            string                  `json:"-"`
+	hostname            string
 	SinceDBInfos        map[string]*SinceDBInfo `json:"-"`
-	sinceDBLastInfosRaw []byte                  `json:"-"`
-	SinceDBLastSaveTime time.Time               `json:"-"`
+	sinceDBLastInfosRaw []byte
+	SinceDBLastSaveTime time.Time `json:"-"`
 }
 
+// DefaultInputConfig returns an InputConfig struct with default values
 func DefaultInputConfig() InputConfig {
 	return InputConfig{
 		InputConfig: config.InputConfig{
@@ -49,6 +50,7 @@ func DefaultInputConfig() InputConfig {
 	}
 }
 
+// InitHandler initialize the input plugin
 func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err error) {
 	conf := DefaultInputConfig()
 	if err = config.ReflectConfig(confraw, &conf); err != nil {
@@ -63,6 +65,7 @@ func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err
 	return
 }
 
+// Start wraps the actual function starting the plugin
 func (t *InputConfig) Start() {
 	t.Invoke(t.start)
 }
@@ -230,7 +233,6 @@ func (self *InputConfig) fileWatchLoop(readEventChan chan fsnotify.Event, fpath 
 		}
 		readEventChan <- event
 	}
-	return
 }
 
 func isFileTruncated(fp *os.File, since *SinceDBInfo) (truncated bool, err error) {
@@ -292,8 +294,6 @@ func readline(reader *bufio.Reader, buffer *bytes.Buffer) (line string, size int
 			return
 		}
 	}
-
-	return
 }
 
 func isPartialLine(segment []byte) bool {
@@ -354,6 +354,4 @@ func waitWatchEvent(fpath string, op fsnotify.Op) (event fsnotify.Event, err err
 			return
 		}
 	}
-
-	return
 }

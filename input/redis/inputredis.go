@@ -3,6 +3,7 @@ package inputredis
 import (
 	"bytes"
 	"encoding/json"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/fzzy/radix/redis"
 	"github.com/tsaikd/gogstash/config"
@@ -14,7 +15,7 @@ const ModuleName = "redis"
 
 const invalidJsonError = "Invalid JSON received from Redis input. Decoder error: %+v"
 
-// InputConfig holds the output configuration json fields
+// InputConfig holds the configuration json fields and internal objects
 type InputConfig struct {
 	config.InputConfig
 	Key               string `json:"key"`

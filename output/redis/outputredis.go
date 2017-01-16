@@ -10,10 +10,10 @@ import (
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
-const (
-	ModuleName = "redis"
-)
+// ModuleName is the name used in config file
+const ModuleName = "redis"
 
+// OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
 	Key               string   `json:"key"`
@@ -27,6 +27,7 @@ type OutputConfig struct {
 	evchan  chan logevent.LogEvent
 }
 
+// DefaultOutputConfig returns an OutputConfig struct with default values
 func DefaultOutputConfig() OutputConfig {
 	return OutputConfig{
 		OutputConfig: config.OutputConfig{
@@ -43,6 +44,7 @@ func DefaultOutputConfig() OutputConfig {
 	}
 }
 
+// InitHandler initialize the output plugin
 func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeOutputConfig, err error) {
 	conf := DefaultOutputConfig()
 	if err = config.ReflectConfig(confraw, &conf); err != nil {
@@ -68,8 +70,6 @@ func (self *OutputConfig) loop() (err error) {
 		event := <-self.evchan
 		self.sendEvent(event)
 	}
-
-	return
 }
 
 func (self *OutputConfig) initRedisClient() (err error) {
@@ -149,8 +149,6 @@ func (self *OutputConfig) sendEvent(event logevent.LogEvent) (err error) {
 
 		time.Sleep(time.Duration(self.ReconnectInterval) * time.Second)
 	}
-
-	return
 }
 
 func (self *OutputConfig) redisSend(client *redis.Client, key string, raw []byte) (err error) {

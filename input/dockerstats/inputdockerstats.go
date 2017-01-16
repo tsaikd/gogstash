@@ -11,10 +11,10 @@ import (
 	"github.com/tsaikd/gogstash/config"
 )
 
-const (
-	ModuleName = "dockerstats"
-)
+// ModuleName is the name used in config file
+const ModuleName = "dockerstats"
 
+// InputConfig holds the configuration json fields and internal objects
 type InputConfig struct {
 	config.InputConfig
 	DockerURL               string   `json:"dockerurl"`
@@ -32,6 +32,7 @@ type InputConfig struct {
 	client   *docker.Client
 }
 
+// DefaultInputConfig returns an InputConfig struct with default values
 func DefaultInputConfig() InputConfig {
 	return InputConfig{
 		InputConfig: config.InputConfig{
@@ -48,6 +49,7 @@ func DefaultInputConfig() InputConfig {
 	}
 }
 
+// InitHandler initialize the input plugin
 func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err error) {
 	conf := DefaultInputConfig()
 	if err = config.ReflectConfig(confraw, &conf); err != nil {
@@ -73,6 +75,7 @@ func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err
 	return
 }
 
+// Start wraps the actual function starting the plugin
 func (t *InputConfig) Start() {
 	t.Invoke(t.start)
 }

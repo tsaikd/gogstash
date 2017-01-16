@@ -2,6 +2,9 @@ package outputelastic
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/hashicorp/go-version"
 	"github.com/tsaikd/gogstash/config"
@@ -9,14 +12,12 @@ import (
 	"golang.org/x/net/context"
 	elastic3 "gopkg.in/olivere/elastic.v3"
 	elastic5 "gopkg.in/olivere/elastic.v5"
-	"io/ioutil"
-	"net/http"
 )
 
-const (
-	ModuleName = "elastic"
-)
+// ModuleName is the name used in config file
+const ModuleName = "elastic"
 
+// OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
 	URL            string `json:"url"`
@@ -31,6 +32,7 @@ type OutputConfig struct {
 	clientVersion int         // private var to hold client version to use after detection
 }
 
+// DefaultOutputConfig returns an OutputConfig struct with default values
 func DefaultOutputConfig() OutputConfig {
 	return OutputConfig{
 		OutputConfig: config.OutputConfig{
@@ -42,6 +44,7 @@ func DefaultOutputConfig() OutputConfig {
 	}
 }
 
+// InitHandler initialize the output plugin
 func InitHandler(confraw *config.ConfigRaw, logger *logrus.Logger) (retconf config.TypeOutputConfig, err error) {
 	conf := DefaultOutputConfig()
 	if err = config.ReflectConfig(confraw, &conf); err != nil {

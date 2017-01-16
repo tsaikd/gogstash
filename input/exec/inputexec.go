@@ -15,10 +15,10 @@ import (
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
-const (
-	ModuleName = "exec"
-)
+// ModuleName is the name used in config file
+const ModuleName = "exec"
 
+// InputConfig holds the configuration json fields and internal objects
 type InputConfig struct {
 	config.InputConfig
 	Command   string   `json:"command"`                  // Command to run. e.g. “uptime”
@@ -28,9 +28,10 @@ type InputConfig struct {
 	MsgPrefix string   `json:"message_prefix,omitempty"` // only in text type, e.g. "%{@timestamp} [uptime] "
 	MsgType   MsgType  `json:"message_type,omitempty"`   // default: "text"
 
-	hostname string `json:"-"`
+	hostname string
 }
 
+// DefaultInputConfig returns an InputConfig struct with default values
 func DefaultInputConfig() InputConfig {
 	return InputConfig{
 		InputConfig: config.InputConfig{
@@ -44,6 +45,7 @@ func DefaultInputConfig() InputConfig {
 	}
 }
 
+// InitHandler initialize the input plugin
 func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err error) {
 	conf := DefaultInputConfig()
 	if err = config.ReflectConfig(confraw, &conf); err != nil {
@@ -58,6 +60,7 @@ func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err
 	return
 }
 
+// Start wraps the actual function starting the plugin
 func (self *InputConfig) Start() {
 	startChan := make(chan bool) // startup tick
 	ticker := time.NewTicker(time.Duration(self.Interval) * time.Second)

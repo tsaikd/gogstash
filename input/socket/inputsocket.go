@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -18,7 +17,7 @@ import (
 // ModuleName is the name used in config file
 const ModuleName = "socket"
 
-// InputConfig holds the output configuration json fields
+// InputConfig holds the configuration json fields and internal objects
 type InputConfig struct {
 	config.InputConfig
 	Socket  string `json:"socket"`  // Type of socket, must be one of ["tcp", "unix", "unixpacket"].

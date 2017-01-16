@@ -5,15 +5,14 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
-const (
-	ModuleName = "report"
-)
+// ModuleName is the name used in config file
+const ModuleName = "report"
 
+// OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
 	Interval     int    `json:"interval,omitempty"`
@@ -23,6 +22,7 @@ type OutputConfig struct {
 	ProcessCount int `json:"-"`
 }
 
+// DefaultOutputConfig returns an OutputConfig struct with default values
 func DefaultOutputConfig() OutputConfig {
 	return OutputConfig{
 		OutputConfig: config.OutputConfig{
@@ -35,6 +35,7 @@ func DefaultOutputConfig() OutputConfig {
 	}
 }
 
+// InitHandler initialize the output plugin
 func InitHandler(confraw *config.ConfigRaw, logger *logrus.Logger) (retconf config.TypeOutputConfig, err error) {
 	conf := DefaultOutputConfig()
 	if err = config.ReflectConfig(confraw, &conf); err != nil {

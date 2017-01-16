@@ -17,7 +17,7 @@ const invalidMethodError = "Method not allowed: '%v'"
 const invalidJsonError = "Invalid JSON received on HTTP listener. Decoder error: %+v"
 const invalidAccessToken = "Invalid access token. Access denied."
 
-// InputConfig holds the output configuration json fields
+// InputConfig holds the configuration json fields and internal objects
 type InputConfig struct {
 	config.InputConfig
 	Address       string   `json:"address"`        // host:port to listen on

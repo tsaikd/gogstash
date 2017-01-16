@@ -93,5 +93,4 @@ func (self *InputConfig) CheckSaveSinceDBInfosLoop() (err error) {
 			return
 		}
 	}
-	return
 }

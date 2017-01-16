@@ -23,7 +23,7 @@ var (
 	ErrorNoValidConn = errutil.NewFactory("no valid amqp server connection found")
 )
 
-// OutputConfig holds the output configuration json fields and internal objects
+// OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
 	URLs               []string `json:"urls"`                           // Array of AMQP connection strings formatted per the [RabbitMQ URI Spec](http://www.rabbitmq.com/uri-spec.html).

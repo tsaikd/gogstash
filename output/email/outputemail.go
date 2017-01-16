@@ -9,12 +9,10 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-// ModuleName the module name of this plugin
-const (
-	ModuleName = "email"
-)
+// ModuleName is the name used in config file
+const ModuleName = "email"
 
-// OutputConfig the default output config
+// OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
 	Address     string   `json:"address"`
@@ -29,7 +27,7 @@ type OutputConfig struct {
 	Password    string   `json:"password"`
 }
 
-// DefaultOutputConfig build the default output config
+// DefaultOutputConfig returns an OutputConfig struct with default values
 func DefaultOutputConfig() OutputConfig {
 	return OutputConfig{
 		OutputConfig: config.OutputConfig{
@@ -46,7 +44,7 @@ func DefaultOutputConfig() OutputConfig {
 	}
 }
 
-// InitHandler init the handler
+// InitHandler initialize the output plugin
 func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeOutputConfig, err error) {
 	conf := DefaultOutputConfig()
 	if err = config.ReflectConfig(confraw, &conf); err != nil {
