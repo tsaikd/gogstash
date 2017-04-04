@@ -4,7 +4,7 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
-			"Rev": "ccd3bf13554df0fc1527a78e3ff2bbde5e2a266f"
+			"Rev": "318513eb1ab27495afbc67f671ba1080513d8aa0"
 		},
 		{
 			"ImportPath": "github.com/fzzy/radix",
