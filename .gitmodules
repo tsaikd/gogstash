@@ -10,6 +10,3 @@
 [submodule "vendor/github.com/tsaikd/KDGoLib"]
 	path = vendor/github.com/tsaikd/KDGoLib
 	url = https://github.com/tsaikd/KDGoLib
-[submodule "vendor/gopkg.in/olivere/elastic.v3"]
-	path = vendor/gopkg.in/olivere/elastic.v3
-	url = https://gopkg.in/olivere/elastic.v3

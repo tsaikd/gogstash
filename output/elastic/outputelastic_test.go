@@ -20,7 +20,7 @@ func init() {
 	config.RegistOutputHandler(ModuleName, InitHandler)
 }
 
-func Test_main(t *testing.T) {
+func Test_output_test_message_to_elastic(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
@@ -38,8 +38,8 @@ func Test_main(t *testing.T) {
 	err = conf.RunOutputs()
 	require.NoError(err)
 
-	evchan := conf.Get(reflect.TypeOf(make(chan logevent.LogEvent))).
-		Interface().(chan logevent.LogEvent)
+	evchan := conf.Get(reflect.TypeOf(make(config.OutChan))).
+		Interface().(config.OutChan)
 	evchan <- logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   "outputstdout test message",
