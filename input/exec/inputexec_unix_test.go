@@ -22,7 +22,7 @@ func Test_text(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"input": [{
 			"type": "exec",
 			"command": "uptime",
@@ -36,7 +36,7 @@ func Test_text(t *testing.T) {
 			"interval": 3,
 			"message_prefix": "%{@timestamp} "
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	err = conf.RunInputs()
@@ -51,14 +51,14 @@ func Test_json(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"input": [{
 			"type": "exec",
 			"command": "./test_json.sh",
 			"interval": 1,
 			"message_type": "json"
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	err = conf.RunInputs()

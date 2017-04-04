@@ -25,19 +25,19 @@ func Test_main(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"output": [{
 			"type": "redis",
 			"host": ["127.0.0.1:6379"]
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	err = conf.RunOutputs()
 	require.NoError(err)
 
-	evchan := conf.Get(reflect.TypeOf(make(chan logevent.LogEvent))).
-		Interface().(chan logevent.LogEvent)
+	evchan := conf.Get(reflect.TypeOf(make(config.OutChan))).
+		Interface().(config.OutChan)
 	evchan <- logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   "outputstdout test message",

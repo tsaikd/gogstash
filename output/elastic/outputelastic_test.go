@@ -24,7 +24,7 @@ func Test_output_test_message_to_elastic(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"output": [{
 			"type": "elastic",
 			"url": "http://127.0.0.1:9200",
@@ -32,7 +32,7 @@ func Test_output_test_message_to_elastic(t *testing.T) {
 			"document_type": "testtype",
 			"document_id": "%{fieldstring}"
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	err = conf.RunOutputs()

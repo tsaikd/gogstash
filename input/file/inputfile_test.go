@@ -22,14 +22,14 @@ func Test_main(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"input": [{
 			"type": "file",
 			"path": "/tmp/log/syslog",
 			"sincedb_path": "",
 			"start_position": "beginning"
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	err = conf.RunInputs()

@@ -24,14 +24,14 @@ func Test_main(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"filter": [{
 			"type": "json",
-            "message": "message",
-            "timestamp": "time",
-            "timeformat": "2006-01-02T15:04:05Z"
+			"message": "message",
+			"timestamp": "time",
+			"timeformat": "2006-01-02T15:04:05Z"
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	timestamp, _ := time.Parse("2006-01-02T15:04:05Z", "2016-12-04T09:09:41.193Z")

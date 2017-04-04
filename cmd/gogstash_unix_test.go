@@ -14,7 +14,7 @@ func Test_gogstash(t *testing.T) {
 
 	logger := config.Logger
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"input": [{
 			"type": "exec",
 			"command": "uptime",
@@ -31,7 +31,7 @@ func Test_gogstash(t *testing.T) {
 		"output": [{
 			"type": "stdout"
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	_, err = conf.Invoke(conf.RunInputs)

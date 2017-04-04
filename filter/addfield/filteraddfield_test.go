@@ -24,13 +24,13 @@ func Test_main(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"filter": [{
 			"type": "add_field",
 			"key": "foo",
 			"value": "bar"
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	timestamp := time.Now()

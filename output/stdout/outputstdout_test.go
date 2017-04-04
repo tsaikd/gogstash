@@ -24,11 +24,11 @@ func Test_main(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"output": [{
 			"type": "stdout"
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	err = conf.RunOutputs()

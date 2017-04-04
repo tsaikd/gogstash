@@ -22,13 +22,13 @@ func Test_main(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"input": [{
 			"type": "dockerlog",
 			"dockerurl": "unix:///var/run/docker.sock",
 			"sincepath": "sincedb-%{USER}"
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	err = conf.RunInputs()

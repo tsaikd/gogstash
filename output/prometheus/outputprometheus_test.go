@@ -27,11 +27,11 @@ func Test_main(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"output": [{
 			"type": "prometheus"
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	err = conf.RunOutputs()

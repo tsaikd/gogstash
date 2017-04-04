@@ -111,6 +111,18 @@ curl 'https://github.com/tsaikd/gogstash/releases/download/0.1.8/gogstash-Linux-
 }
 ```
 
+* Config format with YAML for dockerstats.json (example)
+```
+input:
+  - type: dockerstats
+output:
+  - type: report
+  - type: redis
+    key: "gogstash-docker-%{host}"
+    host:
+      - "127.0.0.1:6379"
+```
+
 * Run gogstash for nginx example (command line)
 ```
 GOMAXPROCS=4 ./gogstash --CONFIG nginx.json

@@ -22,14 +22,14 @@ func Test_main(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"input": [{
 			"type": "http",
 			"method": "GET",
 			"url": "http://127.0.0.1/",
 			"interval": 3
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	err = conf.RunInputs()

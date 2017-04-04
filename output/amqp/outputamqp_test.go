@@ -25,14 +25,14 @@ func Test_WithoutAMQPServer(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"output": [{
 			"type": "amqp",
 			"urls": ["amqp://guest:guest@localhost:5566/"],
 			"exchange": "amq.topic",
 			"exchange_type": "topic"
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	err = conf.RunOutputs()
@@ -47,14 +47,14 @@ func Test_main(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
 		"output": [{
 			"type": "amqp",
 			"urls": ["amqp://guest:guest@localhost:5672/"],
 			"exchange": "amq.topic",
 			"exchange_type": "topic"
 		}]
-	}`)
+	}`))
 	require.NoError(err)
 
 	err = conf.RunOutputs()

@@ -25,7 +25,7 @@ func Test_main(t *testing.T) {
 	require.NotNil(require)
 
 	// Please fill the correct email info xxx is just a placeholder
-	conf, err := config.LoadFromString(`{
+	conf, err := config.LoadFromJSON([]byte(`{
         "output": [{
             "type": "email",
             "address": "xxx",
@@ -38,7 +38,7 @@ func Test_main(t *testing.T) {
             "password": "xxx",
             "subject": "outputemail test subject"
         }]
-    }`)
+    }`))
 	require.NoError(err)
 
 	err = conf.RunOutputs()

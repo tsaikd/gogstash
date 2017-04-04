@@ -23,23 +23,25 @@ func TestSocketInput(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromString(`{
-		"input": [{
-        "type": "socket",
-        "socket": "unix",
-        "address": "/tmp/unix.sock"
-    },
-    {
-        "type": "socket",
-        "socket": "unixpacket",
-        "address": "/tmp/unixpacket.sock"
-    },
-    {
-        "type": "socket",
-        "socket": "tcp",
-        "address": ":9999"
-    }]
-	}`)
+	conf, err := config.LoadFromJSON([]byte(`{
+	"input": [
+		{
+			"type": "socket",
+			"socket": "unix",
+			"address": "/tmp/unix.sock"
+		},
+		{
+			"type": "socket",
+			"socket": "unixpacket",
+			"address": "/tmp/unixpacket.sock"
+		},
+		{
+			"type": "socket",
+			"socket": "tcp",
+			"address": ":9999"
+		}
+	]
+	}`))
 	require.NoError(err)
 
 	err = conf.RunInputs()
