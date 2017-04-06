@@ -3,6 +3,7 @@ package inputredis
 import (
 	"bytes"
 	"encoding/json"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/fzzy/radix/redis"
@@ -66,7 +67,6 @@ func (i *InputConfig) closeRedisClients() (err error) {
 
 // Open connections to redis server
 func (i *InputConfig) initRedisClients() error {
-
 	i.closeRedisClients()
 
 	for j := 0; j < i.Connections; j++ {
@@ -126,8 +126,24 @@ func (i *InputConfig) inputHandler(logger *logrus.Logger, inchan config.InChan, 
 			continue
 		}
 
+		event := logevent.LogEvent{Extra: jsonMsg}
+
+		// try to fill basic log event by json message
+		if value, ok := jsonMsg["message"]; ok {
+			switch v := value.(type) {
+			case string:
+				event.Message = v
+			}
+		}
+		if value, ok := jsonMsg["@timestamp"]; ok {
+			switch v := value.(type) {
+			case string:
+				event.Timestamp, _ = time.Parse(time.RFC3339Nano, v)
+			}
+		}
+
 		// send the event as it came to us
-		inchan <- logevent.LogEvent{Extra: jsonMsg}
+		inchan <- event
 	}
 
 	// Somehow I encountered an error and died. Don't stay dead!
