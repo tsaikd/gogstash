@@ -73,23 +73,37 @@ func (t LogEvent) Get(field string) (v interface{}) {
 	return
 }
 
-func (t LogEvent) GetString(field string) (v string) {
+func (t LogEvent) GetString(field string) string {
 	switch field {
 	case "@timestamp":
-		v = t.Timestamp.UTC().Format(timeFormat)
+		return t.Timestamp.UTC().Format(timeFormat)
 	case "message":
-		v = t.Message
+		return t.Message
 	default:
-		if value, ok := t.Extra[field]; ok {
-			v = fmt.Sprintf("%v", value)
-		}
+		return getStringFromObject(t.Extra, field)
 	}
-	return
+}
+
+func getStringFromObject(obj map[string]interface{}, field string) string {
+	fieldSplits := strings.Split(field, ".")
+	if len(fieldSplits) < 2 {
+		if value, ok := obj[field]; ok {
+			return fmt.Sprintf("%v", value)
+		}
+		return ""
+	}
+
+	switch child := obj[fieldSplits[0]].(type) {
+	case map[string]interface{}:
+		return getStringFromObject(child, strings.Join(fieldSplits[1:], "."))
+	default:
+		return fmt.Sprintf("%v", child)
+	}
 }
 
 var (
 	retime = regexp.MustCompile(`%{\+([^}]+)}`)
-	revar  = regexp.MustCompile(`%{([\w@]+)}`)
+	revar  = regexp.MustCompile(`%{([\w@\.]+)}`)
 )
 
 // FormatWithEnv format string with environment value, ex: %{HOSTNAME}

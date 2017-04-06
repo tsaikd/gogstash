@@ -3,7 +3,10 @@ package modloader
 import (
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/filter/addfield"
+	"github.com/tsaikd/gogstash/filter/date"
+	"github.com/tsaikd/gogstash/filter/gonx"
 	"github.com/tsaikd/gogstash/filter/json"
+	"github.com/tsaikd/gogstash/filter/removefield"
 	"github.com/tsaikd/gogstash/input/dockerlog"
 	"github.com/tsaikd/gogstash/input/dockerstats"
 	"github.com/tsaikd/gogstash/input/exec"
@@ -32,7 +35,10 @@ func init() {
 	config.RegistInputHandler(inputredis.ModuleName, inputredis.InitHandler)
 
 	config.RegistFilterHandler(filteraddfield.ModuleName, filteraddfield.InitHandler)
+	config.RegistFilterHandler(filterdate.ModuleName, filterdate.InitHandler)
+	config.RegistFilterHandler(filtergonx.ModuleName, filtergonx.InitHandler)
 	config.RegistFilterHandler(filterjson.ModuleName, filterjson.InitHandler)
+	config.RegistFilterHandler(filterremovefield.ModuleName, filterremovefield.InitHandler)
 
 	config.RegistOutputHandler(outputstdout.ModuleName, outputstdout.InitHandler)
 	config.RegistOutputHandler(outputelastic.ModuleName, outputelastic.InitHandler)

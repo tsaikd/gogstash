@@ -60,8 +60,7 @@ func (t *Config) getInputs(inchan InChan) (inputs []TypeInputConfig, err error) 
 		inj.Map(inchan)
 		refvs, err := injectutil.Invoke(inj, handler)
 		if err != nil {
-			err = ErrorRunInput1.New(err, confraw)
-			return []TypeInputConfig{}, err
+			return []TypeInputConfig{}, ErrorRunInput1.New(err, confraw)
 		}
 
 		for _, refv := range refvs {

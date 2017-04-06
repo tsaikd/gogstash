@@ -47,6 +47,9 @@ func Test_Format(t *testing.T) {
 			"float":  1.23,
 			"string": "Test String",
 			"time":   time.Now(),
+			"child": map[string]interface{}{
+				"childA": "foo",
+			},
 		},
 	}
 
@@ -65,6 +68,9 @@ func Test_Format(t *testing.T) {
 
 	out = logevent.Format("%{string}")
 	assert.Equal("Test String", out)
+
+	out = logevent.Format("%{child.childA}")
+	assert.Equal("foo", out)
 
 	out = logevent.Format("time string %{+2006-01-02}")
 	nowdatestring := time.Now().Format("2006-01-02")

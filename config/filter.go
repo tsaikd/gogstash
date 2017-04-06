@@ -69,8 +69,7 @@ func (c *Config) getFilters() (filters []TypeFilterConfig, err error) {
 		inj.Map(&confraw)
 		refvs, err := injectutil.Invoke(inj, handler)
 		if err != nil {
-			err = ErrorInitFilter.New(err, confraw)
-			return []TypeFilterConfig{}, err
+			return []TypeFilterConfig{}, ErrorInitFilter.New(err, confraw)
 		}
 
 		for _, refv := range refvs {

@@ -72,8 +72,7 @@ func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
 		inj.Map(&confraw)
 		refvs, err := injectutil.Invoke(inj, handler)
 		if err != nil {
-			err = ErrorRunOutput1.New(err, confraw)
-			return []TypeOutputConfig{}, err
+			return []TypeOutputConfig{}, ErrorRunOutput1.New(err, confraw)
 		}
 
 		for _, refv := range refvs {

@@ -1,13 +1,14 @@
 package cmd
 
 import (
+	"os"
+	"os/signal"
 	"runtime"
-	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/tsaikd/gogstash/config"
 
 	// module loader
-	"github.com/Sirupsen/logrus"
 	_ "github.com/tsaikd/gogstash/modloader"
 )
 
@@ -41,8 +42,12 @@ func gogstash(confpath string, debug bool) (err error) {
 
 	logger.Info("gogstash started...")
 
-	for {
-		// all event run in routine, go into infinite sleep
-		time.Sleep(1 * time.Hour)
-	}
+	syssigChan := make(chan os.Signal, 1)
+	signal.Notify(syssigChan, os.Interrupt)
+	signal.Notify(syssigChan, os.Kill)
+	// all event run in routine, wait for Interrupt
+	syssig := <-syssigChan
+	logger.Info(syssig)
+
+	return
 }
