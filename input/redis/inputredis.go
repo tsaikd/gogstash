@@ -69,7 +69,7 @@ func (i *InputConfig) initRedisClients() error {
 
 	i.closeRedisClients()
 
-	for j := 0; j <= i.Connections; j++ {
+	for j := 0; j < i.Connections; j++ {
 		if client, err := redis.Dial("tcp", i.Host); err == nil {
 			i.clients = append(i.clients, client)
 		} else {
