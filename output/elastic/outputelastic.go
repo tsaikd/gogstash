@@ -1,6 +1,8 @@
 package outputelastic
 
 import (
+	"strings"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -55,6 +57,8 @@ func InitHandler(confraw *config.ConfigRaw, logger *logrus.Logger) (retconf conf
 
 func (t *OutputConfig) Event(event logevent.LogEvent) (err error) {
 	index := event.Format(t.Index)
+	// elastic index name should be lowercase
+	index = strings.ToLower(index)
 	doctype := event.Format(t.DocumentType)
 	id := event.Format(t.DocumentID)
 
