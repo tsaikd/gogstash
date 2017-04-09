@@ -7,6 +7,7 @@ import (
 	"github.com/tsaikd/gogstash/filter/geoip2"
 	"github.com/tsaikd/gogstash/filter/gonx"
 	"github.com/tsaikd/gogstash/filter/json"
+	"github.com/tsaikd/gogstash/filter/ratelimit"
 	"github.com/tsaikd/gogstash/filter/removefield"
 	"github.com/tsaikd/gogstash/filter/typeconv"
 	"github.com/tsaikd/gogstash/input/dockerlog"
@@ -41,6 +42,7 @@ func init() {
 	config.RegistFilterHandler(filtergeoip2.ModuleName, filtergeoip2.InitHandler)
 	config.RegistFilterHandler(filtergonx.ModuleName, filtergonx.InitHandler)
 	config.RegistFilterHandler(filterjson.ModuleName, filterjson.InitHandler)
+	config.RegistFilterHandler(filterratelimit.ModuleName, filterratelimit.InitHandler)
 	config.RegistFilterHandler(filterremovefield.ModuleName, filterremovefield.InitHandler)
 	config.RegistFilterHandler(filtertypeconv.ModuleName, filtertypeconv.InitHandler)
 
