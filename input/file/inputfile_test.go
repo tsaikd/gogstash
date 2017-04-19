@@ -1,10 +1,12 @@
 package inputfile
 
 import (
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
 )
@@ -18,24 +20,25 @@ func init() {
 	config.RegistInputHandler(ModuleName, InitHandler)
 }
 
-func Test_main(t *testing.T) {
+func Test_input_file_module(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromJSON([]byte(`{
-		"input": [{
-			"type": "file",
-			"path": "/tmp/log/syslog",
-			"sincedb_path": "",
-			"start_position": "beginning"
-		}]
-	}`))
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+input:
+  - type: file
+    path: "./README.md"
+    sincedb_path: ""
+    start_position: beginning
+	`)))
 	require.NoError(err)
+	require.NoError(conf.Start())
 
-	err = conf.RunInputs()
-	require.NoError(err)
-
-	waitsec := 10
-	logger.Infof("Wait for %d seconds", waitsec)
-	time.Sleep(time.Duration(waitsec) * time.Second)
+	time.Sleep(500 * time.Millisecond)
+	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {
+		require.Equal("gogstash input file", event.Message)
+	}
 }

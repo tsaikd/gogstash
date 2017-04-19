@@ -1,6 +1,7 @@
 package filtergonx
 
 import (
+	"context"
 	"regexp"
 	"strings"
 
@@ -11,7 +12,10 @@ import (
 )
 
 // ModuleName is the name used in config file
-const ModuleName = "nginx"
+const ModuleName = "gonx"
+
+// ErrorTag tag added to event when process module failed
+const ErrorTag = "gogstash_filter_gonx_error"
 
 // Errors
 var (
@@ -42,16 +46,17 @@ func DefaultFilterConfig() FilterConfig {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeFilterConfig, err error) {
+func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
-	if err = config.ReflectConfig(confraw, &conf); err != nil {
-		return
+	err := config.ReflectConfig(raw, &conf)
+	if err != nil {
+		return nil, err
 	}
 
 	reFields := regexp.MustCompile(`\$([A-Za-z0-9_]+)`)
 	fieldMatches := reFields.FindAllStringSubmatch(conf.Format, -1)
 	if len(fieldMatches) < 1 {
-		return retconf, ErrorNoFieldInNginxFormat1.New(nil, conf.Format)
+		return nil, ErrorNoFieldInNginxFormat1.New(nil, conf.Format)
 	}
 
 	conf.fields = make([]string, len(fieldMatches))
@@ -59,12 +64,11 @@ func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeFilterConfig, er
 		conf.fields[i] = fieldInfo[1]
 	}
 
-	retconf = &conf
-	return
+	return &conf, nil
 }
 
 // Event the main filter event
-func (f *FilterConfig) Event(event logevent.LogEvent) logevent.LogEvent {
+func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	if event.Extra == nil {
 		event.Extra = map[string]interface{}{}
 	}
@@ -73,7 +77,7 @@ func (f *FilterConfig) Event(event logevent.LogEvent) logevent.LogEvent {
 	reader := gonx.NewReader(strings.NewReader(message), f.Format)
 	entry, err := reader.Read()
 	if err != nil {
-		event.AddTag("filter_nginx_invalid_message_format")
+		event.AddTag(ErrorTag)
 		config.Logger.Errorf("%s: %q", err, message)
 		return event
 	}

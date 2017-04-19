@@ -1,6 +1,7 @@
 package filtertypeconv
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -45,24 +46,23 @@ func DefaultFilterConfig() FilterConfig {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeFilterConfig, err error) {
+func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
-	if err = config.ReflectConfig(confraw, &conf); err != nil {
-		return
+	if err := config.ReflectConfig(raw, &conf); err != nil {
+		return nil, err
 	}
 
 	switch conf.ConvType {
 	case convTypeString, convTypeInt64, convTypeFloat64:
 	default:
-		return &conf, ErrorInvalidConvType1.New(nil, conf.ConvType)
+		return nil, ErrorInvalidConvType1.New(nil, conf.ConvType)
 	}
 
-	retconf = &conf
-	return
+	return &conf, nil
 }
 
 // Event the main filter event
-func (f *FilterConfig) Event(event logevent.LogEvent) logevent.LogEvent {
+func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	if event.Extra == nil {
 		event.Extra = map[string]interface{}{}
 	}

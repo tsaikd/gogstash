@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-	"os/signal"
 	"runtime"
 
 	"github.com/Sirupsen/logrus"
@@ -28,26 +26,16 @@ func gogstash(confpath string, debug bool) (err error) {
 		return
 	}
 
-	if err = conf.RunInputs(); err != nil {
-		return
-	}
-
-	if err = conf.RunFilters(); err != nil {
-		return
-	}
-
-	if err = conf.RunOutputs(); err != nil {
+	if err = conf.Start(); err != nil {
 		return
 	}
 
 	logger.Info("gogstash started...")
 
-	syssigChan := make(chan os.Signal, 1)
-	signal.Notify(syssigChan, os.Interrupt)
-	signal.Notify(syssigChan, os.Kill)
-	// all event run in routine, wait for Interrupt
-	syssig := <-syssigChan
-	logger.Info(syssig)
+	// Check whether any goroutines failed.
+	if err = conf.Wait(); err != nil {
+		return
+	}
 
 	return
 }

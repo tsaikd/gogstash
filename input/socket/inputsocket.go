@@ -2,16 +2,17 @@ package inputsocket
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net"
 	"os"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
+	"golang.org/x/sync/errgroup"
 )
 
 // ModuleName is the name used in config file
@@ -35,21 +36,25 @@ func DefaultInputConfig() InputConfig {
 	}
 }
 
+// errors
+var (
+	ErrorUnknownSocketType1 = errutil.NewFactory("%q is not a valid socket type")
+	ErrorSocketAccept       = errutil.NewFactory("socket accept error")
+)
+
 // InitHandler initialize the input plugin
-func InitHandler(confraw *config.ConfigRaw) (config.TypeInputConfig, error) {
+func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
-	if err := config.ReflectConfig(confraw, &conf); err != nil {
+	if err := config.ReflectConfig(raw, &conf); err != nil {
 		return nil, err
 	}
 	return &conf, nil
 }
 
 // Start wraps the actual function starting the plugin
-func (i *InputConfig) Start() {
-	i.Invoke(i.start)
-}
-
-func (i *InputConfig) start(logger *logrus.Logger, inchan config.InChan) {
+func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) error {
+	eg, ctx := errgroup.WithContext(ctx)
+	logger := config.Logger
 	var l net.Listener
 
 	switch i.Socket {
@@ -59,41 +64,59 @@ func (i *InputConfig) start(logger *logrus.Logger, inchan config.InChan) {
 		// Listen to socket
 		address, err := net.ResolveUnixAddr(i.Socket, i.Address)
 		if err != nil {
-			logger.Fatal(err)
+			return err
 		}
+		logger.Debugf("listen %q on %q", i.Socket, i.Address)
 		l, err = net.ListenUnix(i.Socket, address)
 		if err != nil {
-			logger.Fatal(err)
+			return err
 		}
+		defer l.Close()
 		// Set socket permissions.
 		if err = os.Chmod(i.Address, 0777); err != nil {
-			logger.Fatal(err)
+			return err
 		}
-
 	case "tcp":
 		address, err := net.ResolveTCPAddr(i.Socket, i.Address)
 		if err != nil {
-			logger.Fatal(err)
+			return err
 		}
+		logger.Debugf("listen %q on %q", i.Socket, address.String())
 		l, err = net.ListenTCP(i.Socket, address)
 		if err != nil {
-			logger.Fatal(err)
+			return err
 		}
-
+		defer l.Close()
 	default:
-		logger.Fatal(errutil.NewFactory(i.Socket + " is not a valid socket type."))
+		return ErrorUnknownSocketType1.New(nil, i.Socket)
 	}
 
-	for {
-		conn, err := l.Accept()
-		if err != nil {
-			logger.Error(ModuleName, ": socket accept error.", err)
+	eg.Go(func() error {
+		select {
+		case <-ctx.Done():
+			return l.Close()
 		}
-		go parse(conn, logger, inchan)
-	}
+	})
+
+	eg.Go(func() error {
+		for {
+			conn, err := l.Accept()
+			if err != nil {
+				return ErrorSocketAccept.New(err)
+			}
+			func(conn net.Conn) {
+				eg.Go(func() error {
+					parse(ctx, conn, msgChan)
+					return nil
+				})
+			}(conn)
+		}
+	})
+
+	return eg.Wait()
 }
 
-func parse(conn net.Conn, logger *logrus.Logger, inchan config.InChan) {
+func parse(ctx context.Context, conn net.Conn, msgChan chan<- logevent.LogEvent) {
 	defer conn.Close()
 
 	// Duplicate buffer to be able to read it even after failed json decoding
@@ -102,6 +125,12 @@ func parse(conn net.Conn, logger *logrus.Logger, inchan config.InChan) {
 
 	dec := json.NewDecoder(stream)
 	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
 		// Assume first the message is JSON and try to decode it
 		var jsonMsg map[string]interface{}
 		if err := dec.Decode(&jsonMsg); err == io.EOF {
@@ -111,7 +140,7 @@ func parse(conn net.Conn, logger *logrus.Logger, inchan config.InChan) {
 			// and send a log event per line
 			for {
 				line, err := streamCopy.ReadString('\n')
-				inchan <- logevent.LogEvent{
+				msgChan <- logevent.LogEvent{
 					Timestamp: time.Now(),
 					Message:   line,
 				}
@@ -121,6 +150,6 @@ func parse(conn net.Conn, logger *logrus.Logger, inchan config.InChan) {
 			}
 			break
 		}
-		inchan <- logevent.LogEvent{Extra: jsonMsg}
+		msgChan <- logevent.LogEvent{Extra: jsonMsg}
 	}
 }

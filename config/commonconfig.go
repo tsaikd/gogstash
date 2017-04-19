@@ -1,33 +1,19 @@
 package config
 
-import (
-	"reflect"
-
-	"github.com/codegangsta/inject"
-	"github.com/tsaikd/KDGoLib/injectutil"
-)
-
-type TypeConfig interface {
-	SetInjector(inj inject.Injector)
+// TypeCommonConfig is interface of basic config
+type TypeCommonConfig interface {
 	GetType() string
-	Invoke(f interface{}) (refvs []reflect.Value, err error)
 }
 
+// CommonConfig is basic config struct
 type CommonConfig struct {
-	inject.Injector `json:"-"`
-	Type            string `json:"type"`
+	Type string `json:"type"`
 }
 
-func (t *CommonConfig) SetInjector(inj inject.Injector) {
-	t.Injector = inj
-}
-
-func (t *CommonConfig) GetType() string {
+// GetType return module type of config
+func (t CommonConfig) GetType() string {
 	return t.Type
 }
 
-func (t *CommonConfig) Invoke(f interface{}) (refvs []reflect.Value, err error) {
-	return injectutil.Invoke(t.Injector, f)
-}
-
+// ConfigRaw is general config struct
 type ConfigRaw map[string]interface{}

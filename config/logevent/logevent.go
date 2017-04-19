@@ -117,6 +117,10 @@ func FormatWithEnv(text string) (result string) {
 		value := os.Getenv(field)
 		if value != "" {
 			result = strings.Replace(result, submatches[0], value, -1)
+		} else if field == "HOSTNAME" {
+			if value, _ := os.Hostname(); value != "" {
+				result = strings.Replace(result, submatches[0], value, -1)
+			}
 		}
 	}
 

@@ -1,11 +1,12 @@
 package outputreport
 
 import (
-	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -20,38 +21,31 @@ func init() {
 	config.RegistOutputHandler(ModuleName, InitHandler)
 }
 
-func Test_main(t *testing.T) {
+func Test_output_report_module(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromJSON([]byte(`{
-		"output": [{
-			"type": "report",
-			"interval": 1
-		}]
-	}`))
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+output:
+  - type: report
+    interval: 1
+	`)))
 	require.NoError(err)
+	require.NoError(conf.Start())
 
-	err = conf.RunOutputs()
-	require.NoError(err)
-
-	outchan := conf.Get(reflect.TypeOf(make(config.OutChan))).
-		Interface().(config.OutChan)
-	event := logevent.LogEvent{
-		Timestamp: time.Now(),
-		Message:   "outputreport test message",
-	}
-
-	outchan <- event
-	outchan <- event
+	conf.TestInputEvent(logevent.LogEvent{})
+	conf.TestInputEvent(logevent.LogEvent{})
 	time.Sleep(2 * time.Second)
 
-	outchan <- event
+	conf.TestInputEvent(logevent.LogEvent{})
 	time.Sleep(2 * time.Second)
 
-	outchan <- event
-	outchan <- event
-	outchan <- event
-	outchan <- event
+	conf.TestInputEvent(logevent.LogEvent{})
+	conf.TestInputEvent(logevent.LogEvent{})
+	conf.TestInputEvent(logevent.LogEvent{})
+	conf.TestInputEvent(logevent.LogEvent{})
 	time.Sleep(2 * time.Second)
 }

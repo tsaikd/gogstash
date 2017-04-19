@@ -1,11 +1,12 @@
 package outputamqp
 
 import (
-	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
@@ -21,57 +22,41 @@ func init() {
 	config.RegistOutputHandler(ModuleName, InitHandler)
 }
 
-func Test_WithoutAMQPServer(t *testing.T) {
+func Test_output_amqp_module(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromJSON([]byte(`{
-		"output": [{
-			"type": "amqp",
-			"urls": ["amqp://guest:guest@localhost:5566/"],
-			"exchange": "amq.topic",
-			"exchange_type": "topic"
-		}]
-	}`))
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+output:
+  - type: amqp
+    urls: ["amqp://guest:guest@localhost:5672/"]
+    exchange: "amq.topic"
+    exchange_type: "topic"
+	`)))
 	require.NoError(err)
+	err = conf.Start()
+	if err != nil {
+		require.True(config.ErrorInitOutputFailed1.Match(err))
+		require.True(ErrorNoValidConn.In(err))
+		require.Implements((*errutil.ErrorObject)(nil), err)
+		require.True(ErrorNoValidConn.Match(err.(errutil.ErrorObject).Parent()))
+		t.Log("skip test output amqp module")
+		return
+	}
 
-	err = conf.RunOutputs()
-	require.Error(err)
-	require.True(config.ErrorRunOutput1.Match(err))
-	require.True(ErrorNoValidConn.In(err))
-	require.Implements((*errutil.ErrorObject)(nil), err)
-	require.True(ErrorNoValidConn.Match(err.(errutil.ErrorObject).Parent()))
-}
-
-func Test_main(t *testing.T) {
-	require := require.New(t)
-	require.NotNil(require)
-
-	conf, err := config.LoadFromJSON([]byte(`{
-		"output": [{
-			"type": "amqp",
-			"urls": ["amqp://guest:guest@localhost:5672/"],
-			"exchange": "amq.topic",
-			"exchange_type": "topic"
-		}]
-	}`))
-	require.NoError(err)
-
-	err = conf.RunOutputs()
-	require.NoError(err)
-
-	evchan := conf.Get(reflect.TypeOf(make(chan logevent.LogEvent))).
-		Interface().(chan logevent.LogEvent)
-	evchan <- logevent.LogEvent{
+	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   "outputstdout test message",
 		Extra: map[string]interface{}{
 			"fieldstring": "ABC",
 			"fieldnumber": 123,
 		},
-	}
+	})
 
-	waitsec := 1
-	logger.Infof("Wait for %d seconds", waitsec)
-	time.Sleep(time.Duration(waitsec) * time.Second)
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		t.Log(event)
+	}
 }

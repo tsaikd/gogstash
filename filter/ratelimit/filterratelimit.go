@@ -1,6 +1,7 @@
 package filterratelimit
 
 import (
+	"context"
 	"time"
 
 	"github.com/tsaikd/gogstash/config"
@@ -33,35 +34,42 @@ func DefaultFilterConfig() FilterConfig {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeFilterConfig, err error) {
+func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
-	if err = config.ReflectConfig(confraw, &conf); err != nil {
-		return
+	if err := config.ReflectConfig(raw, &conf); err != nil {
+		return nil, err
 	}
 
 	if conf.Rate <= 0 {
 		config.Logger.Warn("filter ratelimit config rate should > 0, ignored")
-	} else {
-		conf.throttle = make(chan time.Time, conf.Burst)
-		tick := time.NewTicker(time.Second / time.Duration(conf.Rate))
-		// no tick.Stop() will not be called, this will leak, but gogstash will not reuse InitHandler
+		return &conf, nil
+	}
 
-		go func() {
-			for t := range tick.C {
+	conf.throttle = make(chan time.Time, conf.Burst)
+	tick := time.NewTicker(time.Second / time.Duration(conf.Rate))
+
+	go func() {
+		defer tick.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case t := <-tick.C:
 				select {
+				case <-ctx.Done():
+					return
 				case conf.throttle <- t:
 				default:
 				}
-			} // exits after tick.Stop()
-		}()
-	}
+			}
+		}
+	}()
 
-	retconf = &conf
-	return
+	return &conf, nil
 }
 
 // Event the main filter event
-func (f *FilterConfig) Event(event logevent.LogEvent) logevent.LogEvent {
+func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	if event.Extra == nil {
 		event.Extra = map[string]interface{}{}
 	}

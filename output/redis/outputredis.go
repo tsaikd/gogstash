@@ -1,30 +1,33 @@
 package outputredis
 
 import (
-	"errors"
+	"context"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/fzzy/radix/redis"
+	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/KDGoLib/timeutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
+	"gopkg.in/redis.v5"
 )
 
 // ModuleName is the name used in config file
 const ModuleName = "redis"
 
+// ErrorTag tag added to event when process module failed
+const ErrorTag = "gogstash_output_redis_error"
+
 // OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
-	Key               string   `json:"key"`
 	Host              []string `json:"host"`
+	Key               string   `json:"key"`
 	DataType          string   `json:"data_type,omitempty"` // one of ["list", "channel"]
 	Timeout           int      `json:"timeout,omitempty"`
 	ReconnectInterval int      `json:"reconnect_interval,omitempty"`
+	Connections       int      `json:"connections"` // maximum number of socket connections, default: 10
 
-	clients []*redis.Client // all configured clients
-	client  *redis.Client   // cache last success client
-	evchan  chan logevent.LogEvent
+	client *redis.Client
 }
 
 // DefaultOutputConfig returns an OutputConfig struct with default values
@@ -35,137 +38,77 @@ func DefaultOutputConfig() OutputConfig {
 				Type: ModuleName,
 			},
 		},
+		Host:              []string{"localhost:6379"},
 		Key:               "gogstash",
 		DataType:          "list",
 		Timeout:           5,
 		ReconnectInterval: 1,
-
-		evchan: make(chan logevent.LogEvent),
+		Connections:       10,
 	}
 }
+
+// errors
+var (
+	ErrorPingFailed           = errutil.NewFactory("ping redis server failed")
+	ErrorEventMarshalFailed1  = errutil.NewFactory("event Marshal failed: %v")
+	ErrorUnsupportedDataType1 = errutil.NewFactory("unsupported data type: %q")
+)
 
 // InitHandler initialize the output plugin
-func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeOutputConfig, err error) {
+func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputConfig, error) {
 	conf := DefaultOutputConfig()
-	if err = config.ReflectConfig(confraw, &conf); err != nil {
-		return
+	err := config.ReflectConfig(raw, &conf)
+	if err != nil {
+		return nil, err
 	}
 
-	go conf.loop()
-	if err = conf.initRedisClient(); err != nil {
-		return
+	if len(conf.Host) > 1 {
+		config.Logger.Warn("deprecated: host number should be only 1")
 	}
 
-	retconf = &conf
-	return
+	conf.client = redis.NewClient(&redis.Options{
+		Addr:     conf.Host[0],
+		PoolSize: conf.Connections,
+	})
+
+	if _, err = conf.client.Ping().Result(); err != nil {
+		return nil, ErrorPingFailed.New(err)
+	}
+
+	return &conf, nil
 }
 
-func (self *OutputConfig) Event(event logevent.LogEvent) (err error) {
-	self.evchan <- event
-	return
-}
-
-func (self *OutputConfig) loop() (err error) {
-	for {
-		event := <-self.evchan
-		self.sendEvent(event)
-	}
-}
-
-func (self *OutputConfig) initRedisClient() (err error) {
-	var (
-		client *redis.Client
-	)
-
-	self.closeRedisClient()
-
-	for _, addr := range self.Host {
-		if client, err = redis.DialTimeout("tcp", addr, time.Duration(self.Timeout)*time.Second); err == nil {
-			self.clients = append(self.clients, client)
-		} else {
-			log.Warnf("Redis connection failed: %q\n%s", addr, err)
-		}
+// Output event
+func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err error) {
+	raw, err := event.MarshalJSON()
+	if err != nil {
+		return ErrorEventMarshalFailed1.New(err, event)
 	}
 
-	if len(self.clients) > 0 {
-		self.client = self.clients[0]
-		err = nil
-	} else {
-		self.client = nil
-		err = errors.New("no valid redis server connection")
-	}
-
-	return
-}
-
-func (self *OutputConfig) closeRedisClient() (err error) {
-	var (
-		client *redis.Client
-	)
-
-	for _, client = range self.clients {
-		client.Close()
-	}
-
-	self.clients = self.clients[:0]
-
-	return
-}
-
-func (self *OutputConfig) sendEvent(event logevent.LogEvent) (err error) {
-	var (
-		client *redis.Client
-		raw    []byte
-		key    string
-	)
-
-	if raw, err = event.MarshalJSON(); err != nil {
-		log.Errorf("event Marshal failed: %v", event)
-		return
-	}
-	key = event.Format(self.Key)
-
-	// try previous client first
-	if self.client != nil {
-		if err = self.redisSend(self.client, key, raw); err == nil {
-			return
-		}
-	}
+	key := event.Format(t.Key)
 
 	// try to log forever
 	for {
-		// reconfig all clients
-		if err = self.initRedisClient(); err != nil {
-			return
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
 		}
 
-		// find valid client
-		for _, client = range self.clients {
-			if err = self.redisSend(client, key, raw); err == nil {
-				self.client = client
+		switch t.DataType {
+		case "list":
+			if _, err = t.client.RPush(key, raw).Result(); err == nil {
 				return
 			}
+		case "channel":
+			if _, err = t.client.Publish(key, string(raw)).Result(); err == nil {
+				return
+			}
+		default:
+			return ErrorUnsupportedDataType1.New(nil, t.DataType)
 		}
 
-		time.Sleep(time.Duration(self.ReconnectInterval) * time.Second)
+		timeout := time.Duration(t.ReconnectInterval) * time.Second
+		timeutil.ContextSleep(ctx, timeout)
 	}
-}
-
-func (self *OutputConfig) redisSend(client *redis.Client, key string, raw []byte) (err error) {
-	var (
-		res *redis.Reply
-	)
-
-	switch self.DataType {
-	case "list":
-		res = client.Cmd("rpush", key, raw)
-		err = res.Err
-	case "channel":
-		res = client.Cmd("publish", key, raw)
-		err = res.Err
-	default:
-		err = errors.New("unknown DataType: " + self.DataType)
-	}
-
-	return
 }

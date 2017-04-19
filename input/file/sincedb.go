@@ -2,6 +2,7 @@ package inputfile
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"time"
@@ -70,27 +71,34 @@ func (self *InputConfig) SaveSinceDBInfos() (err error) {
 	return
 }
 
-func (self *InputConfig) CheckSaveSinceDBInfos() (err error) {
+func (t *InputConfig) CheckSaveSinceDBInfos() (err error) {
 	var (
 		raw []byte
 	)
-	if time.Since(self.SinceDBLastSaveTime) > time.Duration(self.SinceDBWriteInterval)*time.Second {
-		if raw, err = json.Marshal(self.SinceDBInfos); err != nil {
+	if time.Since(t.SinceDBLastSaveTime) > time.Duration(t.SinceDBWriteInterval)*time.Second {
+		if raw, err = json.Marshal(t.SinceDBInfos); err != nil {
 			log.Errorf("Marshal sincedb failed: %s", err)
 			return
 		}
-		if bytes.Compare(raw, self.sinceDBLastInfosRaw) != 0 {
-			err = self.SaveSinceDBInfos()
+		if bytes.Compare(raw, t.sinceDBLastInfosRaw) != 0 {
+			err = t.SaveSinceDBInfos()
 		}
 	}
 	return
 }
 
-func (self *InputConfig) CheckSaveSinceDBInfosLoop() (err error) {
+func (t *InputConfig) CheckSaveSinceDBInfosLoop(ctx context.Context) (err error) {
+	ticker := time.NewTicker(time.Duration(t.SinceDBWriteInterval) * time.Second)
+	defer ticker.Stop()
+
 	for {
-		time.Sleep(time.Duration(self.SinceDBWriteInterval) * time.Second)
-		if err = self.CheckSaveSinceDBInfos(); err != nil {
-			return
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			if err = t.CheckSaveSinceDBInfos(); err != nil {
+				return
+			}
 		}
 	}
 }

@@ -3,7 +3,7 @@ package inputfile
 import (
 	"bufio"
 	"bytes"
-	"fmt"
+	"context"
 	"io"
 	"os"
 	"path/filepath"
@@ -15,6 +15,7 @@ import (
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
+	"golang.org/x/sync/errgroup"
 )
 
 // ModuleName is the name used in config file
@@ -50,47 +51,44 @@ func DefaultInputConfig() InputConfig {
 	}
 }
 
+// errors
+var (
+	ErrorGlobFailed1 = errutil.NewFactory("glob(%q) failed")
+)
+
 // InitHandler initialize the input plugin
-func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err error) {
+func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
-	if err = config.ReflectConfig(confraw, &conf); err != nil {
-		return
+	err := config.ReflectConfig(raw, &conf)
+	if err != nil {
+		return nil, err
 	}
 
 	if conf.hostname, err = os.Hostname(); err != nil {
-		return
+		return nil, err
 	}
 
-	retconf = &conf
-	return
+	return &conf, nil
 }
 
 // Start wraps the actual function starting the plugin
-func (t *InputConfig) Start() {
-	t.Invoke(t.start)
-}
-
-func (t *InputConfig) start(logger *logrus.Logger, inchan config.InChan) (err error) {
-	defer func() {
-		if err != nil {
-			logger.Errorln(err)
-		}
-	}()
-
-	var (
-		matches []string
-		fi      os.FileInfo
-	)
+func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error) {
+	logger := config.Logger
 
 	if err = t.LoadSinceDBInfos(); err != nil {
 		return
 	}
 
-	if matches, err = filepath.Glob(t.Path); err != nil {
-		return errutil.NewErrors(fmt.Errorf("glob(%q) failed", t.Path), err)
+	matches, err := filepath.Glob(t.Path)
+	if err != nil {
+		return ErrorGlobFailed1.New(err, t.Path)
 	}
 
-	go t.CheckSaveSinceDBInfosLoop()
+	eg, ctx := errgroup.WithContext(ctx)
+
+	eg.Go(func() error {
+		return t.CheckSaveSinceDBInfosLoop(ctx)
+	})
 
 	for _, fpath := range matches {
 		if fpath, err = filepath.EvalSymlinks(fpath); err != nil {
@@ -98,6 +96,7 @@ func (t *InputConfig) start(logger *logrus.Logger, inchan config.InChan) (err er
 			continue
 		}
 
+		var fi os.FileInfo
 		if fi, err = os.Stat(fpath); err != nil {
 			logger.Errorf("stat(%q) failed\n%s", t.Path, err)
 			continue
@@ -108,19 +107,26 @@ func (t *InputConfig) start(logger *logrus.Logger, inchan config.InChan) (err er
 			continue
 		}
 
-		readEventChan := make(chan fsnotify.Event, 10)
-		go t.fileReadLoop(readEventChan, fpath, logger, inchan)
-		go t.fileWatchLoop(readEventChan, fpath, fsnotify.Create|fsnotify.Write)
+		func(fpath string) {
+			readEventChan := make(chan fsnotify.Event, 10)
+			eg.Go(func() error {
+				return t.fileReadLoop(ctx, readEventChan, fpath, logger, msgChan)
+			})
+			eg.Go(func() error {
+				return t.fileWatchLoop(ctx, readEventChan, fpath, fsnotify.Create|fsnotify.Write)
+			})
+		}(fpath)
 	}
 
-	return
+	return eg.Wait()
 }
 
 func (t *InputConfig) fileReadLoop(
+	ctx context.Context,
 	readEventChan chan fsnotify.Event,
 	fpath string,
 	logger *logrus.Logger,
-	inchan config.InChan,
+	msgChan chan<- logevent.LogEvent,
 ) (err error) {
 	var (
 		since     *SinceDBInfo
@@ -173,7 +179,13 @@ func (t *InputConfig) fileReadLoop(
 	}
 
 	for {
-		if line, size, err = readline(reader, buffer); err != nil {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		if line, size, err = readline(ctx, reader, buffer); err != nil {
 			if err == io.EOF {
 				watchev := <-readEventChan
 				logger.Debug("fileReadLoop recv:", watchev)
@@ -217,18 +229,24 @@ func (t *InputConfig) fileReadLoop(
 		since.Offset += int64(size)
 
 		logger.Debugf("%q %v", event.Message, event)
-		inchan <- event
+		msgChan <- event
 		//self.SaveSinceDBInfos()
 		t.CheckSaveSinceDBInfos()
 	}
 }
 
-func (self *InputConfig) fileWatchLoop(readEventChan chan fsnotify.Event, fpath string, op fsnotify.Op) (err error) {
+func (self *InputConfig) fileWatchLoop(ctx context.Context, readEventChan chan fsnotify.Event, fpath string, op fsnotify.Op) (err error) {
 	var (
 		event fsnotify.Event
 	)
 	for {
-		if event, err = waitWatchEvent(fpath, op); err != nil {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
+
+		if event, err = waitWatchEvent(ctx, fpath, op); err != nil {
 			return
 		}
 		readEventChan <- event
@@ -266,12 +284,18 @@ func openfile(fpath string, offset int64, whence int) (fp *os.File, reader *bufi
 	return
 }
 
-func readline(reader *bufio.Reader, buffer *bytes.Buffer) (line string, size int, err error) {
+func readline(ctx context.Context, reader *bufio.Reader, buffer *bytes.Buffer) (line string, size int, err error) {
 	var (
 		segment []byte
 	)
 
 	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
 		if segment, err = reader.ReadBytes('\n'); err != nil {
 			if err != io.EOF {
 				err = errutil.New("read line failed", err)
@@ -310,7 +334,7 @@ var (
 	mapWatcher = map[string]*fsnotify.Watcher{}
 )
 
-func waitWatchEvent(fpath string, op fsnotify.Op) (event fsnotify.Event, err error) {
+func waitWatchEvent(ctx context.Context, fpath string, op fsnotify.Op) (event fsnotify.Event, err error) {
 	var (
 		fdir    string
 		watcher *fsnotify.Watcher
@@ -339,6 +363,8 @@ func waitWatchEvent(fpath string, op fsnotify.Op) (event fsnotify.Event, err err
 
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case event = <-watcher.Events:
 			if event.Name == fpath {
 				if op > 0 {

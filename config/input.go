@@ -1,77 +1,71 @@
 package config
 
 import (
-	"github.com/codegangsta/inject"
+	"context"
+
 	"github.com/tsaikd/KDGoLib/errutil"
-	"github.com/tsaikd/KDGoLib/injectutil"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 // errors
 var (
 	ErrorUnknownInputType1 = errutil.NewFactory("unknown input config type: %q")
-	ErrorRunInput1         = errutil.NewFactory("run input module failed: %q")
+	ErrorInitInputFailed1  = errutil.NewFactory("initialize input module failed: %v")
 )
 
+// TypeInputConfig is interface of input module
 type TypeInputConfig interface {
-	TypeConfig
-	Start()
+	TypeCommonConfig
+	Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error)
 }
 
+// InputConfig is basic input config struct
 type InputConfig struct {
 	CommonConfig
 }
 
-type InputHandler interface{}
+// InputHandler is a handler to regist input module
+type InputHandler func(ctx context.Context, raw *ConfigRaw) (TypeInputConfig, error)
 
 var (
 	mapInputHandler = map[string]InputHandler{}
 )
 
+// RegistInputHandler regist a input handler
 func RegistInputHandler(name string, handler InputHandler) {
 	mapInputHandler[name] = handler
 }
 
-func (t *Config) RunInputs() (err error) {
-	return t.InvokeSimple(t.runInputs)
-}
+func (t *Config) getInputs() (inputs []TypeInputConfig, err error) {
+	var input TypeInputConfig
+	for _, raw := range t.InputRaw {
+		handler, ok := mapInputHandler[raw["type"].(string)]
+		if !ok {
+			return inputs, ErrorUnknownInputType1.New(nil, raw["type"])
+		}
 
-func (t *Config) runInputs(inchan InChan) (err error) {
-	inputs, err := t.getInputs(inchan)
-	if err != nil {
-		return
-	}
-	for _, input := range inputs {
-		go input.Start()
+		if input, err = handler(t.ctx, &raw); err != nil {
+			return inputs, ErrorInitInputFailed1.New(err, raw)
+		}
+
+		inputs = append(inputs, input)
 	}
 	return
 }
 
-func (t *Config) getInputs(inchan InChan) (inputs []TypeInputConfig, err error) {
-	for _, confraw := range t.InputRaw {
-		handler, ok := mapInputHandler[confraw["type"].(string)]
-		if !ok {
-			err = ErrorUnknownInputType1.New(nil, confraw["type"])
-			return
-		}
-
-		inj := inject.New()
-		inj.SetParent(t)
-		inj.Map(&confraw)
-		inj.Map(inchan)
-		refvs, err := injectutil.Invoke(inj, handler)
-		if err != nil {
-			return []TypeInputConfig{}, ErrorRunInput1.New(err, confraw)
-		}
-
-		for _, refv := range refvs {
-			if !refv.CanInterface() {
-				continue
-			}
-			if conf, ok := refv.Interface().(TypeInputConfig); ok {
-				conf.SetInjector(inj)
-				inputs = append(inputs, conf)
-			}
-		}
+func (t *Config) startInputs() (err error) {
+	inputs, err := t.getInputs()
+	if err != nil {
+		return
 	}
+
+	for _, input := range inputs {
+		func(input TypeInputConfig) {
+			t.eg.Go(func() error {
+				return input.Start(t.ctx, t.chInFilter)
+			})
+		}(input)
+	}
+
 	return
 }

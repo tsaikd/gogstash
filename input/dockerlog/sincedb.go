@@ -15,14 +15,6 @@ func NewSinceDB(dbdir string) (sincedb *SinceDB, err error) {
 	return
 }
 
-func MustNewSinceDB(dbdir string) (sincedb *SinceDB) {
-	sincedb = &SinceDB{}
-	if err := sincedb.Open(dbdir); err != nil {
-		panic(err)
-	}
-	return
-}
-
 type SinceDB struct {
 	dbdir    string
 	SinceMap map[string]*SinceFile

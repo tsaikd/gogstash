@@ -2,11 +2,12 @@ package outputredis
 
 import (
 	"math/rand"
-	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -21,26 +22,36 @@ func init() {
 	config.RegistOutputHandler(ModuleName, InitHandler)
 }
 
-func Test_main(t *testing.T) {
+func Test_output_redis_module(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromJSON([]byte(`{
-		"output": [{
-			"type": "redis",
-			"host": ["127.0.0.1:6379"]
-		}]
-	}`))
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+output:
+  - type: redis
+    host:
+      - localhost:6379
+    key: gogstash-test
+    data_type: list
+	`)))
 	require.NoError(err)
+	err = conf.Start()
+	if err != nil {
+		t.Log("skip test output redis module")
+		require.True(ErrorPingFailed.In(err))
+		return
+	}
 
-	err = conf.RunOutputs()
-	require.NoError(err)
-
-	evchan := conf.Get(reflect.TypeOf(make(config.OutChan))).
-		Interface().(config.OutChan)
-	evchan <- logevent.LogEvent{
+	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Now(),
-		Message:   "outputstdout test message",
+		Message:   "outputredis test message",
+	})
+
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal("outputredis test message", event.Message)
 	}
 
 	// test random time event only

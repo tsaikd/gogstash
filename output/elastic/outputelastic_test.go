@@ -1,14 +1,17 @@
 package outputelastic
 
 import (
-	"reflect"
+	"context"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
+	elastic "gopkg.in/olivere/elastic.v5"
 )
 
 var (
@@ -20,36 +23,58 @@ func init() {
 	config.RegistOutputHandler(ModuleName, InitHandler)
 }
 
-func Test_output_test_message_to_elastic(t *testing.T) {
+func Test_output_elastic_module(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromJSON([]byte(`{
-		"output": [{
-			"type": "elastic",
-			"url": "http://127.0.0.1:9200",
-			"index": "testindex",
-			"document_type": "testtype",
-			"document_id": "%{fieldstring}"
-		}]
-	}`))
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+output:
+  - type: elastic
+    url: "http://127.0.0.1:9200"
+    index: "gogstash-index-test"
+    document_type: "testtype"
+    document_id: "%{fieldstring}"
+    bulk_actions: 0
+	`)))
 	require.NoError(err)
+	err = conf.Start()
+	if err != nil {
+		t.Log("skip test output elastic module")
+		require.True(ErrorCreateClientFailed1.In(err))
+		return
+	}
 
-	err = conf.RunOutputs()
-	require.NoError(err)
-
-	evchan := conf.Get(reflect.TypeOf(make(config.OutChan))).
-		Interface().(config.OutChan)
-	evchan <- logevent.LogEvent{
-		Timestamp: time.Now(),
-		Message:   "outputstdout test message",
+	conf.TestInputEvent(logevent.LogEvent{
+		Timestamp: time.Date(2017, 4, 18, 19, 53, 1, 2, time.UTC),
+		Message:   "output elastic test message",
 		Extra: map[string]interface{}{
 			"fieldstring": "ABC",
 			"fieldnumber": 123,
 		},
+	})
+
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal("output elastic test message", event.Message)
 	}
 
-	waitsec := 1
-	logger.Infof("Wait for %d seconds", waitsec)
-	time.Sleep(time.Duration(waitsec) * time.Second)
+	client, err := elastic.NewClient(
+		elastic.SetURL("http://127.0.0.1:9200"),
+		elastic.SetSniff(false),
+	)
+	require.NoError(err)
+	require.NotNil(client)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
+	defer cancel()
+	result, err := client.Get().Index("gogstash-index-test").Id("ABC").Do(ctx)
+	require.NoError(err)
+	require.NotNil(result)
+	require.NotNil(result.Source)
+	require.Equal(`{"@timestamp":"2017-04-18T19:53:01.000000002Z","fieldnumber":123,"fieldstring":"ABC","message":"output elastic test message"}`, string(*result.Source))
+
+	_, err = client.DeleteIndex("gogstash-index-test").Do(ctx)
+	require.NoError(err)
 }

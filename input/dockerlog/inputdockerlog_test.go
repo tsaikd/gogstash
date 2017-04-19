@@ -1,4 +1,4 @@
-package inputdockerstats
+package inputdockerlog
 
 import (
 	"strings"
@@ -20,7 +20,7 @@ func init() {
 	config.RegistInputHandler(ModuleName, InitHandler)
 }
 
-func Test_input_dockerstats_module(t *testing.T) {
+func Test_input_dockerlog_module(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
 	require := require.New(t)
@@ -29,14 +29,14 @@ func Test_input_dockerstats_module(t *testing.T) {
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 input:
-  - type: dockerstats
+  - type: dockerlog
     dockerurl: "unix:///var/run/docker.sock"
-    stat_interval: 3
+    sincepath: "sincedb-test"
 	`)))
 	require.NoError(err)
 	err = conf.Start()
 	if err != nil {
-		t.Log("skip test input dockerstats module")
+		t.Log("skip test input dockerlog module")
 		require.True(ErrorPingFailed.In(err))
 		return
 	}

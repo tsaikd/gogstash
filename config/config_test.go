@@ -31,9 +31,21 @@ func TestLoadFromJSON(t *testing.T) {
 	}`))
 	require.NoError(err)
 
-	inputs, err := conf.getInputs(nil)
+	require.NotNil(conf.chInFilter)
+	require.NotNil(conf.chFilterOut)
+	require.NotNil(conf.ctx)
+	require.NotNil(conf.eg)
+	require.Len(conf.InputRaw, 2)
+	require.Len(conf.FilterRaw, 0)
+	require.Len(conf.OutputRaw, 1)
+
+	inputs, err := conf.getInputs()
 	require.Error(err)
 	require.Len(inputs, 0)
+
+	filters, err := conf.getFilters()
+	require.NoError(err)
+	require.Len(filters, 0)
 
 	outputs, err := conf.getOutputs()
 	require.Error(err)
@@ -75,9 +87,21 @@ output:
 	`)))
 	require.NoError(err)
 
-	inputs, err := conf.getInputs(nil)
+	require.NotNil(conf.chInFilter)
+	require.NotNil(conf.chFilterOut)
+	require.NotNil(conf.ctx)
+	require.NotNil(conf.eg)
+	require.Len(conf.InputRaw, 2)
+	require.Len(conf.FilterRaw, 0)
+	require.Len(conf.OutputRaw, 1)
+
+	inputs, err := conf.getInputs()
 	require.Error(err)
 	require.Len(inputs, 0)
+
+	filters, err := conf.getFilters()
+	require.NoError(err)
+	require.Len(filters, 0)
 
 	outputs, err := conf.getOutputs()
 	require.Error(err)

@@ -1,89 +1,91 @@
 package config
 
 import (
-	"github.com/Sirupsen/logrus"
-	"github.com/codegangsta/inject"
+	"context"
+
 	"github.com/tsaikd/KDGoLib/errutil"
-	"github.com/tsaikd/KDGoLib/injectutil"
 	"github.com/tsaikd/gogstash/config/logevent"
+	"golang.org/x/sync/errgroup"
 )
 
 // errors
 var (
 	ErrorUnknownOutputType1 = errutil.NewFactory("unknown output config type: %q")
-	ErrorRunOutput1         = errutil.NewFactory("run output module failed: %q")
+	ErrorInitOutputFailed1  = errutil.NewFactory("initialize output module failed: %v")
 )
 
+// TypeOutputConfig is interface of output module
 type TypeOutputConfig interface {
-	TypeConfig
-	Event(event logevent.LogEvent) (err error)
+	TypeCommonConfig
+	Output(ctx context.Context, event logevent.LogEvent) (err error)
 }
 
+// OutputConfig is basic output config struct
 type OutputConfig struct {
 	CommonConfig
 }
 
-type OutputHandler interface{}
+// OutputHandler is a handler to regist output module
+type OutputHandler func(ctx context.Context, raw *ConfigRaw) (TypeOutputConfig, error)
 
 var (
 	mapOutputHandler = map[string]OutputHandler{}
 )
 
+// RegistOutputHandler regist a output handler
 func RegistOutputHandler(name string, handler OutputHandler) {
 	mapOutputHandler[name] = handler
 }
 
-func (t *Config) RunOutputs() (err error) {
-	return t.InvokeSimple(t.runOutputs)
+func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
+	var output TypeOutputConfig
+	for _, raw := range t.OutputRaw {
+		handler, ok := mapOutputHandler[raw["type"].(string)]
+		if !ok {
+			return outputs, ErrorUnknownOutputType1.New(nil, raw["type"])
+		}
+
+		if output, err = handler(t.ctx, &raw); err != nil {
+			return outputs, ErrorInitOutputFailed1.New(err, raw)
+		}
+
+		outputs = append(outputs, output)
+	}
+	return
 }
 
-func (t *Config) runOutputs(outchan OutChan, logger *logrus.Logger) (err error) {
+func (t *Config) startOutputs() (err error) {
 	outputs, err := t.getOutputs()
 	if err != nil {
 		return
 	}
-	go func() {
+
+	t.eg.Go(func() error {
 		for {
 			select {
-			case event := <-outchan:
+			case <-t.ctx.Done():
+				return nil
+			case event := <-t.chFilterOut:
+				eg, ctx := errgroup.WithContext(t.ctx)
 				for _, output := range outputs {
-					go func(o TypeOutputConfig, e logevent.LogEvent) {
-						if err = o.Event(e); err != nil {
-							logger.Errorf("output failed: %v\n", err)
-						}
-					}(output, event)
+					func(output TypeOutputConfig) {
+						eg.Go(func() error {
+							if err2 := output.Output(ctx, event); err2 != nil {
+								Logger.Errorf("output module %q failed: %v\n", output.GetType(), err)
+							}
+							return nil
+						})
+					}(output)
+				}
+				if err := eg.Wait(); err != nil {
+					return err
+				}
+				if t.chOutDebug != nil {
+					t.chOutDebug <- event
 				}
 			}
 		}
-	}()
-	return
-}
+	})
 
-func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
-	for _, confraw := range t.OutputRaw {
-		handler, ok := mapOutputHandler[confraw["type"].(string)]
-		if !ok {
-			err = ErrorUnknownOutputType1.New(nil, confraw["type"])
-			return
-		}
-
-		inj := inject.New()
-		inj.SetParent(t)
-		inj.Map(&confraw)
-		refvs, err := injectutil.Invoke(inj, handler)
-		if err != nil {
-			return []TypeOutputConfig{}, ErrorRunOutput1.New(err, confraw)
-		}
-
-		for _, refv := range refvs {
-			if !refv.CanInterface() {
-				continue
-			}
-			if conf, ok := refv.Interface().(TypeOutputConfig); ok {
-				conf.SetInjector(inj)
-				outputs = append(outputs, conf)
-			}
-		}
-	}
 	return
 }

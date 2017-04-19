@@ -1,6 +1,7 @@
 package filterremovefield
 
 import (
+	"context"
 	"strings"
 
 	"github.com/tsaikd/gogstash/config"
@@ -30,22 +31,21 @@ func DefaultFilterConfig() FilterConfig {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeFilterConfig, err error) {
+func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
-	if err = config.ReflectConfig(confraw, &conf); err != nil {
-		return
+	if err := config.ReflectConfig(raw, &conf); err != nil {
+		return nil, err
 	}
 
 	if len(conf.Fields) < 1 {
 		config.Logger.Warn("filter remove_field config empty fields")
 	}
 
-	retconf = &conf
-	return
+	return &conf, nil
 }
 
 // Event the main filter event
-func (f *FilterConfig) Event(event logevent.LogEvent) logevent.LogEvent {
+func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	if event.Extra == nil {
 		event.Extra = map[string]interface{}{}
 	}

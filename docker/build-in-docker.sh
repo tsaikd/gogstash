@@ -10,11 +10,8 @@ projname="gogstash"
 renice 15 $$
 cd "${PD}/.."
 
-gobuilder version -c ">=0.1.4" &>/dev/null || go get -u -v "github.com/tsaikd/gobuilder"
-gobuilder --check --test
-
-go get -v "github.com/stretchr/testify"
-go test -v ./cmd/... ./config/... ./filter/...
+gobuilder version -c ">=0.1.5" &>/dev/null || go get -u -v "github.com/tsaikd/gobuilder"
+gobuilder --all --check --test
 
 if [ "${GITHUB_TOKEN}" ] ; then
 	echo "[$(date -Iseconds)] ${projname} release on github"

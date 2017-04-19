@@ -2,8 +2,8 @@ package inputexec
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"errors"
 	"os"
 	"os/exec"
 	"strings"
@@ -17,6 +17,9 @@ import (
 
 // ModuleName is the name used in config file
 const ModuleName = "exec"
+
+// ErrorTag tag added to event when process module failed
+const ErrorTag = "gogstash_input_exec_error"
 
 // InputConfig holds the configuration json fields and internal objects
 type InputConfig struct {
@@ -45,52 +48,58 @@ func DefaultInputConfig() InputConfig {
 	}
 }
 
+// errors
+var (
+	ErrorExecCommandFailed1 = errutil.NewFactory("run exec failed: %q")
+)
+
 // InitHandler initialize the input plugin
-func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err error) {
+func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
-	if err = config.ReflectConfig(confraw, &conf); err != nil {
-		return
+	err := config.ReflectConfig(raw, &conf)
+	if err != nil {
+		return nil, err
 	}
 
 	if conf.hostname, err = os.Hostname(); err != nil {
-		return
+		return nil, err
 	}
 
-	retconf = &conf
-	return
+	return &conf, nil
 }
 
 // Start wraps the actual function starting the plugin
-func (self *InputConfig) Start() {
-	startChan := make(chan bool) // startup tick
-	ticker := time.NewTicker(time.Duration(self.Interval) * time.Second)
+func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error) {
+	startChan := make(chan bool, 1) // startup tick
+	ticker := time.NewTicker(time.Duration(t.Interval) * time.Second)
+	defer ticker.Stop()
 
-	go func() {
-		startChan <- true
-	}()
+	startChan <- true
 
 	for {
 		select {
+		case <-ctx.Done():
+			return nil
 		case <-startChan:
-			self.Invoke(self.Exec)
+			t.exec(msgChan, config.Logger)
 		case <-ticker.C:
-			self.Invoke(self.Exec)
+			t.exec(msgChan, config.Logger)
 		}
 	}
 }
 
-func (self *InputConfig) Exec(inchan config.InChan, logger *logrus.Logger) {
+func (t *InputConfig) exec(msgChan chan<- logevent.LogEvent, logger *logrus.Logger) {
 	errs := []error{}
 
-	message, err := self.doExec()
+	message, err := t.doExecCommand()
 	if err != nil {
 		errs = append(errs, err)
 	}
 	extra := map[string]interface{}{
-		"host": self.hostname,
+		"host": t.hostname,
 	}
 
-	switch self.MsgType {
+	switch t.MsgType {
 	case MsgTypeJson:
 		if err = json.Unmarshal([]byte(message), &extra); err != nil {
 			errs = append(errs, err)
@@ -105,37 +114,34 @@ func (self *InputConfig) Exec(inchan config.InChan, logger *logrus.Logger) {
 		Extra:     extra,
 	}
 
-	switch self.MsgType {
+	switch t.MsgType {
 	case MsgTypeText:
-		event.Message = event.Format(self.MsgPrefix) + event.Message
+		event.Message = event.Format(t.MsgPrefix) + event.Message
 	}
 
 	if len(errs) > 0 {
-		event.AddTag("inputexec_failed")
+		event.AddTag(ErrorTag)
 		event.Extra["error"] = errutil.NewErrors(errs...).Error()
 	}
 
-	logger.Debugf("%+v", event)
-	inchan <- event
+	msgChan <- event
 
 	return
 }
 
-func (self *InputConfig) doExec() (data string, err error) {
-	var (
-		buferr bytes.Buffer
-		raw    []byte
-		cmd    *exec.Cmd
-	)
-	cmd = exec.Command(self.Command, self.Args...)
-	cmd.Stderr = &buferr
-	if raw, err = cmd.Output(); err != nil {
+func (t *InputConfig) doExecCommand() (data string, err error) {
+	buferr := &bytes.Buffer{}
+	cmd := exec.Command(t.Command, t.Args...)
+	cmd.Stderr = buferr
+
+	raw, err := cmd.Output()
+	if err != nil {
 		return
 	}
 	data = string(raw)
-	data = strings.Trim(data, self.MsgTrim)
+	data = strings.Trim(data, t.MsgTrim)
 	if buferr.Len() > 0 {
-		err = errors.New(buferr.String())
+		err = ErrorExecCommandFailed1.New(nil, buferr.String())
 	}
 	return
 }

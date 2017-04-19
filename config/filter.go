@@ -1,86 +1,77 @@
 package config
 
 import (
-	"github.com/codegangsta/inject"
+	"context"
+
 	"github.com/tsaikd/KDGoLib/errutil"
-	"github.com/tsaikd/KDGoLib/injectutil"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 // errors
 var (
-	ErrorUnknownFilterType = errutil.NewFactory("unknown filter config type: %q")
-	ErrorInitFilter        = errutil.NewFactory("filter initialization failed: %q")
+	ErrorUnknownFilterType1 = errutil.NewFactory("unknown filter config type: %q")
+	ErrorInitFilterFailed1  = errutil.NewFactory("initialize filter module failed: %v")
 )
 
+// TypeFilterConfig is interface of filter module
 type TypeFilterConfig interface {
-	TypeConfig
-	Event(logevent.LogEvent) logevent.LogEvent
+	TypeCommonConfig
+	Event(context.Context, logevent.LogEvent) logevent.LogEvent
 }
 
+// FilterConfig is basic filter config struct
 type FilterConfig struct {
 	CommonConfig
 }
 
-type FilterHandler interface{}
+// FilterHandler is a handler to regist filter module
+type FilterHandler func(ctx context.Context, raw *ConfigRaw) (TypeFilterConfig, error)
 
 var (
 	mapFilterHandler = map[string]FilterHandler{}
 )
 
+// RegistFilterHandler regist a filter handler
 func RegistFilterHandler(name string, handler FilterHandler) {
 	mapFilterHandler[name] = handler
 }
 
-func (t *Config) RunFilters() (err error) {
-	return t.InvokeSimple(t.runFilters)
+func (t *Config) getFilters() (filters []TypeFilterConfig, err error) {
+	var filter TypeFilterConfig
+	for _, raw := range t.FilterRaw {
+		handler, ok := mapFilterHandler[raw["type"].(string)]
+		if !ok {
+			return filters, ErrorUnknownFilterType1.New(nil, raw["type"])
+		}
+
+		if filter, err = handler(t.ctx, &raw); err != nil {
+			return filters, ErrorInitFilterFailed1.New(err, raw)
+		}
+
+		filters = append(filters, filter)
+	}
+	return
 }
 
-func (c *Config) runFilters(inchan InChan, outchan OutChan) (err error) {
-	filters, err := c.getFilters()
+func (t *Config) startFilters() (err error) {
+	filters, err := t.getFilters()
 	if err != nil {
 		return
 	}
 
-	go func() {
+	t.eg.Go(func() error {
 		for {
 			select {
-			case event := <-inchan:
+			case <-t.ctx.Done():
+				return nil
+			case event := <-t.chInFilter:
 				for _, filter := range filters {
-					event = filter.Event(event)
+					event = filter.Event(t.ctx, event)
 				}
-				outchan <- event
+				t.chFilterOut <- event
 			}
 		}
-	}()
-	return
-}
+	})
 
-func (c *Config) getFilters() (filters []TypeFilterConfig, err error) {
-	for _, confraw := range c.FilterRaw {
-		handler, ok := mapFilterHandler[confraw["type"].(string)]
-		if !ok {
-			err = ErrorUnknownFilterType.New(nil, confraw["type"])
-			return
-		}
-
-		inj := inject.New()
-		inj.SetParent(c)
-		inj.Map(&confraw)
-		refvs, err := injectutil.Invoke(inj, handler)
-		if err != nil {
-			return []TypeFilterConfig{}, ErrorInitFilter.New(err, confraw)
-		}
-
-		for _, refv := range refvs {
-			if !refv.CanInterface() {
-				continue
-			}
-			if conf, ok := refv.Interface().(TypeFilterConfig); ok {
-				conf.SetInjector(inj)
-				filters = append(filters, conf)
-			}
-		}
-	}
 	return
 }

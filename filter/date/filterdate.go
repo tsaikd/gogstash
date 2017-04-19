@@ -1,6 +1,7 @@
 package filterdate
 
 import (
+	"context"
 	"time"
 
 	"github.com/tsaikd/gogstash/config"
@@ -9,6 +10,9 @@ import (
 
 // ModuleName is the name used in config file
 const ModuleName = "date"
+
+// ErrorTag tag added to event when process module failed
+const ErrorTag = "gogstash_filter_date_error"
 
 // FilterConfig holds the configuration json fields and internal objects
 type FilterConfig struct {
@@ -32,24 +36,24 @@ func DefaultFilterConfig() FilterConfig {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeFilterConfig, err error) {
+func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
-	if err = config.ReflectConfig(confraw, &conf); err != nil {
-		return
+	if err := config.ReflectConfig(raw, &conf); err != nil {
+		return nil, err
 	}
 
-	retconf = &conf
-	return
+	return &conf, nil
 }
 
 // Event the main filter event
-func (f *FilterConfig) Event(event logevent.LogEvent) logevent.LogEvent {
+func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	if event.Extra == nil {
 		event.Extra = map[string]interface{}{}
 	}
 
 	timestamp, err := time.Parse(f.Format, event.GetString(f.Source))
 	if err != nil {
+		event.AddTag(ErrorTag)
 		config.Logger.Error(err)
 		return event
 	}

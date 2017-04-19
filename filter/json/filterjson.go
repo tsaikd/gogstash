@@ -1,6 +1,7 @@
 package filterjson
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 
@@ -8,10 +9,13 @@ import (
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
-const (
-	ModuleName = "json"
-)
+// ModuleName is the name used in config file
+const ModuleName = "json"
 
+// ErrorTag tag added to event when process module failed
+const ErrorTag = "gogstash_filter_json_error"
+
+// FilterConfig holds the configuration json fields and internal objects
 type FilterConfig struct {
 	config.FilterConfig
 	Msgfield string `json:"message"`
@@ -19,6 +23,7 @@ type FilterConfig struct {
 	Tsformat string `json:"timeformat"`
 }
 
+// DefaultFilterConfig returns an FilterConfig struct with default values
 func DefaultFilterConfig() FilterConfig {
 	return FilterConfig{
 		FilterConfig: config.FilterConfig{
@@ -29,20 +34,22 @@ func DefaultFilterConfig() FilterConfig {
 	}
 }
 
-func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeFilterConfig, err error) {
+// InitHandler initialize the filter plugin
+func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
-	if err = config.ReflectConfig(confraw, &conf); err != nil {
-		return
+	if err := config.ReflectConfig(raw, &conf); err != nil {
+		return nil, err
 	}
 
-	retconf = &conf
-	return
+	return &conf, nil
 }
 
-func (f *FilterConfig) Event(event logevent.LogEvent) logevent.LogEvent {
-
+// Event the main filter event
+func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	var parsedMessage map[string]interface{}
 	if err := json.Unmarshal([]byte(event.Message), &parsedMessage); err != nil {
+		event.AddTag(ErrorTag)
+		config.Logger.Error(err)
 		return event
 	}
 

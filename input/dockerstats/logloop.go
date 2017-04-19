@@ -1,53 +1,41 @@
 package inputdockerstats
 
 import (
+	"context"
 	"reflect"
 	"strings"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/fsouza/go-dockerclient"
-	"github.com/tsaikd/KDGoLib/errutil"
-	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"github.com/tsaikd/gogstash/input/dockerlog"
+	"github.com/tsaikd/gogstash/input/dockerlog/dockertool"
 )
 
 var (
 	containerMap = map[string]interface{}{}
 )
 
-func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, inchan config.InChan, logger *logrus.Logger) (err error) {
-	defer func() {
-		if err != nil {
-			logger.Errorln(err)
-		}
-		if recov := recover(); recov != nil {
-			logger.Errorln(recov)
-		}
-	}()
-	id, name, err := inputdockerlog.GetContainerInfo(container)
+func (t *InputConfig) containerLogLoop(ctx context.Context, container interface{}, since *time.Time, msgChan chan<- logevent.LogEvent) (err error) {
+	id, name, err := dockertool.GetContainerInfo(container)
 	if err != nil {
-		return errutil.New("get container info failed", err)
+		return ErrorGetContainerInfoFailed.New(err)
 	}
-	if containerMap[id] != nil {
-		return &ErrorContainerLoopRunning{id}
+	if t.containerExist.Exist(id) {
+		return ErrorContainerLoopRunning1.New(nil, id)
 	}
-	containerMap[id] = true
-	defer delete(containerMap, id)
+	t.containerExist.Add(id)
+	defer t.containerExist.Remove(id)
 
 	retry := 5
+	statsChan := make(chan *docker.Stats, 100)
 
 	for err == nil || retry > 0 {
-		statsChan := make(chan *docker.Stats)
-
 		go func() {
 			for {
 				select {
-				case stats, ok := <-statsChan:
-					if !ok {
-						return
-					}
+				case <-ctx.Done():
+					return
+				case stats := <-statsChan:
 					if time.Now().Add(-time.Duration(float64(t.StatInterval)-0.5) * time.Second).Before(*since) {
 						continue
 					}
@@ -64,15 +52,16 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, 
 						},
 					}
 					*since = time.Now()
-					inchan <- event
+					msgChan <- event
 				}
 			}
 		}()
 
 		err = t.client.Stats(docker.StatsOptions{
-			ID:     id,
-			Stats:  statsChan,
-			Stream: true,
+			ID:      id,
+			Stats:   statsChan,
+			Stream:  true,
+			Context: ctx,
 		})
 		if err != nil && strings.Contains(err.Error(), "connection refused") {
 			retry--
@@ -99,6 +88,10 @@ func filterStatsByMode(stats *docker.Stats, mode Mode) {
 		clear(&stats.CPUStats.CPUUsage.UsageInKernelmode)
 		clear(&stats.CPUStats.CPUUsage.UsageInUsermode)
 		clear(&stats.CPUStats.SystemCPUUsage)
+		clear(&stats.PreCPUStats.CPUUsage.PercpuUsage)
+		clear(&stats.PreCPUStats.CPUUsage.UsageInKernelmode)
+		clear(&stats.PreCPUStats.CPUUsage.UsageInUsermode)
+		clear(&stats.PreCPUStats.SystemCPUUsage)
 	}
 }
 

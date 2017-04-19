@@ -4,11 +4,7 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
-			"Rev": "318513eb1ab27495afbc67f671ba1080513d8aa0"
-		},
-		{
-			"ImportPath": "github.com/fzzy/radix",
-			"Rev": "3528e87a910c6730810cec1be187f989d7d9442a"
+			"Rev": "e24e809e9db395f1e3c85af1b88f2002023610f5"
 		},
 		{
 			"ImportPath": "github.com/go-fsnotify/fsnotify",
@@ -16,7 +12,7 @@
 		},
 		{
 			"ImportPath": "github.com/tsaikd/KDGoLib",
-			"Rev": "ee45efca130e9bfbd379e9981b4fd29fed34dd97"
+			"Rev": "025593b8b77f13531e67f7cd587ba008d0790189"
 		}
 	]
 }

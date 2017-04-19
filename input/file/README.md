@@ -1,6 +1,8 @@
 gogstash input file
 ===================
 
+** WARNING ** this module was deprecated, use official tool [Filebeat](https://www.elastic.co/products/beats/filebeat) instead.
+
 ## Synopsis
 
 ```

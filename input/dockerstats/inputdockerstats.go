@@ -1,14 +1,17 @@
 package inputdockerstats
 
 import (
+	"context"
 	"os"
 	"regexp"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
+	"github.com/tsaikd/gogstash/input/dockerlog/dockertool"
+	"golang.org/x/sync/errgroup"
 )
 
 // ModuleName is the name used in config file
@@ -22,14 +25,14 @@ type InputConfig struct {
 	ExcludePatterns         []string `json:"exclude_patterns"`
 	StatInterval            int      `json:"stat_interval"`
 	ConnectionRetryInterval int      `json:"connection_retry_interval,omitempty"`
+	LogMode                 Mode     `json:"log_mode,omitempty"`
 
-	LogMode Mode `json:"log_mode,omitempty"`
-
-	sincemap map[string]*time.Time
-	includes []*regexp.Regexp
-	excludes []*regexp.Regexp
-	hostname string
-	client   *docker.Client
+	sincemap
+	containerExist dockertool.StringExist
+	includes       []*regexp.Regexp
+	excludes       []*regexp.Regexp
+	hostname       string
+	client         *docker.Client
 }
 
 // DefaultInputConfig returns an InputConfig struct with default values
@@ -45,15 +48,26 @@ func DefaultInputConfig() InputConfig {
 		ConnectionRetryInterval: 10,
 		LogMode:                 ModeFull,
 
-		sincemap: map[string]*time.Time{},
+		sincemap:       newSinceMap(),
+		containerExist: dockertool.NewStringExist(),
 	}
 }
 
+// errors
+var (
+	ErrorPingFailed              = errutil.NewFactory("ping docker server failed")
+	ErrorListContainerFailed     = errutil.NewFactory("list docker container failed")
+	ErrorListenDockerEventFailed = errutil.NewFactory("listen docker event failed")
+	ErrorContainerLoopRunning1   = errutil.NewFactory("container log loop running: %s")
+	ErrorGetContainerInfoFailed  = errutil.NewFactory("get container info failed")
+)
+
 // InitHandler initialize the input plugin
-func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err error) {
+func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
-	if err = config.ReflectConfig(confraw, &conf); err != nil {
-		return
+	err := config.ReflectConfig(raw, &conf)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, pattern := range conf.IncludePatterns {
@@ -63,73 +77,77 @@ func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeInputConfig, err
 		conf.excludes = append(conf.excludes, regexp.MustCompile(pattern))
 	}
 	if conf.hostname, err = os.Hostname(); err != nil {
-		err = errutil.New("get hostname failed", err)
-		return
+		return nil, err
 	}
 	if conf.client, err = docker.NewClient(conf.DockerURL); err != nil {
-		err = errutil.New("create docker client failed", err)
-		return
+		return nil, err
+	}
+	if err = conf.client.Ping(); err != nil {
+		return nil, ErrorPingFailed.New(err)
 	}
 
-	retconf = &conf
-	return
+	return &conf, nil
 }
 
 // Start wraps the actual function starting the plugin
-func (t *InputConfig) Start() {
-	t.Invoke(t.start)
-}
+func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) error {
+	eg, ctx := errgroup.WithContext(ctx)
 
-func (t *InputConfig) start(logger *logrus.Logger, inchan config.InChan) (err error) {
-	defer func() {
+	// listen running containers
+	eg.Go(func() error {
+		containers, err := t.client.ListContainers(docker.ListContainersOptions{})
 		if err != nil {
-			logger.Errorln(err)
+			return ErrorListContainerFailed.New(err)
 		}
-	}()
 
-	containers, err := t.client.ListContainers(docker.ListContainersOptions{})
-	if err != nil {
-		return errutil.New("list docker container failed", err)
-	}
-
-	for _, container := range containers {
-		if !t.isValidContainer(container.Names) {
-			continue
+		for _, container := range containers {
+			if !t.isValidContainer(container.Names) {
+				continue
+			}
+			since := t.sincemap.ensure(container.ID)
+			func(container interface{}, since *time.Time) {
+				eg.Go(func() error {
+					return t.containerLogLoop(ctx, container, since, msgChan)
+				})
+			}(container, since)
 		}
-		since, ok := t.sincemap[container.ID]
-		if !ok || since == nil {
-			since = &time.Time{}
-			t.sincemap[container.ID] = since
+
+		return nil
+	})
+
+	// listen for running in future containers
+	eg.Go(func() error {
+		dockerEventChan := make(chan *docker.APIEvents)
+
+		if err := t.client.AddEventListener(dockerEventChan); err != nil {
+			return ErrorListenDockerEventFailed.New(err)
 		}
-		go t.containerLogLoop(container, since, inchan, logger)
-	}
 
-	dockerEventChan := make(chan *docker.APIEvents)
-
-	if err = t.client.AddEventListener(dockerEventChan); err != nil {
-		return errutil.New("listen docker event failed", err)
-	}
-
-	for {
-		select {
-		case dockerEvent := <-dockerEventChan:
-			if dockerEvent.Status == "start" {
-				container, err := t.client.InspectContainer(dockerEvent.ID)
-				if err != nil {
-					return errutil.New("inspect container failed", err)
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			case dockerEvent := <-dockerEventChan:
+				if dockerEvent.Status == "start" {
+					container, err := t.client.InspectContainer(dockerEvent.ID)
+					if err != nil {
+						return errutil.New("inspect container failed", err)
+					}
+					if !t.isValidContainer([]string{container.Name}) {
+						return errutil.New("invalid container name " + container.Name)
+					}
+					since := t.sincemap.ensure(container.ID)
+					func(container interface{}, since *time.Time) {
+						eg.Go(func() error {
+							return t.containerLogLoop(ctx, container, since, msgChan)
+						})
+					}(container, since)
 				}
-				if !t.isValidContainer([]string{container.Name}) {
-					return errutil.New("invalid container name " + container.Name)
-				}
-				since, ok := t.sincemap[container.ID]
-				if !ok || since == nil {
-					since = &time.Time{}
-					t.sincemap[container.ID] = since
-				}
-				go t.containerLogLoop(container, since, inchan, logger)
 			}
 		}
-	}
+	})
+
+	return eg.Wait()
 }
 
 func (t *InputConfig) isValidContainer(names []string) bool {

@@ -1,6 +1,7 @@
 package outputamqp
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
@@ -74,18 +75,17 @@ type amqpClient struct {
 }
 
 // InitHandler initialize the output plugin
-func InitHandler(confraw *config.ConfigRaw) (retconf config.TypeOutputConfig, err error) {
+func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputConfig, error) {
 	conf := DefaultOutputConfig()
-	if err = config.ReflectConfig(confraw, &conf); err != nil {
-		return
+	if err := config.ReflectConfig(raw, &conf); err != nil {
+		return nil, err
 	}
 
-	if err = conf.initAmqpClients(); err != nil {
-		return
+	if err := conf.initAmqpClients(); err != nil {
+		return nil, err
 	}
 
-	retconf = &conf
-	return
+	return &conf, nil
 }
 
 func (o *OutputConfig) initAmqpClients() error {
@@ -124,8 +124,8 @@ func (o *OutputConfig) initAmqpClients() error {
 	return nil
 }
 
-// Event send the event through AMQP
-func (o *OutputConfig) Event(event logevent.LogEvent) (err error) {
+// Output send the event through AMQP
+func (o *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err error) {
 	raw, err := event.MarshalJSON()
 	if err != nil {
 		logrus.Errorf("event Marshal failed: %v", event)

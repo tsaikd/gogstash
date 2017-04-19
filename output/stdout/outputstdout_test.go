@@ -1,11 +1,12 @@
 package outputstdout
 
 import (
-	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -20,28 +21,26 @@ func init() {
 	config.RegistOutputHandler(ModuleName, InitHandler)
 }
 
-func Test_main(t *testing.T) {
+func Test_output_stdout_module(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
-	conf, err := config.LoadFromJSON([]byte(`{
-		"output": [{
-			"type": "stdout"
-		}]
-	}`))
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+output:
+  - type: stdout
+	`)))
 	require.NoError(err)
+	require.NoError(conf.Start())
 
-	err = conf.RunOutputs()
-	require.NoError(err)
-
-	outchan := conf.Get(reflect.TypeOf(make(config.OutChan))).
-		Interface().(config.OutChan)
-	outchan <- logevent.LogEvent{
+	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   "outputstdout test message",
-	}
+	})
 
-	waitsec := 1
-	logger.Infof("Wait for %d seconds", waitsec)
-	time.Sleep(time.Duration(waitsec) * time.Second)
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal("outputstdout test message", event.Message)
+	}
 }

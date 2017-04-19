@@ -1,59 +1,25 @@
 package inputdockerlog
 
 import (
-	"errors"
-	"reflect"
-	"regexp"
+	"context"
 	"strings"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/fsouza/go-dockerclient"
-	"github.com/tsaikd/KDGoLib/errutil"
-	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
+	"github.com/tsaikd/gogstash/input/dockerlog/dockertool"
 )
 
-var (
-	containerLogMap = map[string]interface{}{}
-	regNameTrim     = regexp.MustCompile(`^/`)
-)
-
-func GetContainerInfo(container interface{}) (id string, name string, err error) {
-	switch container.(type) {
-	case docker.APIContainers:
-		container := container.(docker.APIContainers)
-		id = container.ID
-		name = container.Names[0]
-		name = regNameTrim.ReplaceAllString(name, "")
-	case *docker.Container:
-		container := container.(*docker.Container)
-		id = container.ID
-		name = container.Name
-		name = regNameTrim.ReplaceAllString(name, "")
-	default:
-		err = errors.New("unsupported container type: " + reflect.TypeOf(container).String())
-	}
-	return
-}
-
-func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, inchan config.InChan, logger *logrus.Logger) (err error) {
-	defer func() {
-		if err != nil {
-			logger.Errorln(err)
-		}
-		if recov := recover(); recov != nil {
-			logger.Errorln(recov)
-		}
-	}()
-	id, name, err := GetContainerInfo(container)
+func (t *InputConfig) containerLogLoop(ctx context.Context, container interface{}, since *time.Time, msgChan chan<- logevent.LogEvent) (err error) {
+	id, name, err := dockertool.GetContainerInfo(container)
 	if err != nil {
-		return errutil.New("get container info failed", err)
+		return ErrorGetContainerInfoFailed.New(err)
 	}
-	if containerLogMap[id] != nil {
-		return &ErrorContainerLogLoopRunning{id}
+	if t.containerExist.Exist(id) {
+		return ErrorContainerLoopRunning1.New(nil, id)
 	}
-	containerLogMap[id] = true
-	defer delete(containerLogMap, id)
+	t.containerExist.Add(id)
+	defer t.containerExist.Remove(id)
 
 	eventExtra := map[string]interface{}{
 		"host":          t.hostname,
@@ -61,10 +27,11 @@ func (t *InputConfig) containerLogLoop(container interface{}, since *time.Time, 
 	}
 
 	retry := 5
-	stream := NewContainerLogStream(inchan, id, eventExtra, since, nil)
+	stream := NewContainerLogStream(msgChan, id, eventExtra, since, nil)
 
 	for err == nil || retry > 0 {
 		err = t.client.Logs(docker.LogsOptions{
+			Context:      ctx,
 			Container:    id,
 			OutputStream: &stream,
 			ErrorStream:  &stream,

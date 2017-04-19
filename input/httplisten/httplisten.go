@@ -1,6 +1,7 @@
 package inputhttplisten
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 const ModuleName = "httplisten"
 
 const invalidMethodError = "Method not allowed: '%v'"
-const invalidJsonError = "Invalid JSON received on HTTP listener. Decoder error: %+v"
+const invalidJSONError = "Invalid JSON received on HTTP listener. Decoder error: %+v"
 const invalidAccessToken = "Invalid access token. Access denied."
 
 // InputConfig holds the configuration json fields and internal objects
@@ -40,21 +41,18 @@ func DefaultInputConfig() InputConfig {
 }
 
 // InitHandler initialize the input plugin
-func InitHandler(confraw *config.ConfigRaw) (config.TypeInputConfig, error) {
+func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
-	if err := config.ReflectConfig(confraw, &conf); err != nil {
+	err := config.ReflectConfig(raw, &conf)
+	if err != nil {
 		return nil, err
 	}
 	return &conf, nil
 }
 
 // Start wraps the actual function starting the plugin
-func (i *InputConfig) Start() {
-	i.Invoke(i.start)
-}
-
-// Start the HTTP listener and send all requests matching config to it
-func (i *InputConfig) start(logger *logrus.Logger, inchan config.InChan) {
+func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error) {
+	logger := config.Logger
 	http.HandleFunc(i.Path, func(rw http.ResponseWriter, req *http.Request) {
 		// Only allow POST requests (for now).
 		if req.Method != http.MethodPost {
@@ -73,14 +71,19 @@ func (i *InputConfig) start(logger *logrus.Logger, inchan config.InChan) {
 				return
 			}
 		}
-		i.postHandler(logger, inchan, rw, req)
+		i.postHandler(logger, msgChan, rw, req)
 	})
-	logger.Infof("accepting POST requests to %s%s", i.Address, i.Path)
-	logger.Fatal(http.ListenAndServe(i.Address, nil))
+	go func() {
+		logger.Infof("accepting POST requests to %s%s", i.Address, i.Path)
+		if err = http.ListenAndServe(i.Address, nil); err != nil {
+			logger.Fatal(err)
+		}
+	}()
+	return nil
 }
 
 // Handle HTTP POST requests
-func (i *InputConfig) postHandler(logger *logrus.Logger, inchan config.InChan, rw http.ResponseWriter, req *http.Request) {
+func (i *InputConfig) postHandler(logger *logrus.Logger, msgChan chan<- logevent.LogEvent, rw http.ResponseWriter, req *http.Request) {
 	logger.Debugf("Received request")
 
 	var jsonMsg map[string]interface{}
@@ -88,13 +91,13 @@ func (i *InputConfig) postHandler(logger *logrus.Logger, inchan config.InChan, r
 
 	// attempt to decode post body, if it fails, log it.
 	if err := dec.Decode(&jsonMsg); err != nil {
-		logger.Warnf(invalidJsonError, err)
+		logger.Warnf(invalidJSONError, err)
 		logger.Debugf("Invalid JSON: '%s'", req.Body)
 		rw.WriteHeader(http.StatusBadRequest)
-		rw.Write([]byte(fmt.Sprintf(invalidJsonError, err)))
+		rw.Write([]byte(fmt.Sprintf(invalidJSONError, err)))
 		return
 	}
 
 	// send the event as it came to us
-	inchan <- logevent.LogEvent{Extra: jsonMsg}
+	msgChan <- logevent.LogEvent{Extra: jsonMsg}
 }
