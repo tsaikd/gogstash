@@ -1,6 +1,7 @@
 package filterratelimit
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -27,6 +28,7 @@ func Test_filter_ratelimit_module(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
@@ -35,7 +37,7 @@ filter:
     burst: 1
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	start := time.Now()
 
@@ -65,6 +67,7 @@ func Test_filter_ratelimit_module_burst(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
@@ -73,7 +76,7 @@ filter:
     burst: 4
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	time.Sleep(600 * time.Millisecond)
 
@@ -108,6 +111,7 @@ func Test_filter_ratelimit_module_delay(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
@@ -116,7 +120,7 @@ filter:
     burst: 1
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	time.Sleep(500 * time.Millisecond)
 
@@ -139,5 +143,5 @@ filter:
 	_, err = conf.TestGetOutputEvent(100 * time.Millisecond)
 	require.NoError(err)
 
-	require.WithinDuration(start.Add(400*time.Millisecond), time.Now(), 150*time.Millisecond)
+	require.WithinDuration(start.Add(350*time.Millisecond), time.Now(), 150*time.Millisecond)
 }

@@ -1,6 +1,7 @@
 package outputprometheus
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -29,6 +30,7 @@ func Test_output_prometheus_module(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
@@ -36,7 +38,7 @@ output:
     address: "127.0.0.1:8080"
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	time.Sleep(1000 * time.Millisecond)
 

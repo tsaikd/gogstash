@@ -29,6 +29,7 @@ func Test_output_elastic_module(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
@@ -40,11 +41,10 @@ output:
     bulk_actions: 0
 	`)))
 	require.NoError(err)
-	err = conf.Start()
+	err = conf.Start(ctx)
 	if err != nil {
-		t.Log("skip test output elastic module")
 		require.True(ErrorCreateClientFailed1.In(err))
-		return
+		t.Skip("skip test output elastic module")
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
@@ -56,7 +56,7 @@ output:
 		},
 	})
 
-	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+	if event, err2 := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err2) {
 		require.Equal("output elastic test message", event.Message)
 	}
 

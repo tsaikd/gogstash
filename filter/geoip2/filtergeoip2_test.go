@@ -1,6 +1,7 @@
 package filtergeoip2
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -29,10 +30,10 @@ func Test_filter_geoip2_module(t *testing.T) {
 	require.NotNil(require)
 
 	if futil.IsNotExist("GeoLite2-City.mmdb") {
-		t.Log("No geoip2 database found, skip test ...")
-		return
+		t.Skip("No geoip2 database found, skip test ...")
 	}
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
@@ -40,7 +41,7 @@ filter:
     ip_field: clientip
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	timestamp, err := time.Parse("2006-01-02T15:04:05Z", "2016-12-04T09:09:41.193Z")
 	require.NoError(err)

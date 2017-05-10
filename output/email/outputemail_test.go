@@ -1,6 +1,7 @@
 package outputemail
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -28,6 +29,7 @@ func Test_output_stdout_module(t *testing.T) {
 	require.NotNil(require)
 
 	// Please fill the correct email info xxx is just a placeholder
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
@@ -43,7 +45,7 @@ output:
     subject: "outputemail test subject"
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Now(),

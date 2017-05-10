@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"runtime"
 
 	"github.com/Sirupsen/logrus"
@@ -10,7 +11,7 @@ import (
 	_ "github.com/tsaikd/gogstash/modloader"
 )
 
-func gogstash(confpath string, debug bool) (err error) {
+func gogstash(ctx context.Context, confpath string, debug bool) (err error) {
 	logger := config.Logger
 
 	if debug {
@@ -26,7 +27,7 @@ func gogstash(confpath string, debug bool) (err error) {
 		return
 	}
 
-	if err = conf.Start(); err != nil {
+	if err = conf.Start(ctx); err != nil {
 		return
 	}
 

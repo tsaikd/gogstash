@@ -1,6 +1,7 @@
 package filterremovefield
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -27,13 +28,14 @@ func Test_filter_remove_field_module_empty_fields(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
   - type: remove_field
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	timestamp, err := time.Parse("2006-01-02T15:04:05Z", "2017-04-05T18:30:41.193Z")
 	require.NoError(err)
@@ -67,6 +69,7 @@ func Test_filter_remove_field_module_remove_one_field(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
@@ -75,7 +78,7 @@ filter:
       - fieldA
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	timestamp, err := time.Parse("2006-01-02T15:04:05Z", "2017-04-05T18:30:41.193Z")
 	require.NoError(err)
@@ -108,6 +111,7 @@ func Test_filter_remove_field_module_remove_two_fields(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
@@ -117,7 +121,7 @@ filter:
       - fieldB
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	timestamp, err := time.Parse("2006-01-02T15:04:05Z", "2017-04-05T18:30:41.193Z")
 	require.NoError(err)
@@ -148,6 +152,7 @@ func Test_filter_remove_field_module_remove_child_field(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
@@ -156,7 +161,7 @@ filter:
       - fieldA.childA
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	timestamp, err := time.Parse("2006-01-02T15:04:05Z", "2017-04-05T18:30:41.193Z")
 	require.NoError(err)

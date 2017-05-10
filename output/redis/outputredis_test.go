@@ -1,6 +1,7 @@
 package outputredis
 
 import (
+	"context"
 	"math/rand"
 	"strings"
 	"testing"
@@ -28,6 +29,7 @@ func Test_output_redis_module(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
@@ -38,7 +40,7 @@ output:
     data_type: list
 	`)))
 	require.NoError(err)
-	err = conf.Start()
+	err = conf.Start(ctx)
 	if err != nil {
 		t.Log("skip test output redis module")
 		require.True(ErrorPingFailed.In(err))

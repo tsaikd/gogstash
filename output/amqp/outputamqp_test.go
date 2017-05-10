@@ -1,6 +1,7 @@
 package outputamqp
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -28,6 +29,7 @@ func Test_output_amqp_module(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
@@ -37,14 +39,13 @@ output:
     exchange_type: "topic"
 	`)))
 	require.NoError(err)
-	err = conf.Start()
+	err = conf.Start(ctx)
 	if err != nil {
 		require.True(config.ErrorInitOutputFailed1.Match(err))
 		require.True(ErrorNoValidConn.In(err))
 		require.Implements((*errutil.ErrorObject)(nil), err)
 		require.True(ErrorNoValidConn.Match(err.(errutil.ErrorObject).Parent()))
-		t.Log("skip test output amqp module")
-		return
+		t.Skip("skip test output amqp module")
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{

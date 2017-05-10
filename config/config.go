@@ -101,14 +101,13 @@ func initConfig(config *Config) {
 	if config.DebugChannel {
 		config.chOutDebug = make(MsgChan, config.ChannelSize)
 	}
-
-	ctx := context.Background()
-	ctx = contextWithOSSignal(ctx, Logger, os.Interrupt, os.Kill)
-	config.eg, config.ctx = errgroup.WithContext(ctx)
 }
 
 // Start config in goroutines
-func (t *Config) Start() (err error) {
+func (t *Config) Start(ctx context.Context) (err error) {
+	ctx = contextWithOSSignal(ctx, Logger, os.Interrupt, os.Kill)
+	t.eg, t.ctx = errgroup.WithContext(ctx)
+
 	if err = t.startInputs(); err != nil {
 		return
 	}

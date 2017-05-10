@@ -1,6 +1,7 @@
 package inputredis
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -30,6 +31,7 @@ func Test_input_redis_module(t *testing.T) {
 	require.NotNil(require)
 
 	// write test event to redis
+	ctx := context.Background()
 	confWrite, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
@@ -40,11 +42,10 @@ output:
     data_type: list
 	`)))
 	require.NoError(err)
-	err = confWrite.Start()
+	err = confWrite.Start(ctx)
 	if err != nil {
-		t.Log("skip test input redis module")
 		require.True(outputredis.ErrorPingFailed.In(err))
-		return
+		t.Skip("skip test input redis module")
 	}
 
 	timestamp := time.Now()
@@ -53,7 +54,7 @@ output:
 		Message:   "inputredis test message",
 	})
 
-	if event, err := confWrite.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+	if event, err2 := confWrite.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err2) {
 		require.Equal(timestamp.UnixNano(), event.Timestamp.UnixNano())
 		require.Equal("inputredis test message", event.Message)
 	}
@@ -66,7 +67,7 @@ input:
     key: gogstash-test
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	time.Sleep(500 * time.Millisecond)
 	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {

@@ -1,6 +1,7 @@
 package outputreport
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -27,6 +28,7 @@ func Test_output_report_module(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
@@ -34,7 +36,7 @@ output:
     interval: 1
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	conf.TestInputEvent(logevent.LogEvent{})
 	conf.TestInputEvent(logevent.LogEvent{})

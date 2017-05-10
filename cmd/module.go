@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 	"github.com/tsaikd/KDGoLib/cliutil/cobrather"
 )
@@ -32,7 +34,7 @@ var Module = &cobrather.Module{
 		flagConfig,
 		flagDebug,
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return gogstash(flagConfig.String(), flagDebug.Bool())
+	RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
+		return gogstash(ctx, flagConfig.String(), flagDebug.Bool())
 	},
 }

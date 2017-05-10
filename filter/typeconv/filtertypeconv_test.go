@@ -1,6 +1,7 @@
 package filtertypeconv
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -25,6 +26,7 @@ func Test_filter_typeconv_module_error(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
@@ -32,7 +34,7 @@ filter:
     conv_type: foobar
 	`)))
 	require.NoError(err)
-	require.Error(conf.Start())
+	require.Error(conf.Start(ctx))
 }
 
 func Test_filter_typeconv_module_convert_string(t *testing.T) {
@@ -41,6 +43,7 @@ func Test_filter_typeconv_module_convert_string(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
@@ -49,7 +52,7 @@ filter:
     fields: ["foo", "bar"]
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
 		Extra: map[string]interface{}{
@@ -78,6 +81,7 @@ func Test_filter_typeconv_module_convert_int64(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
@@ -86,7 +90,7 @@ filter:
     fields: ["foo", "bar", "foostr", "barstr"]
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
 		Extra: map[string]interface{}{
@@ -119,6 +123,7 @@ func Test_filter_typeconv_module_convert_float64(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
@@ -127,7 +132,7 @@ filter:
     fields: ["foo", "bar", "foostr", "barstr"]
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
 		Extra: map[string]interface{}{

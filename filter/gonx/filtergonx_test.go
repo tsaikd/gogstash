@@ -1,6 +1,7 @@
 package filtergonx
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -28,13 +29,14 @@ func Test_filter_gonx_module(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
   - type: gonx
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	hostname, err := os.Hostname()
 	require.NoError(err)

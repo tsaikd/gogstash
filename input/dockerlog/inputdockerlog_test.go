@@ -1,6 +1,7 @@
 package inputdockerlog
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -26,6 +27,7 @@ func Test_input_dockerlog_module(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 input:
@@ -34,11 +36,10 @@ input:
     sincepath: "sincedb-test"
 	`)))
 	require.NoError(err)
-	err = conf.Start()
+	err = conf.Start(ctx)
 	if err != nil {
-		t.Log("skip test input dockerlog module")
 		require.True(ErrorPingFailed.In(err))
-		return
+		t.Skip("skip test input dockerlog module")
 	}
 
 	time.Sleep(500 * time.Millisecond)

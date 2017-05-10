@@ -33,8 +33,8 @@ func TestLoadFromJSON(t *testing.T) {
 
 	require.NotNil(conf.chInFilter)
 	require.NotNil(conf.chFilterOut)
-	require.NotNil(conf.ctx)
-	require.NotNil(conf.eg)
+	require.Nil(conf.ctx)
+	require.Nil(conf.eg)
 	require.Len(conf.InputRaw, 2)
 	require.Len(conf.FilterRaw, 0)
 	require.Len(conf.OutputRaw, 1)
@@ -89,8 +89,8 @@ output:
 
 	require.NotNil(conf.chInFilter)
 	require.NotNil(conf.chFilterOut)
-	require.NotNil(conf.ctx)
-	require.NotNil(conf.eg)
+	require.Nil(conf.ctx)
+	require.Nil(conf.eg)
 	require.Len(conf.InputRaw, 2)
 	require.Len(conf.FilterRaw, 0)
 	require.Len(conf.OutputRaw, 1)

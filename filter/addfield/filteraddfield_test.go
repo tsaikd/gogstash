@@ -1,6 +1,7 @@
 package filteraddfield
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -27,6 +28,7 @@ func Test_filter_add_field_module(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
@@ -35,7 +37,7 @@ filter:
     value: bar
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	timestamp := time.Now()
 	expectedEvent := logevent.LogEvent{

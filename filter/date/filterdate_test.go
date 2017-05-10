@@ -1,6 +1,7 @@
 package filterdate
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -27,6 +28,7 @@ func Test_filter_date_module(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 filter:
@@ -35,7 +37,7 @@ filter:
     source: time_local
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	timestamp, err := time.Parse("2006-01-02T15:04:05Z", "2017-03-20T00:42:51Z")
 	require.NoError(err)

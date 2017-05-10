@@ -1,6 +1,7 @@
 package inputsocket
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -24,6 +25,7 @@ func Test_input_socket_module(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 input:
@@ -38,7 +40,7 @@ input:
     address: ":9999"
 	`)))
 	require.NoError(err)
-	require.NoError(conf.Start())
+	require.NoError(conf.Start(ctx))
 
 	waitsec := 10
 	logger.Infof("Wait for %d seconds", waitsec)
