@@ -13,6 +13,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/go-fsnotify/fsnotify"
 	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/KDGoLib/futil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"golang.org/x/sync/errgroup"
@@ -91,7 +92,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 	})
 
 	for _, fpath := range matches {
-		if fpath, err = filepath.EvalSymlinks(fpath); err != nil {
+		if fpath, err = evalSymlinks(ctx, fpath); err != nil {
 			logger.Errorf("Get symlinks failed: %q\n%v", fpath, err)
 			continue
 		}
@@ -141,7 +142,7 @@ func (t *InputConfig) fileReadLoop(
 		buffer = &bytes.Buffer{}
 	)
 
-	if fpath, err = filepath.EvalSymlinks(fpath); err != nil {
+	if fpath, err = evalSymlinks(ctx, fpath); err != nil {
 		logger.Errorf("Get symlinks failed: %q\n%v", fpath, err)
 		return
 	}
@@ -341,7 +342,7 @@ func waitWatchEvent(ctx context.Context, fpath string, op fsnotify.Op) (event fs
 		ok      bool
 	)
 
-	if fpath, err = filepath.EvalSymlinks(fpath); err != nil {
+	if fpath, err = evalSymlinks(ctx, fpath); err != nil {
 		err = errutil.New("Get symlinks failed: "+fpath, err)
 		return
 	}
@@ -380,4 +381,25 @@ func waitWatchEvent(ctx context.Context, fpath string, op fsnotify.Op) (event fs
 			return
 		}
 	}
+}
+
+func evalSymlinks(ctx context.Context, path string) (string, error) {
+	// https://github.com/tsaikd/gogstash/issues/30
+	for retry := 5; retry > 0; retry-- {
+		if futil.IsExist(path) {
+			break
+		}
+
+		select {
+		case <-ctx.Done():
+			return path, nil
+		case <-time.After(500 * time.Millisecond):
+		}
+	}
+
+	if futil.IsNotExist(path) {
+		return path, os.ErrNotExist
+	}
+
+	return filepath.EvalSymlinks(path)
 }
