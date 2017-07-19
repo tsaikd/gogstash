@@ -46,7 +46,7 @@ func init() {
 	config.RegistFilterHandler(filterratelimit.ModuleName, filterratelimit.InitHandler)
 	config.RegistFilterHandler(filterremovefield.ModuleName, filterremovefield.InitHandler)
 	config.RegistFilterHandler(filtertypeconv.ModuleName, filtertypeconv.InitHandler)
-	config.RegistFilterHandler(filtertgrok.ModuleName, filtergrok.InitHandler)
+	config.RegistFilterHandler(filtergrok.ModuleName, filtergrok.InitHandler)
 
 	config.RegistOutputHandler(outputamqp.ModuleName, outputamqp.InitHandler)
 	config.RegistOutputHandler(outputelastic.ModuleName, outputelastic.InitHandler)
