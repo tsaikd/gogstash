@@ -193,3 +193,45 @@ filter:
 		require.Equal(expectedEvent, event)
 	}
 }
+
+func Test_filter_remove_field_module_remove_message(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+
+	ctx := context.Background()
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+filter:
+  - type: remove_field
+    remove_message: true
+	`)))
+	require.NoError(err)
+	require.NoError(conf.Start(ctx))
+
+	timestamp, err := time.Parse("2006-01-02T15:04:05Z", "2017-04-05T18:30:41.193Z")
+	require.NoError(err)
+
+	expectedEvent := logevent.LogEvent{
+		Timestamp: timestamp,
+		Message:   "",
+		Extra: map[string]interface{}{
+			"fieldA": "foo",
+			"fieldB": "bar",
+		},
+	}
+
+	conf.TestInputEvent(logevent.LogEvent{
+		Timestamp: timestamp,
+		Message:   "filter test message",
+		Extra: map[string]interface{}{
+			"fieldA": "foo",
+			"fieldB": "bar",
+		},
+	})
+
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal(expectedEvent, event)
+	}
+}

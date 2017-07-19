@@ -15,7 +15,10 @@ const ModuleName = "remove_field"
 type FilterConfig struct {
 	config.FilterConfig
 
+	// list all fields to remove
 	Fields []string `json:"fields"`
+	// remove event origin message field, not in extra
+	RemoveMessage bool `json:"remove_message"`
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -26,7 +29,8 @@ func DefaultFilterConfig() FilterConfig {
 				Type: ModuleName,
 			},
 		},
-		Fields: []string{},
+		Fields:        []string{},
+		RemoveMessage: false,
 	}
 }
 
@@ -52,6 +56,10 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 
 	for _, field := range f.Fields {
 		removeField(event.Extra, field)
+	}
+
+	if f.RemoveMessage {
+		event.Message = ""
 	}
 
 	return event
