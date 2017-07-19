@@ -47,7 +47,10 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		return nil, err
 	}
 
-	g, _ := grok.NewWithConfig(&grok.Config{NamedCapturesOnly: true})
+	g, err := grok.NewWithConfig(&grok.Config{NamedCapturesOnly: true})
+	if err != nil {
+		return nil, err
+	}
 	if conf.PatternsPath != "" {
 		g.AddPatternsFromPath(conf.PatternsPath)
 	}
@@ -66,13 +69,13 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	message := event.GetString(f.Source)
 	values, err := f.grk.Parse(f.Match, message)
 	if err != nil {
-		config.Logger.Error(err)
 		event.AddTag(ErrorTag)
+		config.Logger.Errorf("%s: %q", err, message)
 		return event
 	}
 
-	for k, v := range values {
-		event.Extra[k] = v
+	for key, value := range values {
+		event.Extra[key] = event.Format(value)
 	}
 
 	return event
