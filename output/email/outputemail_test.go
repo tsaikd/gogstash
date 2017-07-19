@@ -22,7 +22,7 @@ func init() {
 	config.RegistOutputHandler(ModuleName, InitHandler)
 }
 
-func Test_output_stdout_module(t *testing.T) {
+func Test_output_email_module(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
 	require := require.New(t)
