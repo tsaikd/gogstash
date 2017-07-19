@@ -171,8 +171,15 @@ See [input modules](input) for more information
 
 See [filter modules](filter) for more information
 
-* [addfield](filter/addfield)
+* [add field](filter/addfield)
+* [date](filter/date)
+* [geoip2](filter/geoip2)
+* [gonx](filter/gonx)
+* [grok](filter/grok)
 * [json](filter/json)
+* [rate limit](filter/ratelimit)
+* [remove field](filter/removefield)
+* [typeconv](filter/typeconv)
 
 ## Supported outputs
 
