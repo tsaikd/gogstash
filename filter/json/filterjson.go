@@ -3,10 +3,10 @@ package filterjson
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"time"
 )
 
 // ModuleName is the name used in config file
