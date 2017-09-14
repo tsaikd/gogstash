@@ -3,10 +3,10 @@ package filterjson
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
+	"time"
 )
 
 // ModuleName is the name used in config file
@@ -18,9 +18,10 @@ const ErrorTag = "gogstash_filter_json_error"
 // FilterConfig holds the configuration json fields and internal objects
 type FilterConfig struct {
 	config.FilterConfig
-	Msgfield string `json:"message"`
-	Tsfield  string `json:"timestamp"`
-	Tsformat string `json:"timeformat"`
+	Msgfield  string `json:"message"`
+	Appendkey string `json:"appendkey"`
+	Tsfield   string `json:"timestamp"`
+	Tsformat  string `json:"timeformat"`
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -57,16 +58,20 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		event.Extra = make(map[string]interface{})
 	}
 
-	for key, value := range parsedMessage {
-		switch key {
-		case f.Msgfield:
-			event.Message = value.(string)
-		case f.Tsfield:
-			if ts, err := time.Parse(f.Tsformat, value.(string)); err == nil {
-				event.Timestamp = ts
+	if f.Appendkey != "" {
+		event.Extra[f.Appendkey] = parsedMessage
+	} else {
+		for key, value := range parsedMessage {
+			switch key {
+			case f.Msgfield:
+				event.Message = value.(string)
+			case f.Tsfield:
+				if ts, err := time.Parse(f.Tsformat, value.(string)); err == nil {
+					event.Timestamp = ts
+				}
+			default:
+				event.Extra[key] = value
 			}
-		default:
-			event.Extra[key] = value
 		}
 	}
 
