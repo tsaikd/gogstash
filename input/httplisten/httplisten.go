@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/tsaikd/gogstash/config"
@@ -99,5 +100,8 @@ func (i *InputConfig) postHandler(logger *logrus.Logger, msgChan chan<- logevent
 	}
 
 	// send the event as it came to us
-	msgChan <- logevent.LogEvent{Extra: jsonMsg}
+	msgChan <- logevent.LogEvent{
+		Timestamp: time.Now(),
+		Extra:     jsonMsg,
+	}
 }
