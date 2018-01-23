@@ -150,6 +150,9 @@ func parse(ctx context.Context, conn net.Conn, msgChan chan<- logevent.LogEvent)
 			}
 			break
 		}
-		msgChan <- logevent.LogEvent{Extra: jsonMsg}
+		msgChan <- logevent.LogEvent{
+			Timestamp: time.Now(),
+			Extra:     jsonMsg,
+		}
 	}
 }
