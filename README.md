@@ -191,4 +191,5 @@ See [output modules](output) for more information
 * [prometheus](output/prometheus)
 * [redis](output/redis)
 * [report](output/report)
+* [socket](output/socket)
 * [stdout](output/stdout)
