@@ -35,6 +35,8 @@ input:
     method: GET
     url: "http://127.0.0.1/"
     interval: 3
+    codec:
+      - type: "default"
 	`)))
 	require.NoError(err)
 	require.NoError(conf.Start(ctx))

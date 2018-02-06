@@ -69,6 +69,11 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 		return nil, err
 	}
 
+	conf.Codec, err = config.GetCodec(ctx, *raw)
+	if conf.Codec == nil {
+		conf.Codec, _ = config.DefaultCodecInitHandler(nil, nil)
+	}
+
 	return &conf, nil
 }
 
@@ -217,22 +222,33 @@ func (t *InputConfig) fileReadLoop(
 			}
 		}
 
-		event := logevent.LogEvent{
-			Timestamp: time.Now(),
-			Message:   line,
-			Extra: map[string]interface{}{
+		//event := logevent.LogEvent{
+		//	Timestamp: time.Now(),
+		//	Message:   line,
+		//	Extra: map[string]interface{}{
+		//		"host":   t.hostname,
+		//		"path":   fpath,
+		//		"offset": since.Offset,
+		//	},
+		//}
+
+		_, err := t.Codec.Decode(ctx, []byte(line),
+			map[string]interface{}{
 				"host":   t.hostname,
 				"path":   fpath,
 				"offset": since.Offset,
 			},
+			msgChan)
+
+		if err == nil {
+			since.Offset += int64(size)
+
+			//loggfer.Debugf("%q %v", event.Message, event)
+			//msgChan <- event
+
+			//self.SaveSinceDBInfos()
+			t.CheckSaveSinceDBInfos()
 		}
-
-		since.Offset += int64(size)
-
-		logger.Debugf("%q %v", event.Message, event)
-		msgChan <- event
-		//self.SaveSinceDBInfos()
-		t.CheckSaveSinceDBInfos()
 	}
 }
 

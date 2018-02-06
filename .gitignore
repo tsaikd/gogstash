@@ -3,3 +3,6 @@
 /config.json
 /config.yaml
 /config.yml
+
+.idea
+*.i*

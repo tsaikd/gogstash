@@ -22,6 +22,7 @@ type TypeInputConfig interface {
 // InputConfig is basic input config struct
 type InputConfig struct {
 	CommonConfig
+	Codec TypeCodecConfig `json:"-"`
 }
 
 // InputHandler is a handler to regist input module

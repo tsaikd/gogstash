@@ -28,6 +28,7 @@ func Test_input_file_module(t *testing.T) {
 	require.NotNil(require)
 
 	ctx := context.Background()
+	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 input:
@@ -35,6 +36,8 @@ input:
     path: "./README.md"
     sincedb_path: ""
     start_position: beginning
+    codec:
+      type: "default"
 	`)))
 	require.NoError(err)
 	require.NoError(conf.Start(ctx))
