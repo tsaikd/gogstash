@@ -2,10 +2,10 @@ package socket
 
 import (
 	"context"
+	"net"
 
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"net"
 )
 
 // ModuleName is the name used in config file

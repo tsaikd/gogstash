@@ -13,6 +13,7 @@ import (
 var (
 	ErrorUnknownCodecType1 = errutil.NewFactory("unknown codec config type: %q")
 	ErrorInitCodecFailed1  = errutil.NewFactory("initialize codec module failed: %v")
+	ErrorNotImplement1     = errutil.NewFactory("%q is not implement")
 )
 
 // TypeCodecConfig is interface of codec module
@@ -68,13 +69,16 @@ func getCodec(ctx context.Context, raw ConfigRaw) (codec TypeCodecConfig, err er
 	return codec, nil
 }
 
+// DefaultCodecName default codec name
 const DefaultCodecName = "default"
 
+// DefaultCodec default struct for codec
 type DefaultCodec struct {
 	CodecConfig
 }
 
-func DefaultCodecInitHandler(_ context.Context, _ *ConfigRaw) (TypeCodecConfig, error) {
+// DefaultCodecInitHandler returns an TypeCodecConfig interface with default handler
+func DefaultCodecInitHandler(context.Context, *ConfigRaw) (TypeCodecConfig, error) {
 	return &DefaultCodec{
 		CodecConfig: CodecConfig{
 			CommonConfig: CommonConfig{
@@ -100,6 +104,7 @@ func (c *DefaultCodec) Decode(ctx context.Context, data []byte,
 	return true, nil
 }
 
+// Encode function not implement (TODO)
 func (c *DefaultCodec) Encode(ctx context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
-	return false, nil
+	return false, ErrorNotImplement1.New(nil)
 }

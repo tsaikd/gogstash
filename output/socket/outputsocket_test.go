@@ -2,6 +2,7 @@ package socket
 
 import (
 	"context"
+	"math/rand"
 	"strings"
 	"testing"
 	"time"
@@ -12,7 +13,6 @@ import (
 	"github.com/stvp/go-udp-testing"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"math/rand"
 )
 
 var (
