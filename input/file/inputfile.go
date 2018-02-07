@@ -70,6 +70,9 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 	}
 
 	conf.Codec, err = config.GetCodec(ctx, *raw)
+	if err != nil {
+		return nil, err
+	}
 	if conf.Codec == nil {
 		conf.Codec, _ = config.DefaultCodecInitHandler(nil, nil)
 	}
@@ -222,16 +225,6 @@ func (t *InputConfig) fileReadLoop(
 			}
 		}
 
-		//event := logevent.LogEvent{
-		//	Timestamp: time.Now(),
-		//	Message:   line,
-		//	Extra: map[string]interface{}{
-		//		"host":   t.hostname,
-		//		"path":   fpath,
-		//		"offset": since.Offset,
-		//	},
-		//}
-
 		_, err := t.Codec.Decode(ctx, []byte(line),
 			map[string]interface{}{
 				"host":   t.hostname,
@@ -248,6 +241,8 @@ func (t *InputConfig) fileReadLoop(
 
 			//self.SaveSinceDBInfos()
 			t.CheckSaveSinceDBInfos()
+		} else {
+			logger.Errorf("Failed to decode %v using codec %v", line, t.Codec)
 		}
 	}
 }

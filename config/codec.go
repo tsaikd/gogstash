@@ -43,7 +43,10 @@ func RegistCodecHandler(name string, handler CodecHandler) {
 
 // GetCodec returns a codec based on the 'codec' configuration from provided 'ConfigRaw' input
 func GetCodec(ctx context.Context, raw ConfigRaw) (TypeCodecConfig, error) {
-	codecConfig, _ := dyno.Get(map[string]interface{}(raw), "codec")
+	codecConfig, err := dyno.Get(map[string]interface{}(raw), "codec")
+	if err != nil {
+		Logger.Infof("No codec has been configured for input %v", raw)
+	}
 
 	if codecConfig == nil {
 		return nil, nil
