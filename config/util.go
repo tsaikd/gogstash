@@ -9,13 +9,14 @@ import (
 	"reflect"
 	"regexp"
 
+	"github.com/icza/dyno"
 	"github.com/tsaikd/KDGoLib/logutil"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 // ReflectConfig set conf from confraw
 func ReflectConfig(confraw *ConfigRaw, conf interface{}) (err error) {
-	data, err := json.Marshal(confraw)
+	data, err := json.Marshal(dyno.ConvertMapI2MapS(map[string]interface{}(*confraw)))
 	if err != nil {
 		return
 	}

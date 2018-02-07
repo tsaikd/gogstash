@@ -55,4 +55,6 @@ func init() {
 	config.RegistOutputHandler(outputredis.ModuleName, outputredis.InitHandler)
 	config.RegistOutputHandler(outputreport.ModuleName, outputreport.InitHandler)
 	config.RegistOutputHandler(outputstdout.ModuleName, outputstdout.InitHandler)
+
+	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 }
