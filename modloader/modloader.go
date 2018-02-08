@@ -26,6 +26,7 @@ import (
 	"github.com/tsaikd/gogstash/output/redis"
 	"github.com/tsaikd/gogstash/output/report"
 	"github.com/tsaikd/gogstash/output/stdout"
+	"github.com/tsaikd/gogstash/output/mongodb"
 )
 
 func init() {
@@ -55,6 +56,7 @@ func init() {
 	config.RegistOutputHandler(outputredis.ModuleName, outputredis.InitHandler)
 	config.RegistOutputHandler(outputreport.ModuleName, outputreport.InitHandler)
 	config.RegistOutputHandler(outputstdout.ModuleName, outputstdout.InitHandler)
+	config.RegistOutputHandler(outputmongodb.ModuleName, outputmongodb.InitHandler)
 
 	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 }

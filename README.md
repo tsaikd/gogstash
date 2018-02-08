@@ -192,4 +192,5 @@ See [output modules](output) for more information
 * [redis](output/redis)
 * [report](output/report)
 * [socket](output/socket)
+* [mongodb](output/mongodb)
 * [stdout](output/stdout)
