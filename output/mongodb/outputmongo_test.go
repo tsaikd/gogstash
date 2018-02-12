@@ -61,4 +61,3 @@ output:
 		require.Equal("output mongodb test message", event.Message)
 	}
 }
-

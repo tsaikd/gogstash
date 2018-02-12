@@ -22,11 +22,11 @@ import (
 	"github.com/tsaikd/gogstash/output/amqp"
 	"github.com/tsaikd/gogstash/output/elastic"
 	"github.com/tsaikd/gogstash/output/email"
+	"github.com/tsaikd/gogstash/output/mongodb"
 	"github.com/tsaikd/gogstash/output/prometheus"
 	"github.com/tsaikd/gogstash/output/redis"
 	"github.com/tsaikd/gogstash/output/report"
 	"github.com/tsaikd/gogstash/output/stdout"
-	"github.com/tsaikd/gogstash/output/mongodb"
 )
 
 func init() {
