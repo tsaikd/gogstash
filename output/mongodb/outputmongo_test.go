@@ -35,7 +35,7 @@ output:
   - type: mongodb
     host:
       - 127.0.0.1:27017
-    database: gogstash
+    database: test
     collection: allLogs
     timeout: 10
     connections: 10
@@ -47,7 +47,8 @@ output:
 	require.NoError(err)
 	err = conf.Start(ctx)
 	if err != nil {
-		t.Logf("skip test output mongodb module err='%s'", err.Error())
+		t.Logf("Skip test output mongodb module err='%s'", err.Error())
+		require.True(ErrorConnectionMongoDBFailed1.In(err))
 		return
 	}
 

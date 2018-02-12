@@ -14,12 +14,13 @@ gogstash output MongoDB
       ],
       "database": "gogstash",
       "collection": "allLogs",
-      "timeout": 10,
+      "timeout": 3,
       "connections": 10,
       "username": "username",
       "password": "password",
       "mechanism": "SCRAM-SHA-1",
       "retry_interval": 10
+      "retry_max": -1
     }
   ]
 }
@@ -34,12 +35,13 @@ output:
   - localhost:27017
   database: gogstash
   collection: allLogs
-  timeout: 10
+  timeout: 3
   connections: 10
   username: username
   password: password
   mechanism: SCRAM-SHA-1
   retry_interval: 10
+  retry_max: -1
 ```
 
 ## Details
@@ -48,10 +50,11 @@ output:
 * host: The hostname(s) and port(s) of your MongoDB server(s) (default: localhost:27717)
 * database: The name of the database (default: gogstash)
 * collection: The name of the collection (default: allLogs)
-* timeout: MongoDB initial connection timeout in seconds (default: 10)
+* timeout: MongoDB initial connection timeout in seconds (default: 3)
 * connections: The number of connections in the pool (default: 10)
 * username: the username (default: username)
 * password: the password (default: password)
 * mechanism: the authentication mechanisms -- SCRAM-SHA-1, MONGODB-CR (default: MONGODB-CR)
 * retry_interval: Interval for reconnecting to failed MongoDB connections, in seconds (default: 10)
+* retry_max: number of attempts (default: -1, -1 = unlimited)
 

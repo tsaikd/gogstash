@@ -60,6 +60,7 @@ type OutputConfig struct {
 	Password          string   `json:"password"`
 	Mechanism         string   `json:"mechanism,omitempty"`
 	RetryInterval     int      `json:"retry_interval,omitempty"`
+	RetryMax          int      `json:"retry_max,omitempty"`
 
 	firstSession      *mgo.Session
 	pool              *mgoPool
@@ -76,18 +77,21 @@ func DefaultOutputConfig() OutputConfig {
 		Host:              []string{"localhost:27017"},
 		Database:          "gogstash",
 		Collection:        "allLogs",
-		Timeout:           10,
+		Timeout:           3,
 		Connections:       10,
 		Username:          "username",
 		Password:          "password",
 		Mechanism:         "MONGODB-CR",
 		RetryInterval:     10,
+		RetryMax:          -1,
 	}
 }
 
 // errors
 var (
-	ErrorInsertMongoDBFailed1  = errutil.NewFactory("insert MongoDB failed: %v")
+	ErrorInsertMongoDBFailed1      = errutil.NewFactory("Insert MongoDB failed: %v")
+	ErrorConnectionMongoDBFailed1  = errutil.NewFactory("Connection MongoDB failed: %v")
+	ErrorMaxRetryMongoDBFailed1    = errutil.NewFactory("Max retry number must be greater than 1 or equal -1 for unlimited: %d")
 )
 
 // InitHandler initialize the output plugin
@@ -97,6 +101,10 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 	err = config.ReflectConfig(raw, &conf)
 	if err != nil {
 		return nil, err
+	}
+
+	if conf.RetryMax < -1 || conf.RetryMax == 0 {
+		return nil, ErrorMaxRetryMongoDBFailed1.New(nil, conf.RetryMax)
 	}
 
 	// Init pool
@@ -116,7 +124,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 
 	conf.firstSession, err = mgo.DialWithInfo(info)
 	if err != nil {
-		return nil, err
+		return nil, ErrorConnectionMongoDBFailed1.New(err, info)
 	}
 
 	conf.pool = pool
@@ -129,10 +137,11 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 }
 
 // Output event
-func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err error) {
+func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) error {
+	var err error
+	i := 0
 	m := event.GetMap()
 
-	// try to log forever
 	for {
 		select {
 		case <-ctx.Done():
@@ -142,16 +151,18 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 
 		session := t.pool.Get()
 		coll := session.DB(t.Database).C(t.Collection)
-		err := coll.Insert(m)
-		if err == nil {
-			t.pool.Put(session)
-			return nil
-		}
-		ErrorInsertMongoDBFailed1.New(err, event)
+		err = coll.Insert(m)
 		t.pool.Put(session)
-
-		timeout := time.Duration(t.RetryInterval) * time.Second
-		timeutil.ContextSleep(ctx, timeout)
+		if err == nil {
+			return nil
+		} else if t.RetryMax == -1 || i < t.RetryMax {
+			i++
+			timeout := time.Duration(t.RetryInterval) * time.Second
+			timeutil.ContextSleep(ctx, timeout)
+			continue
+		}
+		break
 	}
+	return ErrorInsertMongoDBFailed1.New(err, "Max retry")
 }
 
