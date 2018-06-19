@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 

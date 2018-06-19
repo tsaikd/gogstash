@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/futil"
 )
 

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/bitly/go-hostpool"
+	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
