@@ -38,6 +38,16 @@ type OutputConfig struct {
 	// -1 and set the FlushInterval to a meaningful interval.
 	BulkFlushInterval time.Duration `json:"bulk_flush_interval"`
 
+	// ExponentialBackoffInitialTimeout used to set the first/minimal interval in elastic.ExponentialBackoff
+	// Defaults to 10s
+	ExponentialBackoffInitialTimeout string `json:"exponential_backoff_initial_timeout,omitempty"`
+	exponentialBackoffInitialTimeout time.Duration
+
+	// ExponentialBackoffMaxTimeout used to set the maximum wait interval in elastic.ExponentialBackoff
+	// Defaults to 5m
+	ExponentialBackoffMaxTimeout string `json:"exponential_backoff_max_timeout,omitempty"`
+	exponentialBackoffMaxTimeout time.Duration
+
 	client    *elastic.Client        // elastic client instance
 	processor *elastic.BulkProcessor // elastic bulk processor
 }
@@ -50,9 +60,11 @@ func DefaultOutputConfig() OutputConfig {
 				Type: ModuleName,
 			},
 		},
-		BulkActions:       1000,    // 1000 actions
-		BulkSize:          5 << 20, // 5 MB
-		BulkFlushInterval: 30 * time.Second,
+		BulkActions:                      1000,    // 1000 actions
+		BulkSize:                         5 << 20, // 5 MB
+		BulkFlushInterval:                30 * time.Second,
+		ExponentialBackoffInitialTimeout: "10s",
+		ExponentialBackoffMaxTimeout:     "5m",
 	}
 }
 
@@ -76,11 +88,22 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		return nil, ErrorCreateClientFailed1.New(err, conf.URL)
 	}
 
+	conf.exponentialBackoffInitialTimeout, err = time.ParseDuration(conf.ExponentialBackoffInitialTimeout)
+	if err != nil {
+		return nil, err
+	}
+
+	conf.exponentialBackoffMaxTimeout, err = time.ParseDuration(conf.ExponentialBackoffMaxTimeout)
+	if err != nil {
+		return nil, err
+	}
+
 	conf.processor, err = conf.client.BulkProcessor().
 		Name("gogstash-output-elastic").
 		BulkActions(conf.BulkActions).
 		BulkSize(conf.BulkSize).
 		FlushInterval(conf.BulkFlushInterval).
+		Backoff(elastic.NewExponentialBackoff(conf.exponentialBackoffInitialTimeout, conf.exponentialBackoffMaxTimeout)).
 		Do(ctx)
 	if err != nil {
 		return nil, err
