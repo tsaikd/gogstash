@@ -1,14 +1,10 @@
 {
 	"ImportPath": "github.com/tsaikd/gogstash",
-	"GoVersion": "go1.9",
+	"GoVersion": "go1.10",
 	"Deps": [
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
 			"Rev": "e24e809e9db395f1e3c85af1b88f2002023610f5"
-		},
-		{
-			"ImportPath": "github.com/go-fsnotify/fsnotify",
-			"Rev": "629574ca2a5df945712d3079857300b5e4da0236"
 		},
 		{
 			"ImportPath": "github.com/tsaikd/KDGoLib",

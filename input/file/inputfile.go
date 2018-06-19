@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/go-fsnotify/fsnotify"
+	"github.com/fsnotify/fsnotify"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/futil"
 	"github.com/tsaikd/gogstash/config"
