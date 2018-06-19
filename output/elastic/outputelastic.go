@@ -84,6 +84,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 	if conf.client, err = elastic.NewClient(
 		elastic.SetURL(conf.URL),
 		elastic.SetSniff(conf.Sniff),
+		elastic.SetErrorLog(config.ErrorLogger),
 	); err != nil {
 		return nil, ErrorCreateClientFailed1.New(err, conf.URL)
 	}
