@@ -3,6 +3,7 @@ package modloader
 import (
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/filter/addfield"
+	"github.com/tsaikd/gogstash/filter/cond"
 	"github.com/tsaikd/gogstash/filter/date"
 	"github.com/tsaikd/gogstash/filter/geoip2"
 	"github.com/tsaikd/gogstash/filter/gonx"
@@ -20,6 +21,7 @@ import (
 	"github.com/tsaikd/gogstash/input/redis"
 	"github.com/tsaikd/gogstash/input/socket"
 	"github.com/tsaikd/gogstash/output/amqp"
+	"github.com/tsaikd/gogstash/output/cond"
 	"github.com/tsaikd/gogstash/output/elastic"
 	"github.com/tsaikd/gogstash/output/email"
 	"github.com/tsaikd/gogstash/output/prometheus"
@@ -39,6 +41,7 @@ func init() {
 	config.RegistInputHandler(inputsocket.ModuleName, inputsocket.InitHandler)
 
 	config.RegistFilterHandler(filteraddfield.ModuleName, filteraddfield.InitHandler)
+	config.RegistFilterHandler(filtercond.ModuleName, filtercond.InitHandler)
 	config.RegistFilterHandler(filterdate.ModuleName, filterdate.InitHandler)
 	config.RegistFilterHandler(filtergeoip2.ModuleName, filtergeoip2.InitHandler)
 	config.RegistFilterHandler(filtergonx.ModuleName, filtergonx.InitHandler)
@@ -49,6 +52,7 @@ func init() {
 	config.RegistFilterHandler(filtergrok.ModuleName, filtergrok.InitHandler)
 
 	config.RegistOutputHandler(outputamqp.ModuleName, outputamqp.InitHandler)
+	config.RegistOutputHandler(outputcond.ModuleName, outputcond.InitHandler)
 	config.RegistOutputHandler(outputelastic.ModuleName, outputelastic.InitHandler)
 	config.RegistOutputHandler(outputemail.ModuleName, outputemail.InitHandler)
 	config.RegistOutputHandler(outputprometheus.ModuleName, outputprometheus.InitHandler)

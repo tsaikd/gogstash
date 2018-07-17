@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"reflect"
 	"regexp"
+	"strings"
 
 	"github.com/icza/dyno"
 	"github.com/tsaikd/KDGoLib/logutil"
@@ -29,6 +30,24 @@ func ReflectConfig(confraw *ConfigRaw, conf interface{}) (err error) {
 	formatReflect(rv)
 
 	return
+}
+
+// GetFromObject obtaining value from specified field recursively
+func GetFromObject(obj map[string]interface{}, field string) interface{} {
+	fieldSplits := strings.Split(field, ".")
+	if len(fieldSplits) < 2 {
+		if value, ok := obj[field]; ok {
+			return value
+		}
+		return nil
+	}
+
+	switch child := obj[fieldSplits[0]].(type) {
+	case map[string]interface{}:
+		return GetFromObject(child, strings.Join(fieldSplits[1:], "."))
+	default:
+		return nil
+	}
 }
 
 func formatReflect(rv reflect.Value) {

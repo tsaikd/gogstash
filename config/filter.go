@@ -36,21 +36,26 @@ func RegistFilterHandler(name string, handler FilterHandler) {
 	mapFilterHandler[name] = handler
 }
 
-func (t *Config) getFilters() (filters []TypeFilterConfig, err error) {
+// GetFilters get filters from config
+func GetFilters(ctx context.Context, filterRaw []ConfigRaw) (filters []TypeFilterConfig, err error) {
 	var filter TypeFilterConfig
-	for _, raw := range t.FilterRaw {
+	for _, raw := range filterRaw {
 		handler, ok := mapFilterHandler[raw["type"].(string)]
 		if !ok {
 			return filters, ErrorUnknownFilterType1.New(nil, raw["type"])
 		}
 
-		if filter, err = handler(t.ctx, &raw); err != nil {
+		if filter, err = handler(ctx, &raw); err != nil {
 			return filters, ErrorInitFilterFailed1.New(err, raw)
 		}
 
 		filters = append(filters, filter)
 	}
 	return
+}
+
+func (t *Config) getFilters() (filters []TypeFilterConfig, err error) {
+	return GetFilters(t.ctx, t.FilterRaw)
 }
 
 func (t *Config) startFilters() (err error) {
