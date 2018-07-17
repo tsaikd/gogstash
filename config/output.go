@@ -37,21 +37,26 @@ func RegistOutputHandler(name string, handler OutputHandler) {
 	mapOutputHandler[name] = handler
 }
 
-func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
+// GetOutputs get outputs from config
+func GetOutputs(ctx context.Context, outputRaw []ConfigRaw) (outputs []TypeOutputConfig, err error) {
 	var output TypeOutputConfig
-	for _, raw := range t.OutputRaw {
+	for _, raw := range outputRaw {
 		handler, ok := mapOutputHandler[raw["type"].(string)]
 		if !ok {
 			return outputs, ErrorUnknownOutputType1.New(nil, raw["type"])
 		}
 
-		if output, err = handler(t.ctx, &raw); err != nil {
+		if output, err = handler(ctx, &raw); err != nil {
 			return outputs, ErrorInitOutputFailed1.New(err, raw)
 		}
 
 		outputs = append(outputs, output)
 	}
 	return
+}
+
+func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
+	return GetOutputs(t.ctx, t.OutputRaw)
 }
 
 func (t *Config) startOutputs() (err error) {
@@ -71,7 +76,7 @@ func (t *Config) startOutputs() (err error) {
 					func(output TypeOutputConfig) {
 						eg.Go(func() error {
 							if err2 := output.Output(ctx, event); err2 != nil {
-								Logger.Errorf("output module %q failed: %v\n", output.GetType(), err)
+								Logger.Errorf("output module %q failed: %v\n", output.GetType(), err2)
 							}
 							return nil
 						})
