@@ -2,9 +2,11 @@ package filtercond
 
 import (
 	"context"
+	"math/rand"
 	"strings"
 
 	"github.com/Knetic/govaluate"
+	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
@@ -14,6 +16,36 @@ const ModuleName = "cond"
 
 // ErrorTag tag added to event when process geoip2 failed
 const ErrorTag = "gogstash_filter_cond_error"
+
+// built-in functions
+var (
+	ErrorBuiltInFunctionParameters1 = errutil.NewFactory("Built-in function '%s' parameters error")
+	BuiltInFunctions                = map[string]govaluate.ExpressionFunction{
+		"empty": func(args ...interface{}) (interface{}, error) {
+			if len(args) > 1 {
+				return nil, ErrorBuiltInFunctionParameters1.New(nil, "empty")
+			} else if len(args) == 0 {
+				return true, nil
+			}
+			return args[0] == nil, nil
+		},
+		"strlen": func(args ...interface{}) (interface{}, error) {
+			if len(args) > 1 {
+				return nil, ErrorBuiltInFunctionParameters1.New(nil, "strlen")
+			} else if len(args) == 0 {
+				return float64(0), nil
+			}
+			length := len(args[0].(string))
+			return (float64)(length), nil
+		},
+		"rand": func(args ...interface{}) (interface{}, error) {
+			if len(args) > 0 {
+				return nil, ErrorBuiltInFunctionParameters1.New(nil, "rand")
+			}
+			return rand.Float64(), nil
+		},
+	}
+)
 
 // FilterConfig holds the configuration json fields and internal objects
 type FilterConfig struct {
@@ -69,7 +101,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		config.Logger.Warn("filter cond config filters empty, ignored")
 		return &conf, nil
 	}
-	conf.expression, err = govaluate.NewEvaluableExpression(conf.Condition)
+	conf.expression, err = govaluate.NewEvaluableExpressionWithFunctions(conf.Condition, BuiltInFunctions)
 	return &conf, nil
 }
 
