@@ -2,9 +2,11 @@ package filtercond
 
 import (
 	"context"
+	"math/rand"
 	"strings"
 
 	"github.com/Knetic/govaluate"
+	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
@@ -14,6 +16,12 @@ const ModuleName = "cond"
 
 // ErrorTag tag added to event when process geoip2 failed
 const ErrorTag = "gogstash_filter_cond_error"
+
+// built-in functions
+var (
+	ErrorBuiltInFunctionParameters1 errutil.ErrorFactory
+	builtInFunctions                map[string]govaluate.ExpressionFunction
+)
 
 // FilterConfig holds the configuration json fields and internal objects
 type FilterConfig struct {
@@ -37,6 +45,39 @@ func (ep *EventParameters) Get(field string) (interface{}, error) {
 		return ep.Event.Get(field), nil
 	}
 	return config.GetFromObject(ep.Event.Extra, field), nil
+}
+
+// GetBuiltInFunctions get govaluate built-in functions
+func GetBuiltInFunctions() map[string]govaluate.ExpressionFunction {
+	if builtInFunctions == nil {
+		ErrorBuiltInFunctionParameters1 = errutil.NewFactory("Built-in function '%s' parameters error")
+		builtInFunctions = map[string]govaluate.ExpressionFunction{
+			"empty": func(args ...interface{}) (interface{}, error) {
+				if len(args) > 1 {
+					return nil, ErrorBuiltInFunctionParameters1.New(nil, "empty")
+				} else if len(args) == 0 {
+					return true, nil
+				}
+				return args[0] == nil, nil
+			},
+			"strlen": func(args ...interface{}) (interface{}, error) {
+				if len(args) > 1 {
+					return nil, ErrorBuiltInFunctionParameters1.New(nil, "strlen")
+				} else if len(args) == 0 {
+					return float64(0), nil
+				}
+				length := len(args[0].(string))
+				return (float64)(length), nil
+			},
+			"rand": func(args ...interface{}) (interface{}, error) {
+				if len(args) > 0 {
+					return nil, ErrorBuiltInFunctionParameters1.New(nil, "rand")
+				}
+				return rand.Float64(), nil
+			},
+		}
+	}
+	return builtInFunctions
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -69,7 +110,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		config.Logger.Warn("filter cond config filters empty, ignored")
 		return &conf, nil
 	}
-	conf.expression, err = govaluate.NewEvaluableExpression(conf.Condition)
+	conf.expression, err = govaluate.NewEvaluableExpressionWithFunctions(conf.Condition, GetBuiltInFunctions())
 	return &conf, nil
 }
 

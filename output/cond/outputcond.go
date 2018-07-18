@@ -53,23 +53,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		config.Logger.Warn("output cond config outputs empty, ignored")
 		return &conf, nil
 	}
-	functions := map[string]govaluate.ExpressionFunction{
-		"Get": func(args ...interface{}) (interface{}, error) {
-			if len(args) <= 1 {
-				return nil, nil
-			}
-			obj := args[0].(map[string]interface{})
-			if obj == nil {
-				return nil, nil
-			}
-			field := args[1].(string)
-			if field != "" {
-				return config.GetFromObject(obj, field), nil
-			}
-			return nil, nil
-		},
-	}
-	conf.expression, err = govaluate.NewEvaluableExpressionWithFunctions(conf.Condition, functions)
+	conf.expression, err = govaluate.NewEvaluableExpressionWithFunctions(conf.Condition, filtercond.GetBuiltInFunctions())
 	return &conf, nil
 }
 
