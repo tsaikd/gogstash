@@ -53,7 +53,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		config.Logger.Warn("output cond config outputs empty, ignored")
 		return &conf, nil
 	}
-	conf.expression, err = govaluate.NewEvaluableExpressionWithFunctions(conf.Condition, filtercond.GetBuiltInFunctions())
+	conf.expression, err = govaluate.NewEvaluableExpressionWithFunctions(conf.Condition, filtercond.BuiltInFunctions)
 	return &conf, nil
 }
 
