@@ -172,6 +172,7 @@ See [input modules](input) for more information
 See [filter modules](filter) for more information
 
 * [add field](filter/addfield)
+* [cond](filter/cond)
 * [date](filter/date)
 * [geoip2](filter/geoip2)
 * [gonx](filter/gonx)
@@ -186,6 +187,7 @@ See [filter modules](filter) for more information
 See [output modules](output) for more information
 
 * [amqp](output/amqp)
+* [cond](output/cond)
 * [elastic](output/elastic)
 * [email](output/email)
 * [prometheus](output/prometheus)
