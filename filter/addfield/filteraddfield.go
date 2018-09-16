@@ -43,9 +43,6 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	if _, ok := event.Extra[f.Key]; ok {
 		return event
 	}
-	if event.Extra == nil {
-		event.Extra = make(map[string]interface{})
-	}
-	event.Extra[f.Key] = event.Format(f.Value)
+	event.SetValue(f.Key, event.Format(f.Value))
 	return event
 }

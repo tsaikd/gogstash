@@ -63,48 +63,44 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
-	if event.Extra == nil {
-		event.Extra = map[string]interface{}{}
-	}
-
 	for _, field := range f.Fields {
-		if value, ok := event.Extra[field]; ok {
+		if value, ok := event.GetValue(field); ok {
 			switch f.ConvType {
 			case convTypeString:
 				switch v := value.(type) {
 				case string:
 				default:
-					event.Extra[field] = fmt.Sprintf("%v", v)
+					event.SetValue(field, fmt.Sprintf("%v", v))
 				}
 			case convTypeInt64:
 				switch v := value.(type) {
 				case string:
 					if vparse, err := strconv.ParseInt(v, 0, 64); err == nil {
-						event.Extra[field] = vparse
+						event.SetValue(field, vparse)
 					} else if vparse, err := strconv.ParseFloat(fmt.Sprintf("%v", v), 64); err == nil {
-						event.Extra[field] = int64(vparse)
+						event.SetValue(field, int64(vparse))
 					} else {
 						config.Logger.Error(err)
 						event.AddTag(ErrorTag)
 					}
 				case int:
-					event.Extra[field] = int64(v)
+					event.SetValue(field, int64(v))
 				case int8:
-					event.Extra[field] = int64(v)
+					event.SetValue(field, int64(v))
 				case int16:
-					event.Extra[field] = int64(v)
+					event.SetValue(field, int64(v))
 				case int32:
-					event.Extra[field] = int64(v)
+					event.SetValue(field, int64(v))
 				case int64:
 				case float32:
-					event.Extra[field] = int64(v)
+					event.SetValue(field, int64(v))
 				case float64:
-					event.Extra[field] = int64(v)
+					event.SetValue(field, int64(v))
 				default:
 					if vparse, err := strconv.ParseInt(fmt.Sprintf("%v", v), 0, 64); err == nil {
-						event.Extra[field] = vparse
+						event.SetValue(field, vparse)
 					} else if vparse, err := strconv.ParseFloat(fmt.Sprintf("%v", v), 64); err == nil {
-						event.Extra[field] = int64(vparse)
+						event.SetValue(field, int64(vparse))
 					} else {
 						config.Logger.Error(err)
 						event.AddTag(ErrorTag)
@@ -114,27 +110,27 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 				switch v := value.(type) {
 				case string:
 					if vparse, err := strconv.ParseFloat(v, 64); err == nil {
-						event.Extra[field] = vparse
+						event.SetValue(field, vparse)
 					} else {
 						config.Logger.Error(err)
 						event.AddTag(ErrorTag)
 					}
 				case int:
-					event.Extra[field] = float64(v)
+					event.SetValue(field, float64(v))
 				case int8:
-					event.Extra[field] = float64(v)
+					event.SetValue(field, float64(v))
 				case int16:
-					event.Extra[field] = float64(v)
+					event.SetValue(field, float64(v))
 				case int32:
-					event.Extra[field] = float64(v)
+					event.SetValue(field, float64(v))
 				case int64:
-					event.Extra[field] = float64(v)
+					event.SetValue(field, float64(v))
 				case float32:
-					event.Extra[field] = float64(v)
+					event.SetValue(field, float64(v))
 				case float64:
 				default:
 					if vparse, err := strconv.ParseFloat(fmt.Sprintf("%v", v), 64); err == nil {
-						event.Extra[field] = vparse
+						event.SetValue(field, vparse)
 					} else {
 						config.Logger.Error(err)
 						event.AddTag(ErrorTag)

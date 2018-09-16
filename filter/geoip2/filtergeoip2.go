@@ -57,10 +57,6 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
-	if event.Extra == nil {
-		event.Extra = map[string]interface{}{}
-	}
-
 	ipstr := event.GetString(f.IPField)
 	record, err := f.db.City(net.ParseIP(ipstr))
 	if err != nil {
@@ -77,7 +73,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		return event
 	}
 
-	event.Extra[f.Key] = map[string]interface{}{
+	event.SetValue(f.Key, map[string]interface{}{
 		"city": map[string]interface{}{
 			"name": record.City.Names["en"],
 		},
@@ -94,7 +90,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		"location":  []float64{record.Location.Longitude, record.Location.Latitude},
 		"longitude": record.Location.Longitude,
 		"timezone":  record.Location.TimeZone,
-	}
+	})
 
 	return event
 }

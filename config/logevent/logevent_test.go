@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_FormatWithEnv(t *testing.T) {
@@ -99,4 +100,53 @@ func Test_Format(t *testing.T) {
 	logevent.AddTag("tag1", "tag%{int}")
 	assert.Len(logevent.Tags, 4)
 	assert.Contains(logevent.Tags, "tag123")
+}
+
+func Test_GetValue(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+
+	eventTime := time.Date(2017, time.April, 5, 17, 41, 12, 345, time.UTC)
+	event := LogEvent{
+		Timestamp: eventTime,
+		Message:   "Test Message",
+		Extra: map[string]interface{}{
+			"nginx": map[string]interface{}{
+				"access": map[string]interface{}{
+					"response_code": 200,
+				},
+			},
+		},
+	}
+
+	responseCode, ok := event.GetValue("nginx.access.response_code")
+	assert.True(ok)
+	assert.Equal(200, responseCode)
+}
+
+func Test_SetValue(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+
+	eventTime := time.Date(2017, time.April, 5, 17, 41, 12, 345, time.UTC)
+	event := LogEvent{
+		Timestamp: eventTime,
+		Message:   "Test Message",
+	}
+
+	assert.True(event.SetValue("nginx.access.remote_ip", "1.1.1.1"))
+
+	require.Equal(LogEvent{
+		Timestamp: eventTime,
+		Message:   "Test Message",
+		Extra: map[string]interface{}{
+			"nginx": map[string]interface{}{
+				"access": map[string]interface{}{
+					"remote_ip": "1.1.1.1",
+				},
+			},
+		},
+	}, event)
 }

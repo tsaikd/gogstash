@@ -62,10 +62,6 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
-	if event.Extra == nil {
-		event.Extra = map[string]interface{}{}
-	}
-
 	message := event.GetString(f.Source)
 	values, err := f.grk.Parse(f.Match, message)
 	if err != nil {
@@ -75,7 +71,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	}
 
 	for key, value := range values {
-		event.Extra[key] = event.Format(value)
+		event.SetValue(key, event.Format(value))
 	}
 
 	return event
