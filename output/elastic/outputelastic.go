@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -73,6 +74,15 @@ var (
 	ErrorCreateClientFailed1 = errutil.NewFactory("create elastic client failed: %q")
 )
 
+type errorLogger struct {
+	logger *logrus.Logger
+}
+
+// Printf log format string to error level
+func (l *errorLogger) Printf(format string, args ...interface{}) {
+	l.logger.Errorf(format, args...)
+}
+
 // InitHandler initialize the output plugin
 func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputConfig, error) {
 	conf := DefaultOutputConfig()
@@ -81,10 +91,13 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		return nil, err
 	}
 
+	// map Printf to error level
+	logger := &errorLogger{logger: config.ErrorLogger}
+
 	if conf.client, err = elastic.NewClient(
 		elastic.SetURL(conf.URL),
 		elastic.SetSniff(conf.Sniff),
-		elastic.SetErrorLog(config.ErrorLogger),
+		elastic.SetErrorLog(logger),
 	); err != nil {
 		return nil, ErrorCreateClientFailed1.New(err, conf.URL)
 	}
@@ -105,12 +118,27 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		BulkSize(conf.BulkSize).
 		FlushInterval(conf.BulkFlushInterval).
 		Backoff(elastic.NewExponentialBackoff(conf.exponentialBackoffInitialTimeout, conf.exponentialBackoffMaxTimeout)).
+		After(conf.BulkAfter).
 		Do(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	return &conf, nil
+}
+
+// BulkAfter execute after a commit to Elasticsearch
+func (t *OutputConfig) BulkAfter(executionID int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
+	if err == nil && response.Errors {
+		// find failed requests, and log it
+		for i, item := range response.Items {
+			for _, v := range item {
+				if v.Error != nil {
+					config.ErrorLogger.Errorf("%s: bulk processor request %s failed: %s", ModuleName, requests[i].String(), v.Error.Reason)
+				}
+			}
+		}
+	}
 }
 
 // Output event
