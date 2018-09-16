@@ -69,10 +69,6 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
-	if event.Extra == nil {
-		event.Extra = map[string]interface{}{}
-	}
-
 	message := event.GetString(f.Source)
 	reader := gonx.NewReader(strings.NewReader(message), f.Format)
 	entry, err := reader.Read()
@@ -83,7 +79,8 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	}
 
 	for _, field := range f.fields {
-		event.Extra[field], _ = entry.Field(field)
+		s, _ := entry.Field(field)
+		event.SetValue(field, s)
 	}
 
 	return event

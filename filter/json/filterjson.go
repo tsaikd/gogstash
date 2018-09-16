@@ -54,13 +54,12 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		return event
 	}
 
-	if event.Extra == nil {
-		event.Extra = make(map[string]interface{})
-	}
-
 	if f.Appendkey != "" {
-		event.Extra[f.Appendkey] = parsedMessage
+		event.SetValue(f.Appendkey, parsedMessage)
 	} else {
+		if event.Extra == nil {
+			event.Extra = make(map[string]interface{})
+		}
 		for key, value := range parsedMessage {
 			switch key {
 			case f.Msgfield:

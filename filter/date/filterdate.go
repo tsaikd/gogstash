@@ -47,10 +47,6 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
-	if event.Extra == nil {
-		event.Extra = map[string]interface{}{}
-	}
-
 	timestamp, err := time.Parse(f.Format, event.GetString(f.Source))
 	if err != nil {
 		event.AddTag(ErrorTag)

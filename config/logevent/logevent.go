@@ -80,24 +80,56 @@ func (t LogEvent) GetString(field string) string {
 	case "message":
 		return t.Message
 	default:
-		return getStringFromObject(t.Extra, field)
+		v, ok := getValueFromObject(t.Extra, field)
+		if ok {
+			return fmt.Sprintf("%v", v)
+		}
+		return ""
 	}
 }
 
-func getStringFromObject(obj map[string]interface{}, field string) string {
+func (t LogEvent) GetValue(field string) (interface{}, bool) {
+	return getValueFromObject(t.Extra, field)
+}
+
+func (t *LogEvent) SetValue(field string, v interface{}) bool {
+	if t.Extra == nil {
+		t.Extra = map[string]interface{}{}
+	}
+	return setValueToObject(t.Extra, field, v)
+}
+
+func getValueFromObject(obj map[string]interface{}, field string) (interface{}, bool) {
 	fieldSplits := strings.Split(field, ".")
 	if len(fieldSplits) < 2 {
-		if value, ok := obj[field]; ok {
-			return fmt.Sprintf("%v", value)
-		}
-		return ""
+		val, ok := obj[field]
+		return val, ok
 	}
 
 	switch child := obj[fieldSplits[0]].(type) {
 	case map[string]interface{}:
-		return getStringFromObject(child, strings.Join(fieldSplits[1:], "."))
+		return getValueFromObject(child, strings.Join(fieldSplits[1:], "."))
 	default:
-		return fmt.Sprintf("%v", child)
+		return nil, false
+	}
+}
+
+func setValueToObject(obj map[string]interface{}, field string, v interface{}) bool {
+	fieldSplits := strings.Split(field, ".")
+	if len(fieldSplits) < 2 {
+		obj[field] = v
+		return true
+	}
+
+	switch child := obj[fieldSplits[0]].(type) {
+	case nil:
+		obj[fieldSplits[0]] = map[string]interface{}{}
+		return setValueToObject(obj[fieldSplits[0]].(map[string]interface{}),
+			strings.Join(fieldSplits[1:], "."), v)
+	case map[string]interface{}:
+		return setValueToObject(child, strings.Join(fieldSplits[1:], "."), v)
+	default:
+		return false
 	}
 }
 
