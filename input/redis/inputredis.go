@@ -25,6 +25,11 @@ type InputConfig struct {
 	Key         string `json:"key"`         // where to get data, default: "gogstash"
 	Connections int    `json:"connections"` // maximum number of socket connections, default: 10
 
+	// BlockingTimeout used for set the blocking timeout interval in redis BLPOP command
+	// Defaults to 600s
+	BlockingTimeout string `json:"blocking_timeout,omitempty"` // automatically
+	blockingTimeout time.Duration
+
 	client *redis.Client
 }
 
@@ -36,9 +41,10 @@ func DefaultInputConfig() InputConfig {
 				Type: ModuleName,
 			},
 		},
-		Host:        "localhost:6379",
-		Key:         "gogstash",
-		Connections: 10,
+		Host:            "localhost:6379",
+		Key:             "gogstash",
+		Connections:     10,
+		BlockingTimeout: "600s",
 	}
 }
 
@@ -51,6 +57,11 @@ var (
 func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
 	err := config.ReflectConfig(raw, &conf)
+	if err != nil {
+		return nil, err
+	}
+
+	conf.blockingTimeout, err = time.ParseDuration(conf.BlockingTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -75,11 +86,12 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 	for {
 		select {
 		case <-ctx.Done():
+			logger.Info("input redis stopped")
 			return nil
 		default:
 		}
 
-		result, err := i.client.BLPop(600*time.Second, i.Key).Result()
+		result, err := i.client.BLPop(i.blockingTimeout, i.Key).Result()
 		if err != nil {
 			switch err {
 			case redis.Nil: // BLPOP timeout
