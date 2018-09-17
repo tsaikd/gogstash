@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -81,14 +80,14 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		case <-ctx.Done():
 			return nil
 		case <-startChan:
-			t.exec(msgChan, config.Logger)
+			t.exec(msgChan)
 		case <-ticker.C:
-			t.exec(msgChan, config.Logger)
+			t.exec(msgChan)
 		}
 	}
 }
 
-func (t *InputConfig) exec(msgChan chan<- logevent.LogEvent, logger *logrus.Logger) {
+func (t *InputConfig) exec(msgChan chan<- logevent.LogEvent) {
 	errs := []error{}
 
 	message, err := t.doExecCommand()

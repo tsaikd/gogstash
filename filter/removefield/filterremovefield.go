@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -42,7 +43,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 	}
 
 	if len(conf.Fields) < 1 {
-		config.Logger.Warn("filter remove_field config empty fields")
+		goglog.Logger.Warn("filter remove_field config empty fields")
 	}
 
 	return &conf, nil

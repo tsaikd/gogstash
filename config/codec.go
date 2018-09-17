@@ -6,6 +6,7 @@ import (
 
 	"github.com/icza/dyno"
 	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -46,7 +47,7 @@ func RegistCodecHandler(name string, handler CodecHandler) {
 func GetCodec(ctx context.Context, raw ConfigRaw) (TypeCodecConfig, error) {
 	codecConfig, err := dyno.Get(map[string]interface{}(raw), "codec")
 	if err != nil {
-		Logger.Infof("No codec has been configured for input %v", raw)
+		goglog.Logger.Infof("No codec has been configured for input %v", raw)
 	}
 
 	if codecConfig == nil {
@@ -98,7 +99,7 @@ func (c *DefaultCodec) Decode(ctx context.Context, data []byte,
 		Extra:     eventExtra,
 	}
 
-	Logger.Debugf("%q %v", event.Message, event)
+	goglog.Logger.Debugf("%q %v", event.Message, event)
 	msgChan <- event
 
 	return true, nil

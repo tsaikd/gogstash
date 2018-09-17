@@ -6,6 +6,7 @@ import (
 
 	geoip2 "github.com/oschwald/geoip2-golang"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -60,7 +61,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	ipstr := event.GetString(f.IPField)
 	record, err := f.db.City(net.ParseIP(ipstr))
 	if err != nil {
-		config.Logger.Error(err)
+		goglog.Logger.Error(err)
 		event.AddTag(ErrorTag)
 		return event
 	}

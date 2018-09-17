@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"golang.org/x/sync/errgroup"
 )
@@ -76,7 +77,7 @@ func (t *Config) startOutputs() (err error) {
 					func(output TypeOutputConfig) {
 						eg.Go(func() error {
 							if err2 := output.Output(ctx, event); err2 != nil {
-								Logger.Errorf("output module %q failed: %v\n", output.GetType(), err2)
+								goglog.Logger.Errorf("output module %q failed: %v\n", output.GetType(), err2)
 							}
 							return nil
 						})

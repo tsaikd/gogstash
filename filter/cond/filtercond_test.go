@@ -10,16 +10,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"github.com/tsaikd/gogstash/filter/addfield"
 )
 
-var (
-	logger = config.Logger
-)
-
 func init() {
-	logger.Level = logrus.DebugLevel
+	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistFilterHandler(filteraddfield.ModuleName, filteraddfield.InitHandler)
 	config.RegistFilterHandler(ModuleName, InitHandler)
 }

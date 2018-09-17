@@ -8,6 +8,7 @@ import (
 	"github.com/Knetic/govaluate"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -90,7 +91,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		return nil, err
 	}
 	if conf.Condition == "" {
-		config.Logger.Warn("filter cond config condition empty, ignored")
+		goglog.Logger.Warn("filter cond config condition empty, ignored")
 		return &conf, nil
 	}
 	conf.filters, err = config.GetFilters(ctx, conf.FilterRaw)
@@ -98,7 +99,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		return nil, err
 	}
 	if len(conf.filters) <= 0 {
-		config.Logger.Warn("filter cond config filters empty, ignored")
+		goglog.Logger.Warn("filter cond config filters empty, ignored")
 		return &conf, nil
 	}
 	conf.expression, err = govaluate.NewEvaluableExpressionWithFunctions(conf.Condition, BuiltInFunctions)
@@ -111,7 +112,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		ep := EventParameters{Event: &event}
 		ret, err := f.expression.Eval(&ep)
 		if err != nil {
-			config.Logger.Error(err)
+			goglog.Logger.Error(err)
 			event.AddTag(ErrorTag)
 			return event
 		}

@@ -6,20 +6,19 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 
 	// module loader
 	_ "github.com/tsaikd/gogstash/modloader"
 )
 
 func gogstash(ctx context.Context, confpath string, debug bool) (err error) {
-	logger := config.Logger
-
 	if debug {
-		logger.Level = logrus.DebugLevel
+		goglog.Logger.SetLevel(logrus.DebugLevel)
 	}
 
 	if runtime.GOMAXPROCS(0) == 1 && runtime.NumCPU() > 1 {
-		logger.Warnf("set GOMAXPROCS = %d to get better performance", runtime.NumCPU())
+		goglog.Logger.Warnf("set GOMAXPROCS = %d to get better performance", runtime.NumCPU())
 	}
 
 	conf, err := config.LoadFromFile(confpath)
@@ -31,7 +30,7 @@ func gogstash(ctx context.Context, confpath string, debug bool) (err error) {
 		return
 	}
 
-	logger.Info("gogstash started...")
+	goglog.Logger.Info("gogstash started...")
 
 	// Check whether any goroutines failed.
 	if err = conf.Wait(); err != nil {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"gopkg.in/redis.v5"
 )
@@ -69,7 +70,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 
 // Start wraps the actual function starting the plugin
 func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) error {
-	logger := config.Logger
+	logger := goglog.Logger
 
 	for {
 		select {

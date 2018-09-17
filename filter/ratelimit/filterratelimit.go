@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -41,7 +42,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 	}
 
 	if conf.Rate <= 0 {
-		config.Logger.Warn("filter ratelimit config rate should > 0, ignored")
+		goglog.Logger.Warn("filter ratelimit config rate should > 0, ignored")
 		return &conf, nil
 	}
 

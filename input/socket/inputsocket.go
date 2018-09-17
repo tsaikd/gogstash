@@ -11,6 +11,7 @@ import (
 
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"golang.org/x/sync/errgroup"
 )
@@ -54,7 +55,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 // Start wraps the actual function starting the plugin
 func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) error {
 	eg, ctx := errgroup.WithContext(ctx)
-	logger := config.Logger
+	logger := goglog.Logger
 	var l net.Listener
 
 	switch i.Socket {

@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -53,7 +53,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 
 // Start wraps the actual function starting the plugin
 func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error) {
-	logger := config.Logger
+	logger := goglog.Logger
 	http.HandleFunc(i.Path, func(rw http.ResponseWriter, req *http.Request) {
 		// Only allow POST requests (for now).
 		if req.Method != http.MethodPost {
@@ -72,7 +72,7 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 				return
 			}
 		}
-		i.postHandler(logger, msgChan, rw, req)
+		i.postHandler(msgChan, rw, req)
 	})
 	go func() {
 		logger.Infof("accepting POST requests to %s%s", i.Address, i.Path)
@@ -84,7 +84,8 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 }
 
 // Handle HTTP POST requests
-func (i *InputConfig) postHandler(logger *logrus.Logger, msgChan chan<- logevent.LogEvent, rw http.ResponseWriter, req *http.Request) {
+func (i *InputConfig) postHandler(msgChan chan<- logevent.LogEvent, rw http.ResponseWriter, req *http.Request) {
+	logger := goglog.Logger
 	logger.Debugf("Received request")
 
 	var jsonMsg map[string]interface{}

@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/futil"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"golang.org/x/sync/errgroup"
 )
@@ -82,7 +82,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 
 // Start wraps the actual function starting the plugin
 func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error) {
-	logger := config.Logger
+	logger := goglog.Logger
 
 	if err = t.LoadSinceDBInfos(); err != nil {
 		return
@@ -119,7 +119,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		func(fpath string) {
 			readEventChan := make(chan fsnotify.Event, 10)
 			eg.Go(func() error {
-				return t.fileReadLoop(ctx, readEventChan, fpath, logger, msgChan)
+				return t.fileReadLoop(ctx, readEventChan, fpath, msgChan)
 			})
 			eg.Go(func() error {
 				return t.fileWatchLoop(ctx, readEventChan, fpath, fsnotify.Create|fsnotify.Write)
@@ -134,7 +134,6 @@ func (t *InputConfig) fileReadLoop(
 	ctx context.Context,
 	readEventChan chan fsnotify.Event,
 	fpath string,
-	logger *logrus.Logger,
 	msgChan chan<- logevent.LogEvent,
 ) (err error) {
 	var (
@@ -148,6 +147,7 @@ func (t *InputConfig) fileReadLoop(
 		size      int
 
 		buffer = &bytes.Buffer{}
+		logger = goglog.Logger
 	)
 
 	if fpath, err = evalSymlinks(ctx, fpath); err != nil {

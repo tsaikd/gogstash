@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v2"
@@ -105,7 +106,7 @@ func initConfig(config *Config) {
 
 // Start config in goroutines
 func (t *Config) Start(ctx context.Context) (err error) {
-	ctx = contextWithOSSignal(ctx, Logger, os.Interrupt, os.Kill)
+	ctx = contextWithOSSignal(ctx, goglog.Logger, os.Interrupt, os.Kill)
 	t.eg, t.ctx = errgroup.WithContext(ctx)
 
 	if err = t.startInputs(); err != nil {

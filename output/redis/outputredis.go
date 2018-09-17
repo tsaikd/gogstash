@@ -7,6 +7,7 @@ import (
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/timeutil"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"gopkg.in/redis.v5"
 )
@@ -63,7 +64,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 	}
 
 	if len(conf.Host) > 1 {
-		config.Logger.Warn("deprecated: host number should be only 1")
+		goglog.Logger.Warn("deprecated: host number should be only 1")
 	}
 
 	conf.client = redis.NewClient(&redis.Options{

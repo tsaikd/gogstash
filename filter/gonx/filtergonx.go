@@ -8,6 +8,7 @@ import (
 	"github.com/satyrius/gonx"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -74,7 +75,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	entry, err := reader.Read()
 	if err != nil {
 		event.AddTag(ErrorTag)
-		config.Logger.Errorf("%s: %q", err, message)
+		goglog.Logger.Errorf("%s: %q", err, message)
 		return event
 	}
 

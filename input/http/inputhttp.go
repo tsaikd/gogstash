@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -71,14 +71,14 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		case <-ctx.Done():
 			return nil
 		case <-startChan:
-			t.Request(config.Logger, msgChan)
+			t.Request(msgChan)
 		case <-ticker.C:
-			t.Request(config.Logger, msgChan)
+			t.Request(msgChan)
 		}
 	}
 }
 
-func (t *InputConfig) Request(logger *logrus.Logger, msgChan chan<- logevent.LogEvent) {
+func (t *InputConfig) Request(msgChan chan<- logevent.LogEvent) {
 	data, err := t.SendRequest()
 
 	event := logevent.LogEvent{
@@ -94,7 +94,7 @@ func (t *InputConfig) Request(logger *logrus.Logger, msgChan chan<- logevent.Log
 		event.AddTag(ErrorTag)
 	}
 
-	logger.Debugf("%v", event)
+	goglog.Logger.Debugf("%v", event)
 	msgChan <- event
 
 	return

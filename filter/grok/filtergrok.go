@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"github.com/vjeantet/grok"
 )
@@ -66,7 +67,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	values, err := f.grk.Parse(f.Match, message)
 	if err != nil {
 		event.AddTag(ErrorTag)
-		config.Logger.Errorf("%s: %q", err, message)
+		goglog.Logger.Errorf("%s: %q", err, message)
 		return event
 	}
 

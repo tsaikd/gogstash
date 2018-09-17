@@ -7,6 +7,7 @@ import (
 
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -80,7 +81,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 					} else if vparse, err := strconv.ParseFloat(fmt.Sprintf("%v", v), 64); err == nil {
 						event.SetValue(field, int64(vparse))
 					} else {
-						config.Logger.Error(err)
+						goglog.Logger.Error(err)
 						event.AddTag(ErrorTag)
 					}
 				case int:
@@ -102,7 +103,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 					} else if vparse, err := strconv.ParseFloat(fmt.Sprintf("%v", v), 64); err == nil {
 						event.SetValue(field, int64(vparse))
 					} else {
-						config.Logger.Error(err)
+						goglog.Logger.Error(err)
 						event.AddTag(ErrorTag)
 					}
 				}
@@ -112,7 +113,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 					if vparse, err := strconv.ParseFloat(v, 64); err == nil {
 						event.SetValue(field, vparse)
 					} else {
-						config.Logger.Error(err)
+						goglog.Logger.Error(err)
 						event.AddTag(ErrorTag)
 					}
 				case int:
@@ -132,7 +133,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 					if vparse, err := strconv.ParseFloat(fmt.Sprintf("%v", v), 64); err == nil {
 						event.SetValue(field, vparse)
 					} else {
-						config.Logger.Error(err)
+						goglog.Logger.Error(err)
 						event.AddTag(ErrorTag)
 					}
 				}

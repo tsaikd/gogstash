@@ -12,17 +12,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 var (
-	logger   = config.Logger
 	fileName = "patterns"
 	fileData = []byte(`NGINXTEST %{IP:addr} - (?:%{USERNAME:auth}|-) \[%{HTTPDATE:time}\] "(?:%{WORD:method} %{URIPATHPARAM:request}(?: HTTP/%{NUMBER:httpversion})?|-)" %{NUMBER:status} (?:%{NUMBER:body_bytes}|-) "(?:%{URI:referrer}|-)" (?:%{QS:agent}|-) %{NUMBER:request_time} (?:%{HOSTPORT:upstream_addr}|-)` + "\n")
 )
 
 func init() {
-	logger.Level = logrus.DebugLevel
+	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistFilterHandler(ModuleName, InitHandler)
 
 	err := ioutil.WriteFile(fileName, fileData, 0644)

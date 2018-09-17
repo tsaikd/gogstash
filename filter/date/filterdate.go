@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -50,7 +51,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	timestamp, err := time.Parse(f.Format, event.GetString(f.Source))
 	if err != nil {
 		event.AddTag(ErrorTag)
-		config.Logger.Error(err)
+		goglog.Logger.Error(err)
 		return event
 	}
 

@@ -10,14 +10,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
-)
-
-var (
-	logger = config.Logger
+	"github.com/tsaikd/gogstash/config/goglog"
 )
 
 func init() {
-	logger.Level = logrus.DebugLevel
+	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistInputHandler(ModuleName, InitHandler)
 }
 
@@ -43,7 +40,7 @@ input:
 	require.NoError(conf.Start(ctx))
 
 	waitsec := 10
-	logger.Infof("Wait for %d seconds", waitsec)
+	goglog.Logger.Infof("Wait for %d seconds", waitsec)
 	time.Sleep(time.Duration(waitsec) * time.Second)
 	os.Remove("/tmp/gogstash-test-unix.sock")
 	os.Remove("/tmp/gogstash-test-unixpacket.sock")

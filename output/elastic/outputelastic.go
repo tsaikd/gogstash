@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	elastic "gopkg.in/olivere/elastic.v5"
 )
@@ -75,7 +76,7 @@ var (
 )
 
 type errorLogger struct {
-	logger *logrus.Logger
+	logger logrus.FieldLogger
 }
 
 // Printf log format string to error level
@@ -92,7 +93,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 	}
 
 	// map Printf to error level
-	logger := &errorLogger{logger: config.ErrorLogger}
+	logger := &errorLogger{logger: goglog.Logger}
 
 	if conf.client, err = elastic.NewClient(
 		elastic.SetURL(conf.URL),
@@ -134,7 +135,7 @@ func (t *OutputConfig) BulkAfter(executionID int64, requests []elastic.BulkableR
 		for i, item := range response.Items {
 			for _, v := range item {
 				if v.Error != nil {
-					config.ErrorLogger.Errorf("%s: bulk processor request %s failed: %s", ModuleName, requests[i].String(), v.Error.Reason)
+					goglog.Logger.Errorf("%s: bulk processor request %s failed: %s", ModuleName, requests[i].String(), v.Error.Reason)
 				}
 			}
 		}

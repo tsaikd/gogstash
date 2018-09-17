@@ -5,6 +5,7 @@ import (
 
 	"github.com/Knetic/govaluate"
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"github.com/tsaikd/gogstash/filter/cond"
 	"golang.org/x/sync/errgroup"
@@ -42,7 +43,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		return nil, err
 	}
 	if conf.Condition == "" {
-		config.Logger.Warn("output cond config condition empty, ignored")
+		goglog.Logger.Warn("output cond config condition empty, ignored")
 		return &conf, nil
 	}
 	conf.outputs, err = config.GetOutputs(ctx, conf.OutputRaw)
@@ -50,7 +51,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		return nil, err
 	}
 	if len(conf.outputs) <= 0 {
-		config.Logger.Warn("output cond config outputs empty, ignored")
+		goglog.Logger.Warn("output cond config outputs empty, ignored")
 		return &conf, nil
 	}
 	conf.expression, err = govaluate.NewEvaluableExpressionWithFunctions(conf.Condition, filtercond.BuiltInFunctions)
@@ -71,7 +72,7 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 				func(output config.TypeOutputConfig) {
 					eg.Go(func() error {
 						if err2 := output.Output(ctx2, event); err2 != nil {
-							config.Logger.Errorf("output module %q failed: %v\n", output.GetType(), err2)
+							goglog.Logger.Errorf("output module %q failed: %v\n", output.GetType(), err2)
 						}
 						return nil
 					})
