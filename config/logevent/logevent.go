@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/tsaikd/KDGoLib/jsonex"
+	"github.com/tsaikd/gogstash/config/goglog"
 )
 
 type LogEvent struct {
@@ -65,14 +66,14 @@ func (t LogEvent) getJSONMap() map[string]interface{} {
 				if ok {
 					event["tags"] = append(stringTags, t.Tags...)
 				} else {
-					// TODO: warning
+					goglog.Logger.Warnf("event %v contains malformed tags", t)
 				}
 			case []string:
 				event["tags"] = append(tags, t.Tags...)
 			case nil:
 				event["tags"] = t.Tags
 			default:
-				// TODO: warning
+				goglog.Logger.Warnf("event %v contains malformed tags", t)
 			}
 		} else {
 			event["tags"] = t.Tags
