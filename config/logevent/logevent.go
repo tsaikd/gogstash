@@ -42,11 +42,41 @@ func (t LogEvent) getJSONMap() map[string]interface{} {
 	if t.Message != "" {
 		event["message"] = t.Message
 	}
-	if len(t.Tags) > 0 {
-		event["tags"] = t.Tags
-	}
 	for key, value := range t.Extra {
 		event[key] = value
+	}
+	if len(t.Tags) > 0 {
+		if _, ok := event["tags"]; ok {
+			// extra contains tags field
+			switch tags := event["tags"].(type) {
+			case []interface{}:
+				ok := true
+				stringTags := make([]string, 0, len(tags))
+			tags_loop:
+				for _, v := range tags {
+					switch tag := v.(type) {
+					case string:
+						stringTags = append(stringTags, tag)
+					default:
+						ok = false
+						break tags_loop
+					}
+				}
+				if ok {
+					event["tags"] = append(stringTags, t.Tags...)
+				} else {
+					// TODO: warning
+				}
+			case []string:
+				event["tags"] = append(tags, t.Tags...)
+			case nil:
+				event["tags"] = t.Tags
+			default:
+				// TODO: warning
+			}
+		} else {
+			event["tags"] = t.Tags
+		}
 	}
 	return event
 }

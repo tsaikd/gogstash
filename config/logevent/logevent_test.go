@@ -1,6 +1,7 @@
 package logevent
 
 import (
+	"encoding/json"
 	"os"
 	"testing"
 	"time"
@@ -149,4 +150,50 @@ func Test_SetValue(t *testing.T) {
 			},
 		},
 	}, event)
+}
+
+func Test_MarshalJSON(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+
+	eventTime := time.Date(2017, time.April, 5, 17, 41, 12, 345, time.UTC)
+	event := LogEvent{
+		Timestamp: eventTime,
+		Message:   "Test Message",
+	}
+
+	d, err := json.Marshal(event)
+	assert.NoError(err)
+	assert.Equal(`{"@timestamp":"2017-04-05T17:41:12.000000345Z","message":"Test Message"}`, string(d))
+
+	event.AddTag("test_tag")
+
+	d, err = json.Marshal(event)
+	assert.NoError(err)
+	assert.Equal(`{"@timestamp":"2017-04-05T17:41:12.000000345Z","message":"Test Message","tags":["test_tag"]}`, string(d))
+
+	event.Extra = map[string]interface{}{
+		"tags": nil,
+	}
+
+	d, err = json.Marshal(event)
+	assert.NoError(err)
+	assert.Equal(`{"@timestamp":"2017-04-05T17:41:12.000000345Z","message":"Test Message","tags":["test_tag"]}`, string(d))
+
+	event.Extra = map[string]interface{}{
+		"tags": []interface{}{"original_tag"},
+	}
+
+	d, err = json.Marshal(event)
+	assert.NoError(err)
+	assert.Equal(`{"@timestamp":"2017-04-05T17:41:12.000000345Z","message":"Test Message","tags":["original_tag","test_tag"]}`, string(d))
+
+	// failed to treated `tags` as a string array
+	event.Extra = map[string]interface{}{
+		"tags": []interface{}{"original_tag", 1},
+	}
+
+	d, err = json.Marshal(event)
+	assert.NoError(err)
+	assert.Equal(`{"@timestamp":"2017-04-05T17:41:12.000000345Z","message":"Test Message","tags":["original_tag",1]}`, string(d))
 }
