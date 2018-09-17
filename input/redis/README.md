@@ -16,6 +16,9 @@ input:
 
     # maximum number of socket connections, default: 10
     connections: 10
+
+    # (optional) BLPOP blocking timeout, default: "600s"
+    blocking_timeout: "600s"
 ```
 
 ## WARNING
