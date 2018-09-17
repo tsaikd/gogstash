@@ -5,30 +5,41 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
-	"github.com/tsaikd/KDGoLib/logutil"
+	"github.com/tsaikd/KDGoLib/logrusutil"
 )
 
 var (
+	timestampFormat = "2006/01/02 15:04:05"
 	// Logger app logger
-	Logger = &LoggerType{
-		stdout: &logrus.Logger{
-			Out:       os.Stdout,
-			Formatter: logutil.DefaultLogger.Formatter,
-			Hooks:     make(logrus.LevelHooks),
-			Level:     logrus.InfoLevel,
-		},
-		stderr: &logrus.Logger{
-			Out:       os.Stderr,
-			Formatter: logutil.DefaultLogger.Formatter,
-			Hooks:     make(logrus.LevelHooks),
-			Level:     logrus.InfoLevel,
-		},
-	}
+	Logger = newLogger()
 )
 
 func init() {
 	formatter := errutil.NewConsoleFormatter("; ")
 	errutil.SetDefaultFormatter(formatter)
+}
+
+func newLogger() *LoggerType {
+	return &LoggerType{
+		stdout: &logrus.Logger{
+			Out: os.Stdout,
+			Formatter: &logrusutil.ConsoleLogFormatter{
+				TimestampFormat: timestampFormat,
+				CallerOffset:    5,
+			},
+			Hooks: make(logrus.LevelHooks),
+			Level: logrus.InfoLevel,
+		},
+		stderr: &logrus.Logger{
+			Out: os.Stderr,
+			Formatter: &logrusutil.ConsoleLogFormatter{
+				TimestampFormat: timestampFormat,
+				CallerOffset:    5,
+			},
+			Hooks: make(logrus.LevelHooks),
+			Level: logrus.InfoLevel,
+		},
+	}
 }
 
 // LoggerType wrap logrus.Logger type

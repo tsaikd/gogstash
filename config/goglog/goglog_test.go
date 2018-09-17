@@ -28,16 +28,17 @@ func TestLogger(t *testing.T) {
 
 	stdoutBuffer := &bytes.Buffer{}
 	stderrBuffer := &bytes.Buffer{}
+	logger := newLogger()
 
-	Logger.setDebugOutput(stdoutBuffer, stderrBuffer)
-	Logger.setDebugFormatter(&logrus.TextFormatter{DisableTimestamp: true})
+	logger.setDebugOutput(stdoutBuffer, stderrBuffer)
+	logger.setDebugFormatter(&logrus.TextFormatter{DisableTimestamp: true})
 
-	Logger.Debug("Debug")
-	Logger.Info("Info")
-	Logger.Print("Print")
-	Logger.Warn("Warn")
-	Logger.Warning("Warning")
-	Logger.Error("Error")
+	logger.Debug("Debug")
+	logger.Info("Info")
+	logger.Print("Print")
+	logger.Warn("Warn")
+	logger.Warning("Warning")
+	logger.Error("Error")
 
 	require.EqualValues(`level=info msg=Info
 level=info msg=Print
@@ -46,4 +47,20 @@ level=warning msg=Warning
 `, stdoutBuffer.String())
 	require.EqualValues(`level=error msg=Error
 `, stderrBuffer.String())
+}
+
+func TestLoggerFileLine(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+
+	stdoutBuffer := &bytes.Buffer{}
+	stderrBuffer := &bytes.Buffer{}
+	logger := newLogger()
+
+	logger.setDebugOutput(stdoutBuffer, stderrBuffer)
+
+	logger.Info("Info")
+	require.Contains(stdoutBuffer.String(), "goglog_test.go:64 [info] Info")
 }
