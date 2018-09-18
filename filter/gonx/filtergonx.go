@@ -31,6 +31,7 @@ type FilterConfig struct {
 	Source string `json:"source"` // source message field name
 
 	fields []string
+	parser *gonx.Parser
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -65,13 +66,15 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		conf.fields[i] = fieldInfo[1]
 	}
 
+	conf.parser = gonx.NewParser(conf.Format)
+
 	return &conf, nil
 }
 
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	message := event.GetString(f.Source)
-	reader := gonx.NewReader(strings.NewReader(message), f.Format)
+	reader := gonx.NewParserReader(strings.NewReader(message), f.parser)
 	entry, err := reader.Read()
 	if err != nil {
 		event.AddTag(ErrorTag)
