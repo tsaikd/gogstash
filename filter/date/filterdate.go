@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/tengattack/jodatime"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -21,6 +22,7 @@ type FilterConfig struct {
 
 	Format string `json:"format"` // date parse format
 	Source string `json:"source"` // source message field name
+	Joda   bool   `json:"joda"`   // whether using joda time format
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -48,7 +50,15 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
-	timestamp, err := time.Parse(f.Format, event.GetString(f.Source))
+	var (
+		timestamp time.Time
+		err       error
+	)
+	if f.Joda {
+		timestamp, err = jodatime.Parse(f.Format, event.GetString(f.Source))
+	} else {
+		timestamp, err = time.Parse(f.Format, event.GetString(f.Source))
+	}
 	if err != nil {
 		event.AddTag(ErrorTag)
 		goglog.Logger.Error(err)
