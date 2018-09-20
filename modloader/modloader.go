@@ -18,6 +18,7 @@ import (
 	"github.com/tsaikd/gogstash/input/file"
 	"github.com/tsaikd/gogstash/input/http"
 	"github.com/tsaikd/gogstash/input/httplisten"
+	"github.com/tsaikd/gogstash/input/lorem"
 	"github.com/tsaikd/gogstash/input/redis"
 	"github.com/tsaikd/gogstash/input/socket"
 	"github.com/tsaikd/gogstash/output/amqp"
@@ -37,6 +38,7 @@ func init() {
 	config.RegistInputHandler(inputfile.ModuleName, inputfile.InitHandler)
 	config.RegistInputHandler(inputhttp.ModuleName, inputhttp.InitHandler)
 	config.RegistInputHandler(inputhttplisten.ModuleName, inputhttplisten.InitHandler)
+	config.RegistInputHandler(inputlorem.ModuleName, inputlorem.InitHandler)
 	config.RegistInputHandler(inputredis.ModuleName, inputredis.InitHandler)
 	config.RegistInputHandler(inputsocket.ModuleName, inputsocket.InitHandler)
 
