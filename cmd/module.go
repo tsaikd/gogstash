@@ -11,8 +11,8 @@ import (
 var (
 	flagConfig = &cobrather.StringFlag{
 		Name:    "config",
-		Default: "config.json",
-		Usage:   "Path to configuration file",
+		Default: "",
+		Usage:   "Path to configuration file, default search path: config.json, config.yml",
 		EnvVar:  "CONFIG",
 	}
 	flagDebug = &cobrather.BoolFlag{
@@ -20,6 +20,12 @@ var (
 		Default: false,
 		Usage:   "Enable debug logging",
 		EnvVar:  "DEBUG",
+	}
+	flagPProf = &cobrather.StringFlag{
+		Name:    "pprof",
+		Default: "",
+		Usage:   "Enable golang pprof for listening address, ex: localhost:6060",
+		EnvVar:  "PPROF",
 	}
 )
 
@@ -33,8 +39,9 @@ var Module = &cobrather.Module{
 	Flags: []cobrather.Flag{
 		flagConfig,
 		flagDebug,
+		flagPProf,
 	},
 	RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
-		return gogstash(ctx, flagConfig.String(), flagDebug.Bool())
+		return gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String())
 	},
 }
