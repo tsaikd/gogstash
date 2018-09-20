@@ -17,6 +17,9 @@ input:
     # maximum number of socket connections, default: 10
     connections: 10
 
+    # (optional) The number of events to return from Redis using EVAL, default: 125
+    batch_count: 125
+
     # (optional) BLPOP blocking timeout, default: "600s"
     blocking_timeout: "600s"
 ```
