@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
+	"github.com/tsaikd/KDGoLib/jsonex"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -200,4 +203,54 @@ func Test_MarshalJSON(t *testing.T) {
 	d, err = event.MarshalIndent()
 	assert.NoError(err)
 	assert.Contains(string(d), "\n\t\"")
+}
+
+var benchEvent = LogEvent{
+	Timestamp: time.Now(),
+	Message:   "Test Message",
+	Extra: map[string]interface{}{
+		"int":    123,
+		"float":  1.23,
+		"string": "Test String",
+		"time":   time.Now(),
+		"child": map[string]interface{}{
+			"childA": "foo",
+		},
+	},
+}
+
+func Benchmark_JSONEx(b *testing.B) {
+	jsonMap := benchEvent.getJSONMap()
+	d, err := jsonex.Marshal(jsonMap)
+	if err != nil {
+		b.FailNow()
+	}
+	b.SetBytes(int64(len(d)))
+	for n := 0; n < b.N; n++ {
+		jsonex.Marshal(jsonMap)
+	}
+}
+
+func Benchmark_JSONIter(b *testing.B) {
+	jsonMap := benchEvent.getJSONMap()
+	d, err := jsoniter.Marshal(jsonMap)
+	if err != nil {
+		b.FailNow()
+	}
+	b.SetBytes(int64(len(d)))
+	for n := 0; n < b.N; n++ {
+		jsoniter.Marshal(jsonMap)
+	}
+}
+
+func Benchmark_StdJSON(b *testing.B) {
+	jsonMap := benchEvent.getJSONMap()
+	d, err := json.Marshal(jsonMap)
+	if err != nil {
+		b.FailNow()
+	}
+	b.SetBytes(int64(len(d)))
+	for n := 0; n < b.N; n++ {
+		json.Marshal(jsonMap)
+	}
 }
