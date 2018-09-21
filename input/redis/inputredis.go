@@ -2,10 +2,10 @@ package inputredis
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
@@ -97,7 +97,7 @@ func queueMessage(message string, msgChan chan<- logevent.LogEvent) {
 		Extra:     map[string]interface{}{},
 	}
 
-	if err := json.Unmarshal([]byte(event.Message), &event.Extra); err != nil {
+	if err := jsoniter.Unmarshal([]byte(event.Message), &event.Extra); err != nil {
 		event.AddTag(ErrorTag)
 		goglog.Logger.Error(err)
 	}

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/tsaikd/KDGoLib/jsonex"
 	"github.com/tsaikd/gogstash/config/goglog"
 )
@@ -84,7 +86,7 @@ func (t LogEvent) getJSONMap() map[string]interface{} {
 
 func (t LogEvent) MarshalJSON() (data []byte, err error) {
 	event := t.getJSONMap()
-	return jsonex.Marshal(event)
+	return jsoniter.Marshal(event)
 }
 
 func (t LogEvent) MarshalIndent() (data []byte, err error) {

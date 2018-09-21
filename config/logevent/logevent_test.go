@@ -164,13 +164,13 @@ func Test_MarshalJSON(t *testing.T) {
 
 	d, err := json.Marshal(event)
 	assert.NoError(err)
-	assert.Equal(`{"@timestamp":"2017-04-05T17:41:12.000000345Z","message":"Test Message"}`, string(d))
+	assert.NotContains(string(d), `"tags":[`)
 
 	event.AddTag("test_tag")
 
 	d, err = json.Marshal(event)
 	assert.NoError(err)
-	assert.Equal(`{"@timestamp":"2017-04-05T17:41:12.000000345Z","message":"Test Message","tags":["test_tag"]}`, string(d))
+	assert.Contains(string(d), `"tags":["test_tag"]`)
 
 	event.Extra = map[string]interface{}{
 		"tags": nil,
@@ -178,7 +178,7 @@ func Test_MarshalJSON(t *testing.T) {
 
 	d, err = json.Marshal(event)
 	assert.NoError(err)
-	assert.Equal(`{"@timestamp":"2017-04-05T17:41:12.000000345Z","message":"Test Message","tags":["test_tag"]}`, string(d))
+	assert.Contains(string(d), `"tags":["test_tag"]`)
 
 	event.Extra = map[string]interface{}{
 		"tags": []interface{}{"original_tag"},
@@ -186,7 +186,7 @@ func Test_MarshalJSON(t *testing.T) {
 
 	d, err = json.Marshal(event)
 	assert.NoError(err)
-	assert.Equal(`{"@timestamp":"2017-04-05T17:41:12.000000345Z","message":"Test Message","tags":["original_tag","test_tag"]}`, string(d))
+	assert.Contains(string(d), `"tags":["original_tag","test_tag"]`)
 
 	// failed to treated `tags` as a string array
 	event.Extra = map[string]interface{}{
@@ -195,5 +195,9 @@ func Test_MarshalJSON(t *testing.T) {
 
 	d, err = json.Marshal(event)
 	assert.NoError(err)
-	assert.Equal(`{"@timestamp":"2017-04-05T17:41:12.000000345Z","message":"Test Message","tags":["original_tag",1]}`, string(d))
+	assert.Contains(string(d), `"tags":["original_tag",1]`)
+
+	d, err = event.MarshalIndent()
+	assert.NoError(err)
+	assert.Contains(string(d), "\n\t\"")
 }

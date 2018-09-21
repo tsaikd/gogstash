@@ -2,9 +2,9 @@ package filterjson
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -49,7 +49,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	var parsedMessage map[string]interface{}
-	if err := json.Unmarshal([]byte(event.Message), &parsedMessage); err != nil {
+	if err := jsoniter.Unmarshal([]byte(event.Message), &parsedMessage); err != nil {
 		event.AddTag(ErrorTag)
 		goglog.Logger.Error(err)
 		return event
