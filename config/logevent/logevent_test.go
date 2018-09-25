@@ -219,7 +219,7 @@ var benchEvent = LogEvent{
 	},
 }
 
-func Benchmark_JSONEx(b *testing.B) {
+func Benchmark_Marshal_JSONEx(b *testing.B) {
 	jsonMap := benchEvent.getJSONMap()
 	d, err := jsonex.Marshal(jsonMap)
 	if err != nil {
@@ -231,7 +231,7 @@ func Benchmark_JSONEx(b *testing.B) {
 	}
 }
 
-func Benchmark_JSONIter(b *testing.B) {
+func Benchmark_Marshal_JSONIter(b *testing.B) {
 	jsonMap := benchEvent.getJSONMap()
 	d, err := jsoniter.Marshal(jsonMap)
 	if err != nil {
@@ -243,7 +243,7 @@ func Benchmark_JSONIter(b *testing.B) {
 	}
 }
 
-func Benchmark_StdJSON(b *testing.B) {
+func Benchmark_Marshal_StdJSON(b *testing.B) {
 	jsonMap := benchEvent.getJSONMap()
 	d, err := json.Marshal(jsonMap)
 	if err != nil {

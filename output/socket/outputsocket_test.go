@@ -2,7 +2,9 @@ package socket
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
+	"net"
 	"strings"
 	"testing"
 	"time"
@@ -10,7 +12,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/stvp/go-udp-testing"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -27,9 +28,9 @@ func Test_output_report_module(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	udp.SetAddr(":9876")
-	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
-	udp.Timeout = 5 * time.Second
+	pc, err := net.ListenPacket("udp", ":9876")
+	require.NoError(err)
+	defer pc.Close()
 
 	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
@@ -47,14 +48,15 @@ output:
 	for _, m := range []string{"one", "two", "three", "four", "five", "six", "seven"} {
 		msg := logevent.LogEvent{Message: m}
 		messages = append(messages, msg)
-		json, _ := msg.MarshalJSON()
-		expected = append(expected, string(json)+"\n")
+		expected = append(expected, fmt.Sprintf(`"message":"%s"`, m))
 	}
 
-	udp.ShouldReceiveAll(t, expected, func() {
-		for _, m := range messages {
-			conf.TestInputEvent(m)
-			time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
-		}
-	})
+	buf := make([]byte, 1024)
+	for i, m := range messages {
+		conf.TestInputEvent(m)
+		time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
+		n, _, err := pc.ReadFrom(buf)
+		require.NoError(err)
+		require.Contains(string(buf[:n]), expected[i])
+	}
 }
