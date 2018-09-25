@@ -3,12 +3,12 @@ package inputexec
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -100,7 +100,7 @@ func (t *InputConfig) exec(msgChan chan<- logevent.LogEvent) {
 
 	switch t.MsgType {
 	case MsgTypeJson:
-		if err = json.Unmarshal([]byte(message), &extra); err != nil {
+		if err = jsoniter.Unmarshal([]byte(message), &extra); err != nil {
 			errs = append(errs, err)
 		} else {
 			message = ""

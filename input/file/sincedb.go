@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/futil"
 )
@@ -37,7 +38,7 @@ func (self *InputConfig) LoadSinceDBInfos() (err error) {
 		return
 	}
 
-	if err = json.Unmarshal(raw, &self.SinceDBInfos); err != nil {
+	if err = jsoniter.Unmarshal(raw, &self.SinceDBInfos); err != nil {
 		log.Errorf("Unmarshal sincedb failed: %q\n%s", self.SinceDBPath, err)
 		return
 	}
