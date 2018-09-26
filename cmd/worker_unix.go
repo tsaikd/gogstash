@@ -3,15 +3,71 @@
 package cmd
 
 import (
+	"context"
 	"os"
 	"syscall"
+
+	"github.com/tsaikd/gogstash/config/goglog"
 )
 
-func startWorker() (int, error) {
-	execSpec := &syscall.ProcAttr{
+func startWorker(args []string, attr *syscall.ProcAttr) (pid int, err error) {
+	pid, err = syscall.ForkExec(args[0], args, attr)
+	if err != nil {
+		goglog.Logger.Errorf("start worker error: %v", err)
+		return
+	}
+	goglog.Logger.Infof("worker started: %d", pid)
+	return
+}
+
+func waitWorkers(ctx context.Context, pids []int, args []string, attr *syscall.ProcAttr) error {
+	var ws syscall.WaitStatus
+	for {
+		// wait for any child process
+		pid, err := syscall.Wait4(-1, &ws, 0, nil)
+		if err != nil {
+			goglog.Logger.Error("wait4() error: %v", err)
+			continue
+		}
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			// pass
+		}
+		for i, p := range pids {
+			// match our worker's pid
+			if p == pid {
+				goglog.Logger.Warnf("worker %d stopped unexpectedly (wstatus: %d)", pid, ws)
+				// only restart once after stopped unexpectedly
+				pid, _ = startWorker(args, attr)
+				pids[i] = pid
+				break
+			}
+		}
+	}
+}
+
+func startWorkers(ctx context.Context, workers int) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	attr := &syscall.ProcAttr{
 		Env:   os.Environ(),
 		Files: []uintptr{os.Stdin.Fd(), os.Stdout.Fd(), os.Stderr.Fd()},
 	}
 	args := append(os.Args, "--follower")
-	return syscall.ForkExec(os.Args[0], args, execSpec)
+
+	pids := make([]int, workers)
+	for i := 0; i < workers; i++ {
+		pid, err := startWorker(args, attr)
+		if err != nil {
+			return err
+		}
+		pids[i] = pid
+	}
+
+	go waitWorkers(ctx, pids, args, attr)
+
+	return waitSignals(ctx)
 }
