@@ -34,6 +34,9 @@ type Config struct {
 	// channel size: chInFilter, chFilterOut, chOutDebug
 	ChannelSize int `json:"chsize,omitempty" yaml:"chsize"`
 
+	// workers number, defaults to 1
+	Workers int `json:"workers,omitempty" yaml:"workers"`
+
 	// enable debug channel, used for testing
 	DebugChannel bool `json:"debugch,omitempty" yaml:"debugch"`
 
@@ -46,6 +49,7 @@ type Config struct {
 
 var defaultConfig = Config{
 	ChannelSize: 100,
+	Workers:     1,
 }
 
 // MsgChan message channel type
@@ -97,6 +101,10 @@ func initConfig(config *Config) {
 	if config.ChannelSize < 1 {
 		config.ChannelSize = defaultConfig.ChannelSize
 	}
+	if config.Workers < 1 {
+		config.Workers = defaultConfig.Workers
+	}
+
 	config.chInFilter = make(MsgChan, config.ChannelSize)
 	config.chFilterOut = make(MsgChan, config.ChannelSize)
 	if config.DebugChannel {

@@ -15,6 +15,12 @@ var (
 		Usage:   "Path to configuration file, default search path: config.json, config.yml",
 		EnvVar:  "CONFIG",
 	}
+	flagFollower = &cobrather.BoolFlag{
+		Name:    "follower",
+		Default: false,
+		Usage:   "golang follower mode",
+		EnvVar:  "FOLLOWER",
+	}
 	flagDebug = &cobrather.BoolFlag{
 		Name:    "debug",
 		Default: false,
@@ -38,10 +44,11 @@ var Module = &cobrather.Module{
 	},
 	Flags: []cobrather.Flag{
 		flagConfig,
+		flagFollower,
 		flagDebug,
 		flagPProf,
 	},
 	RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
-		return gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String())
+		return gogstash(ctx, flagConfig.String(), flagFollower.Bool(), flagDebug.Bool(), flagPProf.String())
 	},
 }
