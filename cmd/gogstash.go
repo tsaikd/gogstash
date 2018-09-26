@@ -20,9 +20,10 @@ import (
 func gogstash(
 	ctx context.Context,
 	confpath string,
+	follower bool,
 	debug bool,
 	pprofAddress string,
-) (err error) {
+) error {
 	if debug {
 		goglog.Logger.SetLevel(logrus.DebugLevel)
 	}
@@ -37,11 +38,21 @@ func gogstash(
 
 	conf, err := config.LoadFromFile(confpath)
 	if err != nil {
-		return
+		return err
+	}
+
+	if !follower {
+		for i := 1; i < conf.Workers; i++ {
+			pid, err := startWorker()
+			if err != nil {
+				return err
+			}
+			goglog.Logger.Infof("worker started: %d", pid)
+		}
 	}
 
 	if err = conf.Start(ctx); err != nil {
-		return
+		return err
 	}
 
 	if pprofAddress != "" {
@@ -55,11 +66,7 @@ func gogstash(
 	goglog.Logger.Info("gogstash started...")
 
 	// Check whether any goroutines failed.
-	if err = conf.Wait(); err != nil {
-		return
-	}
-
-	return
+	return conf.Wait()
 }
 
 func searchConfigPath() string {

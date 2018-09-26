@@ -102,6 +102,9 @@ output:
 * Configure for nginx.yml with gonx filter (example)
 
 ```yml
+chsize: 1000
+workers: 2
+
 input:
   - type: redis
     host: redis.server:6379
