@@ -70,7 +70,9 @@ func (t *Config) startOutputs() (err error) {
 		for {
 			select {
 			case <-t.ctx.Done():
-				return nil
+				if len(t.chFilterOut) < 1 {
+					return nil
+				}
 			case event := <-t.chFilterOut:
 				eg, ctx := errgroup.WithContext(t.ctx)
 				for _, output := range outputs {

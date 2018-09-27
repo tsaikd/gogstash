@@ -68,7 +68,9 @@ func (t *Config) startFilters() (err error) {
 		for {
 			select {
 			case <-t.ctx.Done():
-				return nil
+				if len(t.chInFilter) < 1 {
+					return nil
+				}
 			case event := <-t.chInFilter:
 				for _, filter := range filters {
 					event = filter.Event(t.ctx, event)
