@@ -12,6 +12,7 @@ import (
 	"github.com/tsaikd/gogstash/filter/ratelimit"
 	"github.com/tsaikd/gogstash/filter/removefield"
 	"github.com/tsaikd/gogstash/filter/typeconv"
+	"github.com/tsaikd/gogstash/input/beats"
 	"github.com/tsaikd/gogstash/input/dockerlog"
 	"github.com/tsaikd/gogstash/input/dockerstats"
 	"github.com/tsaikd/gogstash/input/exec"
@@ -32,6 +33,7 @@ import (
 )
 
 func init() {
+	config.RegistInputHandler(inputbeats.ModuleName, inputbeats.InitHandler)
 	config.RegistInputHandler(inputdockerlog.ModuleName, inputdockerlog.InitHandler)
 	config.RegistInputHandler(inputdockerstats.ModuleName, inputdockerstats.InitHandler)
 	config.RegistInputHandler(inputexec.ModuleName, inputexec.InitHandler)
