@@ -2,42 +2,46 @@ package goglog
 
 import (
 	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/logrusutil"
+	"github.com/tsaikd/KDGoLib/runtimecaller"
 )
 
-var (
-	timestampFormat = "2006/01/02 15:04:05"
-	// Logger app logger
-	Logger = newLogger()
-)
+// Logger app logger
+var Logger = newLogger()
 
 func init() {
-	formatter := errutil.NewConsoleFormatter("; ")
-	errutil.SetDefaultFormatter(formatter)
+	errutil.SetDefaultFormatter(errutil.NewConsoleFormatter("; "))
+}
+
+const timestampFormat = "2006/01/02 15:04:05"
+
+var logrusFormatter = &logrusutil.ConsoleLogFormatter{
+	TimestampFormat:      timestampFormat,
+	CallerOffset:         5,
+	RuntimeCallerFilters: []runtimecaller.Filter{filterGoglogRuntimeCaller},
+}
+
+func filterGoglogRuntimeCaller(callinfo runtimecaller.CallInfo) (valid bool, stop bool) {
+	return !strings.Contains(callinfo.PackageName(), "github.com/tsaikd/gogstash/config/goglog"), false
 }
 
 func newLogger() *LoggerType {
 	return &LoggerType{
 		stdout: &logrus.Logger{
-			Out: os.Stdout,
-			Formatter: &logrusutil.ConsoleLogFormatter{
-				TimestampFormat: timestampFormat,
-				CallerOffset:    5,
-			},
-			Hooks: make(logrus.LevelHooks),
-			Level: logrus.InfoLevel,
+			Out:       os.Stdout,
+			Formatter: logrusFormatter,
+			Hooks:     make(logrus.LevelHooks),
+			Level:     logrus.InfoLevel,
 		},
 		stderr: &logrus.Logger{
-			Out: os.Stderr,
-			Formatter: &logrusutil.ConsoleLogFormatter{
-				TimestampFormat: timestampFormat,
-				CallerOffset:    5,
-			},
-			Hooks: make(logrus.LevelHooks),
-			Level: logrus.InfoLevel,
+			Out:       os.Stderr,
+			Formatter: logrusFormatter,
+			Hooks:     make(logrus.LevelHooks),
+			Level:     logrus.InfoLevel,
 		},
 	}
 }
@@ -183,14 +187,10 @@ func (t LoggerType) Panicln(args ...interface{}) {
 	t.stderr.Panicln(args...)
 }
 
-type leveler interface {
-	SetLevel(level logrus.Level)
-}
+var _ logrus.FieldLogger = &LoggerType{}
 
 // SetLevel set logger level for filtering output
 func (t *LoggerType) SetLevel(level logrus.Level) {
 	t.stdout.SetLevel(level)
 	t.stderr.SetLevel(level)
 }
-
-var _ logrus.FieldLogger = &LoggerType{}

@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tsaikd/KDGoLib/logrusutil"
 )
 
 func (t *LoggerType) setDebugOutput(stdout io.Writer, stderr io.Writer) {
@@ -60,7 +61,12 @@ func TestLoggerFileLine(t *testing.T) {
 	logger := newLogger()
 
 	logger.setDebugOutput(stdoutBuffer, stderrBuffer)
+	formatter := &logrusutil.ConsoleLogFormatter{
+		TimestampFormat: timestampFormat,
+		CallerOffset:    5,
+	}
+	logger.setDebugFormatter(formatter)
 
 	logger.Info("Info")
-	require.Contains(stdoutBuffer.String(), "goglog_test.go:64 [info] Info")
+	require.Contains(stdoutBuffer.String(), "goglog_test.go:70 [info] Info")
 }
