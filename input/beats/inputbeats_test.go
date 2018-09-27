@@ -48,6 +48,8 @@ input:
 	require.NoError(err)
 	require.NoError(conf.Start(ctx))
 
+	time.Sleep(1500 * time.Millisecond)
+
 	c, err := client.Dial("127.0.0.1:5044")
 	require.NoError(err)
 	defer c.Close()
@@ -61,8 +63,7 @@ input:
 	err = c.Send(data)
 	require.NoError(err)
 
-	time.Sleep(500 * time.Millisecond)
-	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {
+	if event, err := conf.TestGetOutputEvent(500 * time.Millisecond); assert.NoError(err) {
 		require.Equal(event.Message, eventData["message"])
 	}
 }
@@ -116,6 +117,7 @@ func Test_input_beats_module_tls(t *testing.T) {
 	require.NoError(err)
 	err = certOut.Close()
 	require.NoError(err)
+	defer os.Remove("cert.pem")
 
 	keyOut, err := os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	require.NoError(err)
@@ -123,6 +125,7 @@ func Test_input_beats_module_tls(t *testing.T) {
 	require.NoError(err)
 	err = keyOut.Close()
 	require.NoError(err)
+	defer os.Remove("key.pem")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -138,6 +141,8 @@ input:
 	`)))
 	require.NoError(err)
 	require.NoError(conf.Start(ctx))
+
+	time.Sleep(1500 * time.Millisecond)
 
 	conn, err := tls.Dial("tcp", "127.0.0.1:5044", &tls.Config{InsecureSkipVerify: true})
 	require.NoError(err)
@@ -163,14 +168,9 @@ input:
 	err = c.Send(data)
 	require.NoError(err)
 
-	time.Sleep(500 * time.Millisecond)
-	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {
+	if event, err := conf.TestGetOutputEvent(500 * time.Millisecond); assert.NoError(err) {
 		require.Equal(event.Message, eventData["message"])
 	}
-
-	// cleanup
-	os.Remove("cert.pem")
-	os.Remove("key.pem")
 }
 
 func publicKey(priv interface{}) interface{} {
