@@ -41,7 +41,8 @@ func gogstash(
 		return err
 	}
 
-	if conf.Workers > 0 && !follower {
+	// use worker mode when user need more than one workers
+	if conf.Workers > 1 && !follower {
 		return startWorkers(ctx, conf.Workers)
 	}
 
