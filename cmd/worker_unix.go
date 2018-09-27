@@ -27,7 +27,7 @@ func waitWorkers(ctx context.Context, pids []int, args []string, attr *syscall.P
 		// wait for any child process
 		pid, err := syscall.Wait4(-1, &ws, 0, nil)
 		if err != nil {
-			goglog.Logger.Error("wait4() error: %v", err)
+			goglog.Logger.Errorf("wait4() error: %v", err)
 			continue
 		}
 		select {
