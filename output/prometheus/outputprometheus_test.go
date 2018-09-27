@@ -53,6 +53,7 @@ output:
 		Timestamp: time.Now(),
 		Message:   "output prometheus test message",
 	})
+	time.Sleep(500 * time.Millisecond)
 	value, err = getMetric()
 	require.NoError(err)
 	require.Equal("processed_messages_total 2", value)
