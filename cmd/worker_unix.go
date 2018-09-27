@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/tsaikd/gogstash/config/goglog"
+	"golang.org/x/sync/errgroup"
 )
 
 func startWorker(args []string, attr *syscall.ProcAttr) (pid int, err error) {
@@ -67,7 +68,9 @@ func startWorkers(ctx context.Context, workers int) error {
 		pids[i] = pid
 	}
 
-	go waitWorkers(ctx, pids, args, attr)
-
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		return waitWorkers(ctx, pids, args, attr)
+	})
 	return waitSignals(ctx)
 }
