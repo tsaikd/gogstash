@@ -41,14 +41,8 @@ func gogstash(
 		return err
 	}
 
-	if !follower {
-		for i := 1; i < conf.Workers; i++ {
-			pid, err := startWorker()
-			if err != nil {
-				return err
-			}
-			goglog.Logger.Infof("worker started: %d", pid)
-		}
+	if conf.Workers > 0 && !follower {
+		return startWorkers(ctx, conf.Workers)
 	}
 
 	if err = conf.Start(ctx); err != nil {
