@@ -19,10 +19,10 @@ const ModuleName = "elastic"
 // OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
-	URL          string `json:"url"`           // elastic API entrypoint
-	Index        string `json:"index"`         // index name to log
-	DocumentType string `json:"document_type"` // type name to log
-	DocumentID   string `json:"document_id"`   // id to log, used if you want to control id format
+	URL          []string `json:"url"`           // elastic API entrypoints
+	Index        string   `json:"index"`         // index name to log
+	DocumentType string   `json:"document_type"` // type name to log
+	DocumentID   string   `json:"document_id"`   // id to log, used if you want to control id format
 
 	Sniff bool `json:"sniff"` // find all nodes of your cluster, https://github.com/olivere/elastic/wiki/Sniffing
 
@@ -96,7 +96,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 	logger := &errorLogger{logger: goglog.Logger}
 
 	if conf.client, err = elastic.NewClient(
-		elastic.SetURL(conf.URL),
+		elastic.SetURL(conf.URL...),
 		elastic.SetSniff(conf.Sniff),
 		elastic.SetErrorLog(logger),
 	); err != nil {
