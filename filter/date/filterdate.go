@@ -23,6 +23,8 @@ type FilterConfig struct {
 	Format []string `json:"format"` // date parse format
 	Source string   `json:"source"` // source message field name
 	Joda   bool     `json:"joda"`   // whether using joda time format
+
+	timeParser func(layout, value string) (time.Time, error)
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -45,6 +47,12 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		return nil, err
 	}
 
+	if conf.Joda {
+		conf.timeParser = jodatime.Parse
+	} else {
+		conf.timeParser = time.Parse
+	}
+
 	return &conf, nil
 }
 
@@ -55,11 +63,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		err       error
 	)
 	for _, thisFormat := range f.Format {
-		if f.Joda {
-			timestamp, err = jodatime.Parse(thisFormat, event.GetString(f.Source))
-		} else {
-			timestamp, err = time.Parse(thisFormat, event.GetString(f.Source))
-		}
+		timestamp, err = f.timeParser(thisFormat, event.GetString(f.Source))
 		if err == nil {
 			break
 		}
