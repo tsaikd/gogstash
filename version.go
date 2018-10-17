@@ -3,5 +3,5 @@ package main
 import "github.com/tsaikd/KDGoLib/version"
 
 func init() {
-	version.VERSION = "0.1.16"
+	version.VERSION = "0.1.17"
 }
