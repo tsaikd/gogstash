@@ -20,9 +20,9 @@ const ErrorTag = "gogstash_filter_date_error"
 type FilterConfig struct {
 	config.FilterConfig
 
-	Format string `json:"format"` // date parse format
-	Source string `json:"source"` // source message field name
-	Joda   bool   `json:"joda"`   // whether using joda time format
+	Format []string `json:"format"` // date parse format
+	Source string   `json:"source"` // source message field name
+	Joda   bool     `json:"joda"`   // whether using joda time format
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -33,7 +33,7 @@ func DefaultFilterConfig() FilterConfig {
 				Type: ModuleName,
 			},
 		},
-		Format: time.RFC3339Nano,
+		Format: []string{time.RFC3339Nano},
 		Source: "message",
 	}
 }
@@ -54,11 +54,17 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		timestamp time.Time
 		err       error
 	)
-	if f.Joda {
-		timestamp, err = jodatime.Parse(f.Format, event.GetString(f.Source))
-	} else {
-		timestamp, err = time.Parse(f.Format, event.GetString(f.Source))
+	for _, thisFormat := range f.Format {
+		if f.Joda {
+			timestamp, err = jodatime.Parse(thisFormat, event.GetString(f.Source))
+		} else {
+			timestamp, err = time.Parse(thisFormat, event.GetString(f.Source))
+		}
+		if err == nil {
+			break
+		}
 	}
+
 	if err != nil {
 		event.AddTag(ErrorTag)
 		goglog.Logger.Error(err)
