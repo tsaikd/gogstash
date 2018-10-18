@@ -43,7 +43,7 @@ debugch: true
 filter:
   - type: grok
     source: message
-    match: ["%{NGINXTEST}"]
+    match: "%{NGINXTEST}"
     patterns_path: "patterns"
 	`)))
 	require.NoError(err)
