@@ -64,23 +64,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	message := event.GetString(f.Source)
-<<<<<<< HEAD
-	var err error
-	for _, thisMatch := range f.Match {
-		values, err := f.grk.Parse(thisMatch, message)
-		if err != nil {
-			continue
-		} else {
-			for key, value := range values {
-				event.SetValue(key, event.Format(value))
-			}
-			break
-		}
-	}
-
-=======
 	values, err := f.grk.Parse(f.Match, message)
->>>>>>> parent of 8105723... grok: Add ability to accept multiple patterns for filter.
 	if err != nil {
 		event.AddTag(ErrorTag)
 		goglog.Logger.Errorf("%s: %q", err, message)
