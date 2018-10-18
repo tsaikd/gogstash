@@ -31,7 +31,7 @@ func Test_output_elastic_module(t *testing.T) {
 debugch: true
 output:
   - type: elastic
-    url: "http://127.0.0.1:9200"
+    url: ["http://127.0.0.1:9200"]
     index: "gogstash-index-test"
     document_type: "testtype"
     document_id: "%{fieldstring}"
