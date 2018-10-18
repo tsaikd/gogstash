@@ -69,11 +69,10 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		values, err := f.grk.Parse(thisMatch, message)
 		if err != nil {
 			continue
-		} else {
-			for key, value := range values {
-				event.SetValue(key, event.Format(value))
-			}
-			break
+		}
+
+		for key, value := range values {
+			event.SetValue(key, event.Format(value))
 		}
 	}
 
