@@ -19,9 +19,9 @@ const ErrorTag = "gogstash_filter_grok_error"
 type FilterConfig struct {
 	config.FilterConfig
 
-	PatternsPath string   `json:"patterns_path"` // path to patterns file
-	Match        []string `json:"match"`         // match pattern
-	Source       string   `json:"source"`        // source message field name
+	PatternsPath string `json:"patterns_path"` // path to patterns file
+	Match        string `json:"match"`         // match pattern
+	Source       string `json:"source"`        // source message field name
 
 	grk *grok.Grok
 }
@@ -35,7 +35,7 @@ func DefaultFilterConfig() FilterConfig {
 			},
 		},
 		PatternsPath: "",
-		Match:        []string{"%{COMMONAPACHELOG}"},
+		Match:        "%{COMMONAPACHELOG}",
 		Source:       "message",
 	}
 }
@@ -64,6 +64,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	message := event.GetString(f.Source)
+<<<<<<< HEAD
 	var err error
 	for _, thisMatch := range f.Match {
 		values, err := f.grk.Parse(thisMatch, message)
@@ -77,10 +78,17 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		}
 	}
 
+=======
+	values, err := f.grk.Parse(f.Match, message)
+>>>>>>> parent of 8105723... grok: Add ability to accept multiple patterns for filter.
 	if err != nil {
 		event.AddTag(ErrorTag)
 		goglog.Logger.Errorf("%s: %q", err, message)
 		return event
+	}
+
+	for key, value := range values {
+		event.SetValue(key, event.Format(value))
 	}
 
 	return event
