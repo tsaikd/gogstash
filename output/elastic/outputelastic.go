@@ -10,7 +10,7 @@ import (
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	elastic "gopkg.in/olivere/elastic.v5"
+	elastic "gopkg.in/olivere/elastic.v6"
 )
 
 // ModuleName is the name used in config file
@@ -19,10 +19,11 @@ const ModuleName = "elastic"
 // OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
-	URL          []string `json:"url"`           // elastic API entrypoints
-	Index        string   `json:"index"`         // index name to log
-	DocumentType string   `json:"document_type"` // type name to log
-	DocumentID   string   `json:"document_id"`   // id to log, used if you want to control id format
+	URL             []string `json:"url"`               // elastic API entrypoints
+	Index           string   `json:"index"`             // index name to log
+	DocumentType    string   `json:"document_type"`     // type name to log
+	DocumentID      string   `json:"document_id"`       // id to log, used if you want to control id format
+	RetryOnConflict int      `json:"retry_on_conflict"` // the number of times Elasticsearch should internally retry an update/upserted document
 
 	Sniff bool `json:"sniff"` // find all nodes of your cluster, https://github.com/olivere/elastic/wiki/Sniffing
 
@@ -62,6 +63,7 @@ func DefaultOutputConfig() OutputConfig {
 				Type: ModuleName,
 			},
 		},
+		RetryOnConflict:                  1,
 		BulkActions:                      1000,    // 1000 actions
 		BulkSize:                         5 << 20, // 5 MB
 		BulkFlushInterval:                30 * time.Second,
@@ -152,6 +154,7 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 
 	indexRequest := elastic.NewBulkIndexRequest().
 		Index(index).
+		RetryOnConflict(t.RetryOnConflict).
 		Type(doctype).
 		Id(id).
 		Doc(event)
