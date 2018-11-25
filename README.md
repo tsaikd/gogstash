@@ -155,7 +155,7 @@ input:
 
 filter:
   - type: grok
-    match: ["%{COMMONAPACHELOG}"]
+    match: "%{COMMONAPACHELOG}"
     source: "message"
     patterns_path: "/etc/gogstash/grok-patterns"
   - type: date
