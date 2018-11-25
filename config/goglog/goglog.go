@@ -5,17 +5,12 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/logrusutil"
 	"github.com/tsaikd/KDGoLib/runtimecaller"
 )
 
 // Logger app logger
 var Logger = newLogger()
-
-func init() {
-	errutil.SetDefaultFormatter(errutil.NewConsoleFormatter("; "))
-}
 
 const timestampFormat = "2006/01/02 15:04:05"
 
