@@ -13,16 +13,15 @@ import (
 // ModuleName is the name used in config file
 const ModuleName = "date"
 
-// ErrorTag tag added to event when process module failed
-const ErrorTag = "gogstash_filter_date_error"
-
 // FilterConfig holds the configuration json fields and internal objects
 type FilterConfig struct {
 	config.FilterConfig
 
-	Format []string `json:"format"` // date parse format
-	Source string   `json:"source"` // source message field name
-	Joda   bool     `json:"joda"`   // whether using joda time format
+	Format       []string `json:"format"`         // date parse format
+	Source       string   `json:"source"`         // source message field name
+	Joda         bool     `json:"joda"`           // whether using joda time format
+	TagOnFailure []string `json:"tag_on_failure"` // tags to append on failure
+	Target       string   `json:"target"`         // target field
 
 	timeParser func(layout, value string) (time.Time, error)
 }
@@ -35,8 +34,10 @@ func DefaultFilterConfig() FilterConfig {
 				Type: ModuleName,
 			},
 		},
-		Format: []string{time.RFC3339Nano},
-		Source: "message",
+		Format:       []string{time.RFC3339Nano},
+		Source:       "message",
+		Target:       "@timestamp",
+		TagOnFailure: []string{"gogstash_filter_date_error", "_dateparsefailure"},
 	}
 }
 
@@ -70,11 +71,20 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	}
 
 	if err != nil {
-		event.AddTag(ErrorTag)
+		for _, t := range f.TagOnFailure {
+			event.AddTag(t)
+		}
 		goglog.Logger.Error(err)
 		return event
 	}
 
-	event.Timestamp = timestamp.UTC()
+	switch f.Target {
+	case "@timestamp":
+		event.Timestamp = timestamp.UTC()
+		break
+	default:
+		event.SetValue(f.Target, timestamp.UTC())
+		break
+	}
 	return event
 }
