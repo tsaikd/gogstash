@@ -155,7 +155,7 @@ input:
 
 filter:
   - type: grok
-    match: "%{COMMONAPACHELOG}"
+    match: ["%{COMMONAPACHELOG}"]
     source: "message"
     patterns_path: "/etc/gogstash/grok-patterns"
   - type: date
@@ -201,6 +201,7 @@ docker run -it --rm \
 
 See [input modules](input) for more information
 
+* [beats](input/beats)
 * [docker log](input/dockerlog)
 * [docker stats](input/dockerstats)
 * [exec](input/exec)
