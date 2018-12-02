@@ -19,9 +19,9 @@ const ErrorTag = "gogstash_filter_grok_error"
 type FilterConfig struct {
 	config.FilterConfig
 
-	PatternsPath string `json:"patterns_path"` // path to patterns file
-	Match        string `json:"match"`         // match pattern
-	Source       string `json:"source"`        // source message field name
+	PatternsPath string   `json:"patterns_path"` // path to patterns file
+	Match        []string `json:"match"`         // match pattern
+	Source       string   `json:"source"`        // source message field name
 
 	grk *grok.Grok
 }
@@ -35,7 +35,7 @@ func DefaultFilterConfig() FilterConfig {
 			},
 		},
 		PatternsPath: "",
-		Match:        "%{COMMONAPACHELOG}",
+		Match:        []string{"%{COMMONAPACHELOG}"},
 		Source:       "message",
 	}
 }
@@ -64,15 +64,22 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	message := event.GetString(f.Source)
-	values, err := f.grk.Parse(f.Match, message)
-	if err != nil {
-		event.AddTag(ErrorTag)
-		goglog.Logger.Errorf("%s: %q", err, message)
-		return event
+	found := false
+	for _, thisMatch := range f.Match {
+		// grok Parse will success even it doesn't match
+		values, err := f.grk.Parse(thisMatch, message)
+		if err == nil && len(values) > 0 {
+			found = true
+			for key, value := range values {
+				event.SetValue(key, event.Format(value))
+			}
+			break
+		}
 	}
 
-	for key, value := range values {
-		event.SetValue(key, event.Format(value))
+	if !found {
+		event.AddTag(ErrorTag)
+		goglog.Logger.Errorf("grok: no matches for %q", message)
 	}
 
 	return event

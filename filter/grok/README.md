@@ -6,8 +6,8 @@ gogstash grok filter module
 ```yaml
 filter:
   - type: grok
-    # (optional) grok pattern, default: "%{COMMONAPACHELOG}"
-    match: "%{COMMONAPACHELOG}"
+    # (optional) grok patterns, default: ["%{COMMONAPACHELOG}"]
+    match: ["%{COMMONAPACHELOG}"]
     # (optional) message field to parse, default: "message"
     source: "message"
     # (optional) grok patterns file path, default: empty
