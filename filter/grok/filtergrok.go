@@ -64,12 +64,12 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	message := event.GetString(f.Source)
-	var err error
+	found := false
 	for _, thisMatch := range f.Match {
+		// grok Parse will success even it doesn't match
 		values, err := f.grk.Parse(thisMatch, message)
-		if err != nil {
-			continue
-		} else {
+		if err == nil && len(values) > 0 {
+			found = true
 			for key, value := range values {
 				event.SetValue(key, event.Format(value))
 			}
@@ -77,10 +77,9 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		}
 	}
 
-	if err != nil {
+	if !found {
 		event.AddTag(ErrorTag)
-		goglog.Logger.Errorf("%s: %q", err, message)
-		return event
+		goglog.Logger.Errorf("grok: no matches for %q", message)
 	}
 
 	return event

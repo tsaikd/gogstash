@@ -91,6 +91,20 @@ filter:
 		require.Equal(expectedEvent, event)
 	}
 
+	conf.TestInputEvent(logevent.LogEvent{
+		Timestamp: timestamp,
+		Message:   `8.8.8.8 - - [18/Jul/2017:16:10:16 +0300] "GET /index.html HTTP/1.1" 200 756 "https://google.com/" "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36"`,
+		Extra: map[string]interface{}{
+			"host":   hostname,
+			"path":   "/test/file/path",
+			"offset": 0,
+		},
+	})
+
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Contains(event.Tags, ErrorTag)
+	}
+
 	err = os.Remove(fileName)
 	require.NoError(err)
 }
