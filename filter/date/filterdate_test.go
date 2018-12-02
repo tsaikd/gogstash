@@ -30,7 +30,7 @@ func Test_filter_date_module(t *testing.T) {
 debugch: true
 filter:
   - type: date
-    format: "02/Jan/2006:15:04:05 -0700"
+    format: ["02/Jan/2006:15:04:05 -0700"]
     source: time_local
 	`)))
 	require.NoError(err)
@@ -68,7 +68,7 @@ func Test_filter_date_module_joda(t *testing.T) {
 debugch: true
 filter:
   - type: date
-    format: "YYYY-MM-dd HH:mm:ss,SSS"
+    format: ["YYYY-MM-dd HH:mm:ss,SSS"]
     source: time_local
     joda: true
 	`)))

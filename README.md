@@ -141,6 +141,46 @@ output:
     document_type: "%{type}"
 ```
 
+* Configure for beats.yml with grok filter (example)
+
+```yml
+chsize: 1000
+workers: 2
+
+input:
+  - type: beats
+    port: 5044
+    host: 0.0.0.0
+    ssl:  false
+
+filter:
+  - type: grok
+    match: "%{COMMONAPACHELOG}"
+    source: "message"
+    patterns_path: "/etc/gogstash/grok-patterns"
+  - type: date
+    format: "02/Jan/2006:15:04:05 -0700"
+    source: time_local
+  - type: remove_field
+    fields: ["full_request", "time_local"]
+  - type: add_field
+    key: host
+    value: "%{beat.hostname}"
+  - type: geoip2
+    db_path: "GeoLite2-City.mmdb"
+    ip_field: clientip
+    key: req_geo
+  - type: typeconv
+    conv_type: int64
+    fields: ["bytes", "response"]
+
+output:
+  - type: elastic
+    url: ["http://elastic1:9200","http://elastic2:9200","http://elastic3:9200"]
+    index: "filebeat-6.4.2-%{+@2006.01.02}"
+    document_type: "doc"
+```
+
 * Run gogstash for nginx example (command line)
 ```
 GOMAXPROCS=4 ./gogstash --CONFIG nginx.json
