@@ -21,6 +21,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 )
@@ -28,6 +29,7 @@ import (
 func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistInputHandler(ModuleName, InitHandler)
+	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
 }
 
 func Test_input_beats_module(t *testing.T) {
@@ -48,15 +50,15 @@ input:
 	require.NoError(err)
 	require.NoError(conf.Start(ctx))
 
-	time.Sleep(1500 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 
 	c, err := client.Dial("127.0.0.1:5044")
 	require.NoError(err)
 	defer c.Close()
 
-	timeNow := time.Now().UTC()
+	ts := time.Date(2019, time.January, 4, 0, 55, 36, 0, time.UTC)
 	eventData := map[string]interface{}{
-		"@timestamp": timeNow.Format(time.RFC3339),
+		"@timestamp": ts.Format(time.RFC3339),
 		"message":    "test message",
 	}
 	data := []interface{}{eventData}
@@ -64,7 +66,8 @@ input:
 	require.NoError(err)
 
 	if event, err := conf.TestGetOutputEvent(500 * time.Millisecond); assert.NoError(err) {
-		require.Equal(event.Message, eventData["message"])
+		assert.Equal(ts, event.Timestamp)
+		assert.Equal(eventData["message"], event.Message)
 	}
 }
 
@@ -142,7 +145,7 @@ input:
 	require.NoError(err)
 	require.NoError(conf.Start(ctx))
 
-	time.Sleep(1500 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 
 	conn, err := tls.Dial("tcp", "127.0.0.1:5044", &tls.Config{InsecureSkipVerify: true})
 	require.NoError(err)
@@ -159,9 +162,9 @@ input:
 	t.Log("client: handshake:", state.HandshakeComplete)
 	t.Log("client: mutual:", state.NegotiatedProtocolIsMutual)
 
-	timeNow := time.Now().UTC()
+	ts := time.Date(2019, time.January, 4, 0, 55, 36, 0, time.UTC)
 	eventData := map[string]interface{}{
-		"@timestamp": timeNow.Format(time.RFC3339),
+		"@timestamp": ts.Format(time.RFC3339),
 		"message":    "test message",
 	}
 	data := []interface{}{eventData}
@@ -169,7 +172,8 @@ input:
 	require.NoError(err)
 
 	if event, err := conf.TestGetOutputEvent(500 * time.Millisecond); assert.NoError(err) {
-		require.Equal(event.Message, eventData["message"])
+		assert.Equal(ts, event.Timestamp)
+		assert.Equal(eventData["message"], event.Message)
 	}
 }
 

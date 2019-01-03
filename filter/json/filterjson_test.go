@@ -46,11 +46,12 @@ filter:
 		Extra: map[string]interface{}{
 			"host": "Hostname",
 		},
+		Tags: []string{"foo"},
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Now(),
-		Message:   "{ \"message\": \"Test\", \"host\": \"Hostname\", \"time\":\"2016-12-04T09:09:41.193Z\" }",
+		Message:   "{ \"message\": \"Test\", \"host\": \"Hostname\", \"time\":\"2016-12-04T09:09:41.193Z\", \"tags\": [ \"foo\" ] }",
 	})
 
 	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {

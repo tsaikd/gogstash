@@ -69,6 +69,8 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 				if ts, err := time.Parse(f.Tsformat, value.(string)); err == nil {
 					event.Timestamp = ts
 				}
+			case logevent.TagsField:
+				event.ParseTags(value)
 			default:
 				event.Extra[key] = value
 			}

@@ -32,8 +32,8 @@ func InitHandler(context.Context, *config.ConfigRaw) (config.TypeCodecConfig, er
 	}, nil
 }
 
-// Decode returns an event based on current timestamp and converting 'data' to 'string', adding provided 'eventExtra'
-func (c *Codec) Decode(ctx context.Context, data []byte,
+// Decode returns an event from 'data' as JSON format, adding provided 'eventExtra'
+func (c *Codec) Decode(ctx context.Context, data interface{},
 	eventExtra map[string]interface{},
 	msgChan chan<- logevent.LogEvent) (ok bool, err error) {
 
@@ -42,8 +42,27 @@ func (c *Codec) Decode(ctx context.Context, data []byte,
 		Extra:     eventExtra,
 	}
 
-	if err = jsoniter.Unmarshal(data, &event.Extra); err != nil {
-		event.Message = string(data)
+	switch v := data.(type) {
+	case string:
+		if err = jsoniter.Unmarshal([]byte(v), &event.Extra); err != nil {
+			event.Message = v
+		}
+	case []byte:
+		if err = jsoniter.Unmarshal(v, &event.Extra); err != nil {
+			event.Message = string(v)
+		}
+	case map[string]interface{}:
+		if event.Extra != nil {
+			for k, val := range v {
+				event.Extra[k] = val
+			}
+		} else {
+			event.Extra = v
+		}
+	default:
+		err = config.ErrDecodeData
+	}
+	if err != nil {
 		event.AddTag(ErrorTag)
 		goglog.Logger.Error(err)
 	}
@@ -64,6 +83,13 @@ func (c *Codec) Decode(ctx context.Context, data []byte,
 					event.Timestamp = timestamp
 					delete(event.Extra, "@timestamp")
 				}
+			}
+		}
+		if value, ok := event.Extra[logevent.TagsField]; ok {
+			if event.ParseTags(value) {
+				delete(event.Extra, logevent.TagsField)
+			} else {
+				goglog.Logger.Warnf("malformed tags: %v", value)
 			}
 		}
 	}

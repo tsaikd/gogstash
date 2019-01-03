@@ -5,10 +5,10 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/elastic/go-lumber/server"
 	reuse "github.com/libp2p/go-reuseport"
+	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -80,6 +80,11 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 		}
 	}
 
+	conf.Codec, err = config.GetCodecDefault(ctx, *raw, codecjson.ModuleName)
+	if err != nil {
+		return nil, err
+	}
+
 	return &conf, nil
 }
 
@@ -113,30 +118,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			return nil
 		case data := <-s.ReceiveChan():
 			for _, e := range data.Events {
-				if msg, ok := e.(map[string]interface{}); ok {
-					event := logevent.LogEvent{
-						Timestamp: time.Now(),
-						Extra:     msg,
-					}
-					// try to fill basic log event by json message
-					if value, ok := event.Extra["message"]; ok {
-						switch v := value.(type) {
-						case string:
-							event.Message = v
-							delete(event.Extra, "message")
-						}
-					}
-					if value, ok := event.Extra["@timestamp"]; ok {
-						switch v := value.(type) {
-						case string:
-							if timestamp, err := time.Parse(time.RFC3339Nano, v); err == nil {
-								event.Timestamp = timestamp
-								delete(event.Extra, "@timestamp")
-							}
-						}
-					}
-					msgChan <- event
-				}
+				t.Codec.Decode(ctx, e, nil, msgChan)
 			}
 			data.ACK()
 		}

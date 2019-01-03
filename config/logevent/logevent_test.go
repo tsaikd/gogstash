@@ -96,13 +96,28 @@ func Test_Format(t *testing.T) {
 
 	out = logevent.Format("%{null}")
 	assert.Equal("%{null}", out)
+}
+
+func Test_Tags(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+
+	logevent := LogEvent{
+		Extra: map[string]interface{}{
+			"int": 123,
+		},
+	}
+
+	logevent.ParseTags(interface{}([]interface{}{"foo", "bar"}))
+	assert.Len(logevent.Tags, 2)
+	assert.Equal([]string{"foo", "bar"}, logevent.Tags)
 
 	logevent.AddTag("tag1", "tag2", "tag3")
-	assert.Len(logevent.Tags, 3)
+	assert.Len(logevent.Tags, 5)
 	assert.Contains(logevent.Tags, "tag1")
 
 	logevent.AddTag("tag1", "tag%{int}")
-	assert.Len(logevent.Tags, 4)
+	assert.Len(logevent.Tags, 6)
 	assert.Contains(logevent.Tags, "tag123")
 }
 
@@ -174,31 +189,6 @@ func Test_MarshalJSON(t *testing.T) {
 	d, err = json.Marshal(event)
 	assert.NoError(err)
 	assert.Contains(string(d), `"tags":["test_tag"]`)
-
-	event.Extra = map[string]interface{}{
-		"tags": nil,
-	}
-
-	d, err = json.Marshal(event)
-	assert.NoError(err)
-	assert.Contains(string(d), `"tags":["test_tag"]`)
-
-	event.Extra = map[string]interface{}{
-		"tags": []interface{}{"original_tag"},
-	}
-
-	d, err = json.Marshal(event)
-	assert.NoError(err)
-	assert.Contains(string(d), `"tags":["original_tag","test_tag"]`)
-
-	// failed to treated `tags` as a string array
-	event.Extra = map[string]interface{}{
-		"tags": []interface{}{"original_tag", 1},
-	}
-
-	d, err = json.Marshal(event)
-	assert.NoError(err)
-	assert.Contains(string(d), `"tags":["original_tag",1]`)
 
 	d, err = event.MarshalIndent()
 	assert.NoError(err)
