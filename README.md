@@ -119,7 +119,7 @@ filter:
     format: '$verb $request HTTP/$httpversion'
     source: full_request
   - type: date
-    format: "02/Jan/2006:15:04:05 -0700"
+    format: ["02/Jan/2006:15:04:05 -0700"]
     source: time_local
   - type: remove_field
     fields: ["full_request", "time_local"]
@@ -159,7 +159,7 @@ filter:
     source: "message"
     patterns_path: "/etc/gogstash/grok-patterns"
   - type: date
-    format: "02/Jan/2006:15:04:05 -0700"
+    format: ["02/Jan/2006:15:04:05 -0700"]
     source: time_local
   - type: remove_field
     fields: ["full_request", "time_local"]
