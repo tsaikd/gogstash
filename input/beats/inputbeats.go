@@ -23,9 +23,11 @@ type InputConfig struct {
 
 	// The IP address to listen on, defaults to "0.0.0.0"
 	Host string `json:"host"`
-	// The port to listen on. Here we enable SO_REUSEPORT, see more information:
-	// https://github.com/libp2p/go-reuseport
+	// The port to listen on.
 	Port int `json:"port"`
+	// Here we enable SO_REUSEPORT, see more information:
+	// https://github.com/libp2p/go-reuseport
+	ReusePort bool `json:"reuseport"`
 
 	// Enable ssl transport, defaults to false
 	SSL bool `json:"ssl"`
@@ -84,8 +86,12 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 // Start wraps the actual function starting the plugin
 func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error) {
 	addr := fmt.Sprintf("%s:%d", t.Host, t.Port)
-	s, err := server.ListenAndServeWith(func(network, addr string) (net.Listener, error) {
-		l, err := reuse.Listen(network, addr)
+	s, err := server.ListenAndServeWith(func(network, addr string) (l net.Listener, err error) {
+		if t.ReusePort {
+			l, err = reuse.Listen(network, addr)
+		} else {
+			l, err = net.Listen(network, addr)
+		}
 		if err != nil {
 			return nil, err
 		}
