@@ -8,8 +8,11 @@ input:
   # type Must be "beats"
   - type: "beats"
 
-    # (required) server port, SO_REUSEPORT applied
+    # (required) server port
     port: 5044
+
+    # (optional) SO_REUSEPORT applied or not, default: false
+    reuseport: false
 
     # (optional) server host, default: "0.0.0.0"
     host: "0.0.0.0"

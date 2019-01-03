@@ -1,6 +1,8 @@
 socket input
 ===================
 
+Input event message should end with new line (`\n`).
+
 ## Synopsis
 
 ```
@@ -9,17 +11,18 @@ socket input
 		{
 			"type": "socket",
 
-			// Socket type. Must be one of ["tcp", "unix", "unixpacket"].
+			// Socket type. Must be one of ["tcp", "udp", "unix", "unixpacket"].
 			"socket": "tcp",
 
-			// For TCP, address must have the form `host:port`.
+			// For TCP or UDP, address must have the form `host:port`.
 			// For Unix networks, the address must be a file system path.
-			"address": "localhost:9999"
+			"address": "localhost:9999",
+
+			// (optional) SO_REUSEPORT applied or not, default: false
+			"reuseport": false
 		}
 	]
 }
 ```
 
-> Note: at the moment, this input only works with connection-oriented sockets.
->
-> Datagram-oriented sockets like UDP or UNIXGRAM socket are not supported.
+> Note: at the moment, UNIXGRAM socket are not supported.

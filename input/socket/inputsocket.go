@@ -1,14 +1,15 @@
 package inputsocket
 
 import (
-	"bytes"
+	"bufio"
 	"context"
-	"encoding/json"
 	"io"
 	"net"
 	"os"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
+	reuse "github.com/libp2p/go-reuseport"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
@@ -19,11 +20,17 @@ import (
 // ModuleName is the name used in config file
 const ModuleName = "socket"
 
+// ErrorTag tag added to event when process module failed
+const ErrorTag = "gogstash_input_socket_error"
+
 // InputConfig holds the configuration json fields and internal objects
 type InputConfig struct {
 	config.InputConfig
-	Socket  string `json:"socket"`  // Type of socket, must be one of ["tcp", "unix", "unixpacket"].
-	Address string `json:"address"` // For TCP, address must have the form `host:port`. For Unix networks, the address must be a file system path.
+	Socket string `json:"socket"` // Type of socket, must be one of ["tcp", "udp", "unix", "unixpacket"].
+	// For TCP or UDP, address must have the form `host:port`.
+	// For Unix networks, the address must be a file system path.
+	Address   string `json:"address"`
+	ReusePort bool   `json:"reuseport"`
 }
 
 // DefaultInputConfig returns an InputConfig struct with default values
@@ -54,7 +61,6 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 
 // Start wraps the actual function starting the plugin
 func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) error {
-	eg, ctx := errgroup.WithContext(ctx)
 	logger := goglog.Logger
 	var l net.Listener
 
@@ -83,14 +89,33 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			return err
 		}
 		logger.Debugf("listen %q on %q", i.Socket, address.String())
-		l, err = net.ListenTCP(i.Socket, address)
+		if i.ReusePort {
+			l, err = reuse.Listen(i.Socket, address.String())
+		} else {
+			l, err = net.ListenTCP(i.Socket, address)
+		}
 		if err != nil {
 			return err
 		}
 		defer l.Close()
+	case "udp":
+		address, err := net.ResolveUDPAddr(i.Socket, i.Address)
+		logger.Debugf("listen %q on %q", i.Socket, address.String())
+		var conn net.PacketConn
+		if i.ReusePort {
+			conn, err = reuse.ListenPacket(i.Socket, i.Address)
+		} else {
+			conn, err = net.ListenPacket(i.Socket, i.Address)
+		}
+		if err != nil {
+			return err
+		}
+		return handleUDP(ctx, conn, msgChan)
 	default:
 		return ErrorUnknownSocketType1.New(nil, i.Socket)
 	}
+
+	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
 		select {
@@ -107,6 +132,7 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			}
 			func(conn net.Conn) {
 				eg.Go(func() error {
+					defer conn.Close()
 					parse(ctx, conn, msgChan)
 					return nil
 				})
@@ -117,14 +143,49 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 	return eg.Wait()
 }
 
-func parse(ctx context.Context, conn net.Conn, msgChan chan<- logevent.LogEvent) {
-	defer conn.Close()
+func handleUDP(ctx context.Context, conn net.PacketConn, msgChan chan<- logevent.LogEvent) error {
+	eg, ctx := errgroup.WithContext(ctx)
+	b := make([]byte, 1500) // read buf
+	pr, pw := io.Pipe()
+	defer pw.Close()
 
-	// Duplicate buffer to be able to read it even after failed json decoding
-	var streamCopy bytes.Buffer
-	stream := io.TeeReader(conn, &streamCopy)
+	eg.Go(func() error {
+		select {
+		case <-ctx.Done():
+			pr.Close()
+			conn.Close()
+			return nil
+		}
+	})
 
-	dec := json.NewDecoder(stream)
+	eg.Go(func() error {
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			default:
+			}
+			n, _, err := conn.ReadFrom(b)
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				return err
+			}
+			pw.Write(b[:n])
+		}
+		return nil
+	})
+
+	eg.Go(func() error {
+		parse(ctx, pr, msgChan)
+		return nil
+	})
+
+	return eg.Wait()
+}
+
+func parse(ctx context.Context, r io.Reader, msgChan chan<- logevent.LogEvent) {
+	b := bufio.NewReader(r)
 	for {
 		select {
 		case <-ctx.Done():
@@ -132,28 +193,39 @@ func parse(ctx context.Context, conn net.Conn, msgChan chan<- logevent.LogEvent)
 		default:
 		}
 
-		// Assume first the message is JSON and try to decode it
-		var jsonMsg map[string]interface{}
-		if err := dec.Decode(&jsonMsg); err == io.EOF {
-			break
-		} else if err != nil {
-			// If decoding fail, split raw message by line
-			// and send a log event per line
-			for {
-				line, err := streamCopy.ReadString('\n')
-				msgChan <- logevent.LogEvent{
-					Timestamp: time.Now(),
-					Message:   line,
-				}
-				if err != nil {
-					break
+		line, err := b.ReadBytes('\n')
+		if err != nil {
+			// EOF
+			return
+		}
+
+		event := logevent.LogEvent{
+			Timestamp: time.Now(),
+			Message:   string(line),
+			Extra:     map[string]interface{}{},
+		}
+
+		if err := jsoniter.Unmarshal([]byte(event.Message), &event.Extra); err != nil {
+			event.AddTag(ErrorTag)
+			goglog.Logger.Error(err)
+		}
+
+		// try to fill basic log event by json message
+		if value, ok := event.Extra["message"]; ok {
+			switch v := value.(type) {
+			case string:
+				event.Message = v
+			}
+		}
+		if value, ok := event.Extra["@timestamp"]; ok {
+			switch v := value.(type) {
+			case string:
+				if timestamp, err := time.Parse(time.RFC3339Nano, v); err == nil {
+					event.Timestamp = timestamp
 				}
 			}
-			break
 		}
-		msgChan <- logevent.LogEvent{
-			Timestamp: time.Now(),
-			Extra:     jsonMsg,
-		}
+
+		msgChan <- event
 	}
 }
