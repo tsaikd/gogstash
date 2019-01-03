@@ -21,6 +21,7 @@ var (
 type TypeCodecConfig interface {
 	TypeCommonConfig
 	// The codec’s decode method is where data coming in from an input is transformed into an event.
+	// if event sent to msgChan, ok will be true
 	Decode(ctx context.Context, data []byte, extra map[string]interface{}, msgChan chan<- logevent.LogEvent) (ok bool, err error)
 	// The encode method takes an event and serializes it (encodes) into another format.
 	Encode(ctx context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error)
@@ -45,16 +46,32 @@ func RegistCodecHandler(name string, handler CodecHandler) {
 
 // GetCodec returns a codec based on the 'codec' configuration from provided 'ConfigRaw' input
 func GetCodec(ctx context.Context, raw ConfigRaw) (TypeCodecConfig, error) {
+	return GetCodecDefault(ctx, raw, DefaultCodecName)
+}
+
+// GetCodecDefault returns a codec based on the 'codec' configuration from provided 'ConfigRaw' input
+// defaults to 'defaultType'
+func GetCodecDefault(ctx context.Context, raw ConfigRaw, defaultType string) (TypeCodecConfig, error) {
 	codecConfig, err := dyno.Get(map[string]interface{}(raw), "codec")
 	if err != nil {
-		goglog.Logger.Infof("No codec has been configured for input %v", raw)
+		// return default codec here
+		return getCodec(ctx, ConfigRaw{"type": defaultType})
 	}
 
 	if codecConfig == nil {
 		return nil, nil
 	}
 
-	return getCodec(ctx, ConfigRaw(codecConfig.(map[string]interface{})))
+	switch codecConfig.(type) {
+	case map[string]interface{}:
+		return getCodec(ctx, ConfigRaw(codecConfig.(map[string]interface{})))
+	case string:
+		// shorthand codec config method:
+		// codec: [codecTypeName]
+		return getCodec(ctx, ConfigRaw{"type": codecConfig.(string)})
+	default:
+		return nil, ErrorUnknownCodecType1.New(nil, codecConfig)
+	}
 }
 
 func getCodec(ctx context.Context, raw ConfigRaw) (codec TypeCodecConfig, err error) {

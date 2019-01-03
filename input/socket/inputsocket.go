@@ -11,6 +11,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	reuse "github.com/libp2p/go-reuseport"
 	"github.com/tsaikd/KDGoLib/errutil"
+	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -53,9 +54,16 @@ var (
 // InitHandler initialize the input plugin
 func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
-	if err := config.ReflectConfig(raw, &conf); err != nil {
+	err := config.ReflectConfig(raw, &conf)
+	if err != nil {
 		return nil, err
 	}
+
+	conf.Codec, err = config.GetCodecDefault(ctx, *raw, codecjson.ModuleName)
+	if err != nil {
+		return nil, err
+	}
+
 	return &conf, nil
 }
 

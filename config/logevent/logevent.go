@@ -134,36 +134,46 @@ func (t *LogEvent) SetValue(field string, v interface{}) bool {
 
 func getValueFromObject(obj map[string]interface{}, field string) (interface{}, bool) {
 	fieldSplits := strings.Split(field, ".")
-	if len(fieldSplits) < 2 {
-		val, ok := obj[field]
-		return val, ok
+	for i, key := range fieldSplits {
+		if i >= len(fieldSplits)-1 {
+			v, ok := obj[key]
+			return v, ok
+		} else if node, ok := obj[key]; ok {
+			switch v := node.(type) {
+			case map[string]interface{}:
+				obj = v
+			default:
+				return nil, false
+			}
+		} else {
+			break
+		}
 	}
-
-	switch child := obj[fieldSplits[0]].(type) {
-	case map[string]interface{}:
-		return getValueFromObject(child, strings.Join(fieldSplits[1:], "."))
-	default:
-		return nil, false
-	}
+	return nil, false
 }
 
 func setValueToObject(obj map[string]interface{}, field string, v interface{}) bool {
 	fieldSplits := strings.Split(field, ".")
-	if len(fieldSplits) < 2 {
-		obj[field] = v
-		return true
+	for i, key := range fieldSplits {
+		if i >= len(fieldSplits)-1 {
+			obj[key] = v
+			return true
+		} else if node, ok := obj[key]; ok {
+			switch v := node.(type) {
+			case map[string]interface{}:
+				obj = v
+			case nil:
+				obj[key] = map[string]interface{}{}
+				obj = obj[key].(map[string]interface{})
+			default:
+				return false
+			}
+		} else {
+			obj[key] = map[string]interface{}{}
+			obj = obj[key].(map[string]interface{})
+		}
 	}
-
-	switch child := obj[fieldSplits[0]].(type) {
-	case nil:
-		obj[fieldSplits[0]] = map[string]interface{}{}
-		return setValueToObject(obj[fieldSplits[0]].(map[string]interface{}),
-			strings.Join(fieldSplits[1:], "."), v)
-	case map[string]interface{}:
-		return setValueToObject(child, strings.Join(fieldSplits[1:], "."), v)
-	default:
-		return false
-	}
+	return false
 }
 
 var (
