@@ -6,9 +6,7 @@ import (
 	"io"
 	"net"
 	"os"
-	"time"
 
-	jsoniter "github.com/json-iterator/go"
 	reuse "github.com/libp2p/go-reuseport"
 	"github.com/tsaikd/KDGoLib/errutil"
 	codecjson "github.com/tsaikd/gogstash/codec/json"
@@ -118,7 +116,7 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		if err != nil {
 			return err
 		}
-		return handleUDP(ctx, conn, msgChan)
+		return i.handleUDP(ctx, conn, msgChan)
 	default:
 		return ErrorUnknownSocketType1.New(nil, i.Socket)
 	}
@@ -141,7 +139,7 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			func(conn net.Conn) {
 				eg.Go(func() error {
 					defer conn.Close()
-					parse(ctx, conn, msgChan)
+					i.parse(ctx, conn, msgChan)
 					return nil
 				})
 			}(conn)
@@ -151,7 +149,7 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 	return eg.Wait()
 }
 
-func handleUDP(ctx context.Context, conn net.PacketConn, msgChan chan<- logevent.LogEvent) error {
+func (i *InputConfig) handleUDP(ctx context.Context, conn net.PacketConn, msgChan chan<- logevent.LogEvent) error {
 	eg, ctx := errgroup.WithContext(ctx)
 	b := make([]byte, 1500) // read buf
 	pr, pw := io.Pipe()
@@ -185,14 +183,14 @@ func handleUDP(ctx context.Context, conn net.PacketConn, msgChan chan<- logevent
 	})
 
 	eg.Go(func() error {
-		parse(ctx, pr, msgChan)
+		i.parse(ctx, pr, msgChan)
 		return nil
 	})
 
 	return eg.Wait()
 }
 
-func parse(ctx context.Context, r io.Reader, msgChan chan<- logevent.LogEvent) {
+func (i *InputConfig) parse(ctx context.Context, r io.Reader, msgChan chan<- logevent.LogEvent) {
 	b := bufio.NewReader(r)
 	for {
 		select {
@@ -207,33 +205,6 @@ func parse(ctx context.Context, r io.Reader, msgChan chan<- logevent.LogEvent) {
 			return
 		}
 
-		event := logevent.LogEvent{
-			Timestamp: time.Now(),
-			Message:   string(line),
-			Extra:     map[string]interface{}{},
-		}
-
-		if err := jsoniter.Unmarshal([]byte(event.Message), &event.Extra); err != nil {
-			event.AddTag(ErrorTag)
-			goglog.Logger.Error(err)
-		}
-
-		// try to fill basic log event by json message
-		if value, ok := event.Extra["message"]; ok {
-			switch v := value.(type) {
-			case string:
-				event.Message = v
-			}
-		}
-		if value, ok := event.Extra["@timestamp"]; ok {
-			switch v := value.(type) {
-			case string:
-				if timestamp, err := time.Parse(time.RFC3339Nano, v); err == nil {
-					event.Timestamp = timestamp
-				}
-			}
-		}
-
-		msgChan <- event
+		i.Codec.Decode(ctx, line, nil, msgChan)
 	}
 }
