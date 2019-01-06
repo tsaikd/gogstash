@@ -1,6 +1,7 @@
 package modloader
 
 import (
+	"github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/filter/addfield"
 	"github.com/tsaikd/gogstash/filter/cond"
@@ -65,4 +66,5 @@ func init() {
 	config.RegistOutputHandler(outputstdout.ModuleName, outputstdout.InitHandler)
 
 	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
+	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
 }

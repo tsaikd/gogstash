@@ -73,9 +73,6 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 	if err != nil {
 		return nil, err
 	}
-	if conf.Codec == nil {
-		conf.Codec, _ = config.DefaultCodecInitHandler(nil, nil)
-	}
 
 	return &conf, nil
 }

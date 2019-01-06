@@ -1,9 +1,10 @@
-package inputhttp
+package inputhttplisten
 
 import (
+	"bytes"
 	"context"
+	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 )
@@ -18,26 +20,10 @@ import (
 func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistInputHandler(ModuleName, InitHandler)
-	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
+	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
 }
 
-func TestMain(m *testing.M) {
-	http.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
-		rw.Write([]byte("foo"))
-	})
-
-	go func() {
-		if err := http.ListenAndServe("127.0.0.1:8090", nil); err != nil {
-			goglog.Logger.Fatal(err)
-		}
-	}()
-
-	ret := m.Run()
-
-	os.Exit(ret)
-}
-
-func Test_input_http_module(t *testing.T) {
+func Test_input_httplisten_module(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
 	require := require.New(t)
@@ -47,18 +33,25 @@ func Test_input_http_module(t *testing.T) {
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 input:
-  - type: http
-    method: GET
-    url: "http://127.0.0.1:8090/"
-    interval: 3
-    codec:
-      type: "default"
+  - type: httplisten
+    address: "127.0.0.1:8089"
+    path: "/"
 	`)))
 	require.NoError(err)
 	require.NoError(conf.Start(ctx))
 
 	time.Sleep(500 * time.Millisecond)
+
+	resp, err := http.Post("http://127.0.0.1:8089/", "application/json", bytes.NewReader([]byte("{\"foo\":\"bar\"}")))
+	require.NoError(err)
+	defer resp.Body.Close()
+
+	assert.Equal(http.StatusOK, resp.StatusCode)
+	data, err := ioutil.ReadAll(resp.Body)
+	require.NoError(err)
+	assert.Equal([]byte{}, data)
+
 	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {
-		assert.Equal("foo", event.Message)
+		assert.Equal(map[string]interface{}{"foo": "bar"}, event.Extra)
 	}
 }

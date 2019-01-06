@@ -10,7 +10,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/tsaikd/KDGoLib/jsonex"
-	"github.com/tsaikd/gogstash/config/goglog"
 )
 
 type LogEvent struct {
@@ -19,6 +18,9 @@ type LogEvent struct {
 	Tags      []string               `json:"tags,omitempty"`
 	Extra     map[string]interface{} `json:"-"`
 }
+
+// TagsField is the event tags field name
+const TagsField = "tags"
 
 const timeFormat = `2006-01-02T15:04:05.999999999Z`
 
@@ -31,11 +33,39 @@ func appendIfMissing(slice []string, s string) []string {
 	return append(slice, s)
 }
 
+// AddTag add tags into event.Tags
 func (t *LogEvent) AddTag(tags ...string) {
 	for _, tag := range tags {
 		ftag := t.Format(tag)
 		t.Tags = appendIfMissing(t.Tags, ftag)
 	}
+}
+
+// ParseTags parse tags into event.Tags
+func (t *LogEvent) ParseTags(tags interface{}) bool {
+	switch v := tags.(type) {
+	case []interface{}:
+		ok := true
+		stringTags := make([]string, 0, len(v))
+	tagsLoop:
+		for _, t := range v {
+			switch tag := t.(type) {
+			case string:
+				stringTags = append(stringTags, tag)
+			default:
+				ok = false
+				break tagsLoop
+			}
+		}
+		if ok {
+			t.Tags = stringTags
+			return true
+		}
+	case []string:
+		t.Tags = v
+		return true
+	}
+	return false
 }
 
 func (t LogEvent) getJSONMap() map[string]interface{} {
@@ -49,37 +79,7 @@ func (t LogEvent) getJSONMap() map[string]interface{} {
 		event[key] = value
 	}
 	if len(t.Tags) > 0 {
-		if _, ok := event["tags"]; ok {
-			// extra contains tags field
-			switch tags := event["tags"].(type) {
-			case []interface{}:
-				ok := true
-				stringTags := make([]string, 0, len(tags))
-			tags_loop:
-				for _, v := range tags {
-					switch tag := v.(type) {
-					case string:
-						stringTags = append(stringTags, tag)
-					default:
-						ok = false
-						break tags_loop
-					}
-				}
-				if ok {
-					event["tags"] = append(stringTags, t.Tags...)
-				} else {
-					goglog.Logger.Warnf("event %v contains malformed tags", t)
-				}
-			case []string:
-				event["tags"] = append(tags, t.Tags...)
-			case nil:
-				event["tags"] = t.Tags
-			default:
-				goglog.Logger.Warnf("event %v contains malformed tags", t)
-			}
-		} else {
-			event["tags"] = t.Tags
-		}
+		event["tags"] = t.Tags
 	}
 	return event
 }
@@ -134,36 +134,46 @@ func (t *LogEvent) SetValue(field string, v interface{}) bool {
 
 func getValueFromObject(obj map[string]interface{}, field string) (interface{}, bool) {
 	fieldSplits := strings.Split(field, ".")
-	if len(fieldSplits) < 2 {
-		val, ok := obj[field]
-		return val, ok
+	for i, key := range fieldSplits {
+		if i >= len(fieldSplits)-1 {
+			v, ok := obj[key]
+			return v, ok
+		} else if node, ok := obj[key]; ok {
+			switch v := node.(type) {
+			case map[string]interface{}:
+				obj = v
+			default:
+				return nil, false
+			}
+		} else {
+			break
+		}
 	}
-
-	switch child := obj[fieldSplits[0]].(type) {
-	case map[string]interface{}:
-		return getValueFromObject(child, strings.Join(fieldSplits[1:], "."))
-	default:
-		return nil, false
-	}
+	return nil, false
 }
 
 func setValueToObject(obj map[string]interface{}, field string, v interface{}) bool {
 	fieldSplits := strings.Split(field, ".")
-	if len(fieldSplits) < 2 {
-		obj[field] = v
-		return true
+	for i, key := range fieldSplits {
+		if i >= len(fieldSplits)-1 {
+			obj[key] = v
+			return true
+		} else if node, ok := obj[key]; ok {
+			switch v := node.(type) {
+			case map[string]interface{}:
+				obj = v
+			case nil:
+				obj[key] = map[string]interface{}{}
+				obj = obj[key].(map[string]interface{})
+			default:
+				return false
+			}
+		} else {
+			obj[key] = map[string]interface{}{}
+			obj = obj[key].(map[string]interface{})
+		}
 	}
-
-	switch child := obj[fieldSplits[0]].(type) {
-	case nil:
-		obj[fieldSplits[0]] = map[string]interface{}{}
-		return setValueToObject(obj[fieldSplits[0]].(map[string]interface{}),
-			strings.Join(fieldSplits[1:], "."), v)
-	case map[string]interface{}:
-		return setValueToObject(child, strings.Join(fieldSplits[1:], "."), v)
-	default:
-		return false
-	}
+	return false
 }
 
 var (

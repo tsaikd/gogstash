@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/tsaikd/KDGoLib/errutil"
+	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -87,38 +87,16 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 		}
 	}
 
+	conf.Codec, err = config.GetCodecDefault(ctx, *raw, codecjson.ModuleName)
+	if err != nil {
+		return nil, err
+	}
+
 	return &conf, nil
 }
 
-func queueMessage(message string, msgChan chan<- logevent.LogEvent) {
-	event := logevent.LogEvent{
-		Timestamp: time.Now(),
-		Message:   message,
-		Extra:     map[string]interface{}{},
-	}
-
-	if err := jsoniter.Unmarshal([]byte(event.Message), &event.Extra); err != nil {
-		event.AddTag(ErrorTag)
-		goglog.Logger.Error(err)
-	}
-
-	// try to fill basic log event by json message
-	if value, ok := event.Extra["message"]; ok {
-		switch v := value.(type) {
-		case string:
-			event.Message = v
-		}
-	}
-	if value, ok := event.Extra["@timestamp"]; ok {
-		switch v := value.(type) {
-		case string:
-			if timestamp, err := time.Parse(time.RFC3339Nano, v); err == nil {
-				event.Timestamp = timestamp
-			}
-		}
-	}
-
-	msgChan <- event
+func (i *InputConfig) queueMessage(ctx context.Context, message string, msgChan chan<- logevent.LogEvent) {
+	i.Codec.Decode(ctx, []byte(message), nil, msgChan)
 }
 
 func (i *InputConfig) listSingle(ctx context.Context, msgChan chan<- logevent.LogEvent) error {
@@ -134,7 +112,7 @@ func (i *InputConfig) listSingle(ctx context.Context, msgChan chan<- logevent.Lo
 
 	// we need to use msg[1] because BLPOP returns a tuple of (key, value) where key is
 	// the redis key used to retrieve the message
-	queueMessage(result[1], msgChan)
+	i.queueMessage(ctx, result[1], msgChan)
 
 	return nil
 }
@@ -160,7 +138,7 @@ retry:
 	switch results := r.(type) {
 	case []interface{}:
 		for _, result := range results {
-			queueMessage(result.(string), msgChan)
+			i.queueMessage(ctx, result.(string), msgChan)
 		}
 		if len(results) <= 0 {
 			time.Sleep(time.Duration(batchEmptySleep))

@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 )
@@ -22,6 +23,7 @@ var timeNow time.Time
 func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistInputHandler(ModuleName, InitHandler)
+	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
 }
 
 func TestMain(m *testing.M) {
@@ -60,6 +62,7 @@ input:
     key: gogstash-test
     connections: 1
     batch_count: 10
+    codec: json
 	`)))
 	require.NoError(err)
 	require.NoError(conf.Start(ctx))
@@ -92,6 +95,7 @@ input:
     key: gogstash-test
     batch_count: 1
     blocking_timeout: 5s
+    codec: json
 	`)))
 	require.NoError(err)
 	require.NoError(conf.Start(ctx))

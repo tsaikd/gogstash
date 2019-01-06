@@ -1,16 +1,15 @@
 package inputhttp
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -55,6 +54,11 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 		return nil, err
 	}
 
+	conf.Codec, err = config.GetCodec(ctx, *raw)
+	if err != nil {
+		return nil, err
+	}
+
 	return &conf, nil
 }
 
@@ -71,36 +75,35 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		case <-ctx.Done():
 			return nil
 		case <-startChan:
-			t.Request(msgChan)
+			t.Request(ctx, msgChan)
 		case <-ticker.C:
-			t.Request(msgChan)
+			t.Request(ctx, msgChan)
 		}
 	}
 }
 
-func (t *InputConfig) Request(msgChan chan<- logevent.LogEvent) {
+func (t *InputConfig) Request(ctx context.Context, msgChan chan<- logevent.LogEvent) {
 	data, err := t.SendRequest()
-
-	event := logevent.LogEvent{
-		Timestamp: time.Now(),
-		Message:   data,
-		Extra: map[string]interface{}{
-			"host": t.hostname,
-			"url":  t.URL,
-		},
+	extra := map[string]interface{}{
+		"host": t.hostname,
+		"url":  t.URL,
 	}
-
 	if err != nil {
+		event := logevent.LogEvent{
+			Timestamp: time.Now(),
+			Extra:     extra,
+		}
 		event.AddTag(ErrorTag)
+		msgChan <- event
+		return
 	}
 
-	goglog.Logger.Debugf("%v", event)
-	msgChan <- event
+	t.Codec.Decode(ctx, data, extra, msgChan)
 
 	return
 }
 
-func (t *InputConfig) SendRequest() (data string, err error) {
+func (t *InputConfig) SendRequest() (data []byte, err error) {
 	var (
 		res *http.Response
 		raw []byte
@@ -122,8 +125,7 @@ func (t *InputConfig) SendRequest() (data string, err error) {
 	if raw, err = ioutil.ReadAll(res.Body); err != nil {
 		return
 	}
-	data = string(raw)
-	data = strings.TrimSpace(data)
+	data = bytes.TrimSpace(raw)
 
 	return
 }
