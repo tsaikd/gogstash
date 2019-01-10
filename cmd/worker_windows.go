@@ -53,7 +53,7 @@ func waitWorkers(ctx context.Context, pids []int, handles []uintptr, args []stri
 	}
 }
 
-func startWorkers(ctx context.Context, workers int) error {
+func startWorkers(ctx context.Context, workerNum int) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -63,9 +63,9 @@ func startWorkers(ctx context.Context, workers int) error {
 	}
 	args := append([]string{os.Args[0], WorkerModule.Use}, os.Args[1:]...)
 
-	pids := make([]int, workers)
-	handles := make([]uintptr, workers)
-	for i := 0; i < workers; i++ {
+	pids := make([]int, workerNum)
+	handles := make([]uintptr, workerNum)
+	for i := 0; i < workerNum; i++ {
 		pid, handle, err := startWorker(args, attr)
 		if err != nil {
 			return err

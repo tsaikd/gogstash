@@ -14,7 +14,7 @@ import (
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // errors
@@ -34,8 +34,8 @@ type Config struct {
 	// channel size: chInFilter, chFilterOut, chOutDebug
 	ChannelSize int `json:"chsize,omitempty" yaml:"chsize"`
 
-	// workers number, defaults to 1
-	Workers int `json:"workers,omitempty" yaml:"workers"`
+	// worker number, defaults to 1
+	Worker int `json:"worker,omitempty" yaml:"worker"`
 
 	// enable debug channel, used for testing
 	DebugChannel bool `json:"debugch,omitempty" yaml:"debugch"`
@@ -49,7 +49,7 @@ type Config struct {
 
 var defaultConfig = Config{
 	ChannelSize: 100,
-	Workers:     1,
+	Worker:      1,
 }
 
 // MsgChan message channel type
@@ -101,8 +101,8 @@ func initConfig(config *Config) {
 	if config.ChannelSize < 1 {
 		config.ChannelSize = defaultConfig.ChannelSize
 	}
-	if config.Workers < 1 {
-		config.Workers = defaultConfig.Workers
+	if config.Worker < 1 {
+		config.Worker = defaultConfig.Worker
 	}
 
 	config.chInFilter = make(MsgChan, config.ChannelSize)
