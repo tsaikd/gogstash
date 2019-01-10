@@ -15,12 +15,6 @@ var (
 		Usage:   "Path to configuration file, default search path: config.json, config.yml",
 		EnvVar:  "CONFIG",
 	}
-	flagFollower = &cobrather.BoolFlag{
-		Name:    "follower",
-		Default: false,
-		Usage:   "golang follower mode",
-		EnvVar:  "FOLLOWER",
-	}
 	flagDebug = &cobrather.BoolFlag{
 		Name:    "debug",
 		Default: false,
@@ -35,20 +29,37 @@ var (
 	}
 )
 
-// Module info
-var Module = &cobrather.Module{
-	Use:   "gogstash",
-	Short: "Logstash like, written in golang",
-	Commands: []*cobrather.Module{
-		cobrather.VersionModule,
-	},
-	Flags: []cobrather.Flag{
-		flagConfig,
-		flagFollower,
-		flagDebug,
-		flagPProf,
-	},
-	RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
-		return gogstash(ctx, flagConfig.String(), flagFollower.Bool(), flagDebug.Bool(), flagPProf.String())
-	},
+// modules
+var (
+	WorkerModule *cobrather.Module
+	Module       *cobrather.Module
+)
+
+func init() {
+	// WorkerModule info
+	WorkerModule = &cobrather.Module{
+		Use:   "worker",
+		Short: "gogstash worker mode",
+		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
+			return gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), true)
+		},
+	}
+
+	// Module info
+	Module = &cobrather.Module{
+		Use:   "gogstash",
+		Short: "Logstash like, written in golang",
+		Commands: []*cobrather.Module{
+			cobrather.VersionModule,
+			WorkerModule,
+		},
+		GlobalFlags: []cobrather.Flag{
+			flagConfig,
+			flagDebug,
+			flagPProf,
+		},
+		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
+			return gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), false)
+		},
+	}
 }

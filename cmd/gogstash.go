@@ -20,9 +20,9 @@ import (
 func gogstash(
 	ctx context.Context,
 	confpath string,
-	follower bool,
 	debug bool,
 	pprofAddress string,
+	workerMode bool,
 ) error {
 	if debug {
 		goglog.Logger.SetLevel(logrus.DebugLevel)
@@ -42,7 +42,7 @@ func gogstash(
 	}
 
 	// use worker mode when user need more than one workers
-	if conf.Workers > 1 && !follower {
+	if conf.Workers > 1 && !workerMode {
 		return startWorkers(ctx, conf.Workers)
 	}
 

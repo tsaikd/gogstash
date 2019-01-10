@@ -61,7 +61,7 @@ func startWorkers(ctx context.Context, workers int) error {
 		Env:   os.Environ(),
 		Files: []uintptr{os.Stdin.Fd(), os.Stdout.Fd(), os.Stderr.Fd()},
 	}
-	args := append(os.Args, "--follower")
+	args := append([]string{os.Args[0], WorkerModule.Use}, os.Args[1:]...)
 
 	pids := make([]int, workers)
 	handles := make([]uintptr, workers)
