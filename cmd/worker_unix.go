@@ -49,7 +49,7 @@ func waitWorkers(ctx context.Context, pids []int, args []string, attr *syscall.P
 	}
 }
 
-func startWorkers(ctx context.Context, workers int) error {
+func startWorkers(ctx context.Context, workerNum int) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -57,10 +57,10 @@ func startWorkers(ctx context.Context, workers int) error {
 		Env:   os.Environ(),
 		Files: []uintptr{os.Stdin.Fd(), os.Stdout.Fd(), os.Stderr.Fd()},
 	}
-	args := append(os.Args, "--follower")
+	args := append([]string{os.Args[0], WorkerModule.Use}, os.Args[1:]...)
 
-	pids := make([]int, workers)
-	for i := 0; i < workers; i++ {
+	pids := make([]int, workerNum)
+	for i := 0; i < workerNum; i++ {
 		pid, err := startWorker(args, attr)
 		if err != nil {
 			return err
