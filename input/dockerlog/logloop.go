@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/fsouza/go-dockerclient"
+	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"github.com/tsaikd/gogstash/input/dockerlog/dockertool"
 )
@@ -27,7 +28,7 @@ func (t *InputConfig) containerLogLoop(ctx context.Context, container interface{
 	}
 
 	retry := 5
-	stream := NewContainerLogStream(msgChan, id, eventExtra, since, nil)
+	stream := NewContainerLogStream(msgChan, id, eventExtra, since, config.Logger)
 
 	for err == nil || retry > 0 {
 		err = t.client.Logs(docker.LogsOptions{

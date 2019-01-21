@@ -84,6 +84,22 @@ func (t LogEvent) getJSONMap() map[string]interface{} {
 	return event
 }
 
+func (t LogEvent) GetMap() map[string]interface{} {
+	event := map[string]interface{}{
+		"@timestamp": t.Timestamp,
+	}
+	if t.Message != "" {
+		event["message"] = t.Message
+	}
+	if len(t.Tags) > 0 {
+		event["tags"] = t.Tags
+	}
+	for key, value := range t.Extra {
+		event[key] = value
+	}
+	return event
+}
+
 func (t LogEvent) MarshalJSON() (data []byte, err error) {
 	event := t.getJSONMap()
 	return jsoniter.Marshal(event)
