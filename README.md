@@ -103,7 +103,7 @@ output:
 
 ```yml
 chsize: 1000
-workers: 2
+worker: 2
 
 input:
   - type: redis
@@ -145,7 +145,7 @@ output:
 
 ```yml
 chsize: 1000
-workers: 2
+worker: 2
 
 input:
   - type: beats
