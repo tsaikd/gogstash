@@ -25,6 +25,7 @@ type FilterConfig struct {
 	Key         string `json:"key"`          // geoip destination field name, default: geoip
 	QuietFail   bool   `json:"quiet"`        // fail quietly
 	SkipPrivate bool   `json:"skip_private"` // skip private IP addresses
+	FlatFormat  bool   `json:"flat_format"`  // flat format
 
 	db *geoip2.Reader
 }
@@ -41,6 +42,7 @@ func DefaultFilterConfig() FilterConfig {
 		Key:         "geoip",
 		QuietFail:   false, // backwards compatible
 		SkipPrivate: false,
+		FlatFormat:  false,
 	}
 }
 
@@ -85,24 +87,51 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		return event
 	}
 
-	event.SetValue(f.Key, map[string]interface{}{
-		"city": map[string]interface{}{
-			"name": record.City.Names["en"],
-		},
-		"continent": map[string]interface{}{
-			"code": record.Continent.Code,
-			"name": record.Continent.Names["en"],
-		},
-		"country": map[string]interface{}{
-			"code": record.Country.IsoCode,
-			"name": record.Country.Names["en"],
-		},
-		"ip":        ipstr,
-		"latitude":  record.Location.Latitude,
-		"location":  []float64{record.Location.Longitude, record.Location.Latitude},
-		"longitude": record.Location.Longitude,
-		"timezone":  record.Location.TimeZone,
-	})
+	if f.FlatFormat {
+		m := map[string]interface{}{
+			"city_name":      record.City.Names["en"],
+			"continent_code": record.Continent.Code,
+			"country_code":   record.Country.IsoCode,
+			"country_name":   record.Country.Names["en"],
+			"ip":             ipstr,
+			"latitude":       record.Location.Latitude,
+			"location":       []float64{record.Location.Longitude, record.Location.Latitude},
+			"longitude":      record.Location.Longitude,
+			"postal_code":    record.Postal.Code,
+			"timezone":       record.Location.TimeZone,
+		}
+		if len(record.Subdivisions) > 0 {
+			m["region_code"] = record.Subdivisions[0].IsoCode
+			m["region_name"] = record.Subdivisions[0].Names["en"]
+		}
+		event.SetValue(f.Key, m)
+	} else {
+		m := map[string]interface{}{
+			"city": map[string]interface{}{
+				"name": record.City.Names["en"],
+			},
+			"continent": map[string]interface{}{
+				"code": record.Continent.Code,
+				"name": record.Continent.Names["en"],
+			},
+			"country": map[string]interface{}{
+				"code": record.Country.IsoCode,
+				"name": record.Country.Names["en"],
+			},
+			"ip":        ipstr,
+			"latitude":  record.Location.Latitude,
+			"location":  []float64{record.Location.Longitude, record.Location.Latitude},
+			"longitude": record.Location.Longitude,
+			"timezone":  record.Location.TimeZone,
+		}
+		if len(record.Subdivisions) > 0 {
+			m["region"] = map[string]interface{}{
+				"code": record.Subdivisions[0].IsoCode,
+				"name": record.Subdivisions[0].Names["en"],
+			}
+		}
+		event.SetValue(f.Key, m)
+	}
 
 	return event
 }

@@ -17,4 +17,8 @@ filter:
     ip_field: remote_addr
     # (optional) parsed geoip info should saved to field, default: geoip
     key: geoip
+    # (optional) parsed geoip info into flat format, default: false
+    # `city_name`, `continent_code`, `country_code`, `country_name`,
+    # `ip`, `latitude`, `longitude`, `postal_code`, `region_code`, `region_name` and `timezone`.
+    flat_format: false
 ```
