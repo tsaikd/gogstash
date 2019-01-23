@@ -10,9 +10,11 @@ import (
 	"github.com/tsaikd/gogstash/filter/gonx"
 	"github.com/tsaikd/gogstash/filter/grok"
 	"github.com/tsaikd/gogstash/filter/json"
+	"github.com/tsaikd/gogstash/filter/mutate"
 	"github.com/tsaikd/gogstash/filter/ratelimit"
 	"github.com/tsaikd/gogstash/filter/removefield"
 	"github.com/tsaikd/gogstash/filter/typeconv"
+	"github.com/tsaikd/gogstash/filter/useragent"
 	"github.com/tsaikd/gogstash/input/beats"
 	"github.com/tsaikd/gogstash/input/dockerlog"
 	"github.com/tsaikd/gogstash/input/dockerstats"
@@ -50,11 +52,13 @@ func init() {
 	config.RegistFilterHandler(filterdate.ModuleName, filterdate.InitHandler)
 	config.RegistFilterHandler(filtergeoip2.ModuleName, filtergeoip2.InitHandler)
 	config.RegistFilterHandler(filtergonx.ModuleName, filtergonx.InitHandler)
+	config.RegistFilterHandler(filtergrok.ModuleName, filtergrok.InitHandler)
 	config.RegistFilterHandler(filterjson.ModuleName, filterjson.InitHandler)
+	config.RegistFilterHandler(filtermutate.ModuleName, filtermutate.InitHandler)
 	config.RegistFilterHandler(filterratelimit.ModuleName, filterratelimit.InitHandler)
 	config.RegistFilterHandler(filterremovefield.ModuleName, filterremovefield.InitHandler)
 	config.RegistFilterHandler(filtertypeconv.ModuleName, filtertypeconv.InitHandler)
-	config.RegistFilterHandler(filtergrok.ModuleName, filtergrok.InitHandler)
+	config.RegistFilterHandler(filteruseragent.ModuleName, filteruseragent.InitHandler)
 
 	config.RegistOutputHandler(outputamqp.ModuleName, outputamqp.InitHandler)
 	config.RegistOutputHandler(outputcond.ModuleName, outputcond.InitHandler)
