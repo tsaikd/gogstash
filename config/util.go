@@ -35,19 +35,24 @@ func ReflectConfig(confraw *ConfigRaw, conf interface{}) (err error) {
 // GetFromObject obtaining value from specified field recursively
 func GetFromObject(obj map[string]interface{}, field string) interface{} {
 	fieldSplits := strings.Split(field, ".")
-	if len(fieldSplits) < 2 {
-		if value, ok := obj[field]; ok {
-			return value
+	for i, key := range fieldSplits {
+		if i >= len(fieldSplits)-1 {
+			if v, ok := obj[key]; ok {
+				return v
+			}
+			return nil
+		} else if node, ok := obj[key]; ok {
+			switch v := node.(type) {
+			case map[string]interface{}:
+				obj = v
+			default:
+				return nil
+			}
+		} else {
+			break
 		}
-		return nil
 	}
-
-	switch child := obj[fieldSplits[0]].(type) {
-	case map[string]interface{}:
-		return GetFromObject(child, strings.Join(fieldSplits[1:], "."))
-	default:
-		return nil
-	}
+	return nil
 }
 
 func formatReflect(rv reflect.Value) {

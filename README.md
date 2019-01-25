@@ -146,6 +146,9 @@ output:
 ```yml
 chsize: 1000
 worker: 2
+event:
+  sort_map_keys: false
+  remove_field: ['@metadata']
 
 input:
   - type: beats
@@ -222,9 +225,11 @@ See [filter modules](filter) for more information
 * [gonx](filter/gonx)
 * [grok](filter/grok)
 * [json](filter/json)
+* [mutate](filter/mutate)
 * [rate limit](filter/ratelimit)
 * [remove field](filter/removefield)
 * [typeconv](filter/typeconv)
+* [useragent](filter/useragent)
 
 ## Supported outputs
 
