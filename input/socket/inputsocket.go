@@ -28,8 +28,9 @@ type InputConfig struct {
 	Socket string `json:"socket"` // Type of socket, must be one of ["tcp", "udp", "unix", "unixpacket"].
 	// For TCP or UDP, address must have the form `host:port`.
 	// For Unix networks, the address must be a file system path.
-	Address   string `json:"address"`
-	ReusePort bool   `json:"reuseport"`
+	Address    string `json:"address"`
+	ReusePort  bool   `json:"reuseport"`
+	BufferSize int    `json:"buffer_size"`
 }
 
 // DefaultInputConfig returns an InputConfig struct with default values
@@ -40,6 +41,7 @@ func DefaultInputConfig() InputConfig {
 				Type: ModuleName,
 			},
 		},
+		BufferSize: 4096,
 	}
 }
 
@@ -151,7 +153,7 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 
 func (i *InputConfig) handleUDP(ctx context.Context, conn net.PacketConn, msgChan chan<- logevent.LogEvent) error {
 	eg, ctx := errgroup.WithContext(ctx)
-	b := make([]byte, 1500) // read buf
+	b := make([]byte, i.BufferSize) // read buf
 	pr, pw := io.Pipe()
 	defer pw.Close()
 
