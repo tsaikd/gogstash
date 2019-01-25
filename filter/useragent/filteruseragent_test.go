@@ -2,6 +2,8 @@ package filteruseragent
 
 import (
 	"context"
+	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -14,9 +16,28 @@ import (
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
+var (
+	fileName = "regexes.yaml"
+	fileData = []byte(strings.TrimSpace(`
+user_agent_parsers:
+  # Chrome/Chromium/major_version.minor_version
+  - regex: '(Chromium|Chrome)/(\d+)\.(\d+)(?:\.(\d+)|)(?:\.(\d+)|)'
+
+os_parsers:
+  - regex: '(Windows NT 6\.1)'
+    os_replacement: 'Windows'
+    os_v1_replacement: '7'
+	`))
+)
+
 func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistFilterHandler(ModuleName, InitHandler)
+
+	err := ioutil.WriteFile(fileName, fileData, 0644)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func Test_filter_useragent_module_error(t *testing.T) {
@@ -56,12 +77,14 @@ filter:
 		Extra: map[string]interface{}{
 			"agent": uagent,
 			"user_agent": map[string]interface{}{
-				"device":  "Other",
-				"major":   "71",
-				"minor":   "0",
-				"os":      "Windows",
-				"os_name": "Windows",
-				"patch":   "3578",
+				"device":   "Other",
+				"major":    "71",
+				"minor":    "0",
+				"name":     "Chrome",
+				"os":       "Windows",
+				"os_name":  "Windows",
+				"os_major": "7",
+				"patch":    "3578",
 			},
 		},
 	}
@@ -75,4 +98,7 @@ filter:
 	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
 		require.Equal(expectedEvent, event)
 	}
+
+	err = os.Remove(fileName)
+	require.NoError(err)
 }

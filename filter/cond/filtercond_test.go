@@ -37,6 +37,10 @@ filter:
       - type: add_field
         key: foo
         value: bar
+    else_filter:
+      - type: add_field
+        key: foo
+        value: bar2
 	`)))
 	require.NoError(err)
 	require.NoError(conf.Start(ctx))
@@ -55,6 +59,7 @@ filter:
 		Message:   "filter test message 2",
 		Extra: map[string]interface{}{
 			"level": "WARN",
+			"foo":   "bar2",
 		},
 	}
 

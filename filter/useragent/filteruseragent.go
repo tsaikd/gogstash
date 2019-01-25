@@ -112,8 +112,10 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 			if client.Os.Family != "" {
 				event.SetValue(f.fields.OSName, client.Os.Family)
 			}
-			if client.Os.Major != "" && client.Os.Minor != "" {
+			if client.Os.Major != "" {
 				event.SetValue(f.fields.OSMajor, client.Os.Major)
+			}
+			if client.Os.Minor != "" {
 				event.SetValue(f.fields.OSMinor, client.Os.Minor)
 			}
 		}
@@ -121,9 +123,16 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 			event.SetValue(f.fields.Device, client.Device.Family)
 		}
 		if client.UserAgent != nil {
-			event.SetValue(f.fields.Major, client.UserAgent.Major)
-			event.SetValue(f.fields.Minor, client.UserAgent.Minor)
-			event.SetValue(f.fields.Patch, client.UserAgent.Patch)
+			event.SetValue(f.fields.Name, client.UserAgent.Family)
+			if client.UserAgent.Major != "" {
+				event.SetValue(f.fields.Major, client.UserAgent.Major)
+			}
+			if client.UserAgent.Minor != "" {
+				event.SetValue(f.fields.Minor, client.UserAgent.Minor)
+			}
+			if client.UserAgent.Patch != "" {
+				event.SetValue(f.fields.Patch, client.UserAgent.Patch)
+			}
 		}
 	}
 	return event

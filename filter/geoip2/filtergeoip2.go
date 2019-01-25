@@ -65,6 +65,10 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	ipstr := event.GetString(f.IPField)
+	if ipstr == "" {
+		// Passthru if empty
+		return event
+	}
 	ip := net.ParseIP(ipstr)
 	if f.SkipPrivate && f.privateIP(ip) {
 		// Passthru
