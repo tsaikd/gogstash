@@ -20,7 +20,7 @@ type OutputConfig struct {
 
 	Condition     string             `json:"condition"`   // condition need to test
 	OutputRaw     []config.ConfigRaw `json:"output"`      // filters when satisfy the condition
-	ElseOutputRaw []config.ConfigRaw `json:"else_output"` // filters when satisfy the condition
+	ElseOutputRaw []config.ConfigRaw `json:"else_output"` // filters when does not met the condition
 	outputs       []config.TypeOutputConfig
 	elseOutputs   []config.TypeOutputConfig
 	expression    *govaluate.EvaluableExpression

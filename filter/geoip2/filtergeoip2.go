@@ -120,7 +120,6 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 
 	if f.FlatFormat {
 		m := map[string]interface{}{
-			"city_name":      record.City.Names["en"],
 			"continent_code": record.Continent.Code,
 			"country_code":   record.Country.IsoCode,
 			"country_name":   record.Country.Names["en"],
@@ -128,7 +127,9 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 			"latitude":       record.Location.Latitude,
 			"location":       []float64{record.Location.Longitude, record.Location.Latitude},
 			"longitude":      record.Location.Longitude,
-			"timezone":       record.Location.TimeZone,
+		}
+		if record.City.Names != nil {
+			m["city_name"] = record.City.Names["en"]
 		}
 		if record.Postal.Code != "" {
 			m["postal_code"] = record.Postal.Code
@@ -136,6 +137,9 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		if len(record.Subdivisions) > 0 {
 			m["region_code"] = record.Subdivisions[0].IsoCode
 			m["region_name"] = record.Subdivisions[0].Names["en"]
+		}
+		if record.Location.TimeZone != "" {
+			m["timezone"] = record.Location.TimeZone
 		}
 		event.SetValue(f.Key, m)
 	} else {
