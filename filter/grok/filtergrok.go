@@ -83,7 +83,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 			for key, value := range values {
 				switch v := value.(type) {
 				case string:
-					event.SetValue(key, event.Format(v))
+					event.SetValue(key, v)
 				case nil:
 					// pass
 				default:
