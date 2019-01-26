@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"github.com/ua-parser/uap-go/uaparser"
@@ -64,8 +65,13 @@ type FilterConfig struct {
 	// <https://github.com/ua-parser/uap-core/blob/master/regexes.yaml>
 	Regexes string `json:"regexes"`
 
+	// UA parsing is surprisingly expensive.
+	// We can optimize it by adding a cache
+	CacheSize int `json:"cache_size"`
+
 	fields uaFields
 	parser *uaparser.Parser
+	cache  *lru.Cache
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -76,7 +82,8 @@ func DefaultFilterConfig() FilterConfig {
 				Type: ModuleName,
 			},
 		},
-		Target: "",
+		Target:    "",
+		CacheSize: 100000,
 	}
 }
 
@@ -98,6 +105,10 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 	}
 
 	conf.fields.Init(conf.Target)
+	conf.cache, err = lru.New(conf.CacheSize)
+	if err != nil {
+		return nil, err
+	}
 
 	return &conf, nil
 }
@@ -106,7 +117,13 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	ua := event.GetString(f.Source)
 	if ua != "" {
-		client := f.parser.Parse(ua)
+		var client *uaparser.Client
+		if c, ok := f.cache.Get(ua); ok {
+			client = c.(*uaparser.Client)
+		} else {
+			client = f.parser.Parse(ua)
+			f.cache.Add(ua, client)
+		}
 		if client.Os != nil {
 			event.SetValue(f.fields.OS, client.Os.Family)
 			if client.Os.Family != "" {
