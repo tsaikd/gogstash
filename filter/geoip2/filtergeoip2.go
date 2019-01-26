@@ -101,8 +101,10 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 			"latitude":       record.Location.Latitude,
 			"location":       []float64{record.Location.Longitude, record.Location.Latitude},
 			"longitude":      record.Location.Longitude,
-			"postal_code":    record.Postal.Code,
 			"timezone":       record.Location.TimeZone,
+		}
+		if record.Postal.Code != "" {
+			m["postal_code"] = record.Postal.Code
 		}
 		if len(record.Subdivisions) > 0 {
 			m["region_code"] = record.Subdivisions[0].IsoCode
