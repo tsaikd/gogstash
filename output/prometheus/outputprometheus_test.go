@@ -46,7 +46,7 @@ output:
 	})
 	value, err := getMetric()
 	require.NoError(err)
-	require.Equal("processed_messages_total 1.0", value)
+	require.Equal("processed_messages_total 1", value)
 
 	// sending second event
 	conf.TestInputEvent(logevent.LogEvent{
@@ -56,7 +56,7 @@ output:
 	time.Sleep(500 * time.Millisecond)
 	value, err = getMetric()
 	require.NoError(err)
-	require.Equal("processed_messages_total 2.0", value)
+	require.Equal("processed_messages_total 2", value)
 }
 
 func getMetric() (string, error) {
