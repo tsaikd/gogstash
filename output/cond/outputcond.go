@@ -18,10 +18,12 @@ const ModuleName = "cond"
 type OutputConfig struct {
 	config.OutputConfig
 
-	Condition  string             `json:"condition"` // condition need to test
-	OutputRaw  []config.ConfigRaw `json:"output"`    // filters when satisfy the condition
-	outputs    []config.TypeOutputConfig
-	expression *govaluate.EvaluableExpression
+	Condition     string             `json:"condition"`   // condition need to test
+	OutputRaw     []config.ConfigRaw `json:"output"`      // filters when satisfy the condition
+	ElseOutputRaw []config.ConfigRaw `json:"else_output"` // filters when does not met the condition
+	outputs       []config.TypeOutputConfig
+	elseOutputs   []config.TypeOutputConfig
+	expression    *govaluate.EvaluableExpression
 }
 
 // DefaultOutputConfig returns an OutputConfig struct with default values
@@ -54,6 +56,12 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		goglog.Logger.Warn("output cond config outputs empty, ignored")
 		return &conf, nil
 	}
+	if len(conf.ElseOutputRaw) > 0 {
+		conf.elseOutputs, err = config.GetOutputs(ctx, conf.ElseOutputRaw)
+		if err != nil {
+			return nil, err
+		}
+	}
 	conf.expression, err = govaluate.NewEvaluableExpressionWithFunctions(conf.Condition, filtercond.BuiltInFunctions)
 	return &conf, nil
 }
@@ -66,19 +74,36 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 		if err != nil {
 			return err
 		}
-		if ok, _ := ret.(bool); ok {
-			eg, ctx2 := errgroup.WithContext(ctx)
-			for _, output := range t.outputs {
-				func(output config.TypeOutputConfig) {
-					eg.Go(func() error {
-						if err2 := output.Output(ctx2, event); err2 != nil {
-							goglog.Logger.Errorf("output module %q failed: %v\n", output.GetType(), err2)
-						}
-						return nil
-					})
-				}(output)
+		if r, ok := ret.(bool); ok {
+			if r {
+				eg, ctx2 := errgroup.WithContext(ctx)
+				for _, output := range t.outputs {
+					func(output config.TypeOutputConfig) {
+						eg.Go(func() error {
+							if err2 := output.Output(ctx2, event); err2 != nil {
+								goglog.Logger.Errorf("output module %q failed: %v\n", output.GetType(), err2)
+							}
+							return nil
+						})
+					}(output)
+				}
+				return eg.Wait()
+			} else if len(t.elseOutputs) > 0 {
+				eg, ctx2 := errgroup.WithContext(ctx)
+				for _, output := range t.elseOutputs {
+					func(output config.TypeOutputConfig) {
+						eg.Go(func() error {
+							if err2 := output.Output(ctx2, event); err2 != nil {
+								goglog.Logger.Errorf("output module %q failed: %v\n", output.GetType(), err2)
+							}
+							return nil
+						})
+					}(output)
+				}
+				return eg.Wait()
 			}
-			return eg.Wait()
+		} else {
+			goglog.Logger.Warn("output cond condition returns not a boolean, ignored")
 		}
 	}
 	return nil

@@ -18,7 +18,7 @@ import (
 
 var (
 	fileName = "patterns"
-	fileData = []byte(`NGINXTEST %{IP:addr} - (?:%{USERNAME:auth}|-) \[%{HTTPDATE:time}\] "(?:%{WORD:method} %{URIPATHPARAM:request}(?: HTTP/%{NUMBER:httpversion})?|-)" %{NUMBER:status} (?:%{NUMBER:body_bytes}|-) "(?:%{URI:referrer}|-)" (?:%{QS:agent}|-) %{NUMBER:request_time} (?:%{HOSTPORT:upstream_addr}|-)` + "\n")
+	fileData = []byte(`NGINXTEST %{IP:addr} - (?:%{USERNAME:auth}|-) \[%{HTTPDATE:time}\] "(?:%{WORD:method} %{URIPATHPARAM:request}(?: HTTP/%{NUMBER:httpversion})?|-)" %{NUMBER:status:int} (?:%{NUMBER:body_bytes}|-) "(?:%{URI:referrer}|-)" (?:%{QS:agent}|-) %{NUMBER:request_time} (?:%{HOSTPORT:upstream_addr}|-)` + "\n")
 )
 
 func init() {
@@ -69,9 +69,8 @@ filter:
 			"method":        "GET",
 			"request":       "/index.html",
 			"httpversion":   "1.1",
-			"status":        "200",
+			"status":        200,
 			"body_bytes":    "756",
-			"port":          "",
 			"agent":         "\"Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36\"",
 			"upstream_addr": "192.168.0.1:8080",
 		},

@@ -153,6 +153,7 @@ event:
 input:
   - type: beats
     port: 5044
+    reuseport: true
     host: 0.0.0.0
     ssl:  false
 

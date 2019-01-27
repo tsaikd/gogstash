@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 
+	lru "github.com/hashicorp/golang-lru"
 	geoip2 "github.com/oschwald/geoip2-golang"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
@@ -26,8 +27,11 @@ type FilterConfig struct {
 	QuietFail   bool   `json:"quiet"`        // fail quietly
 	SkipPrivate bool   `json:"skip_private"` // skip private IP addresses
 	FlatFormat  bool   `json:"flat_format"`  // flat format
+	CacheSize   int    `json:"cache_size"`   // cache size
 
-	db *geoip2.Reader
+	db           *geoip2.Reader
+	cache        *lru.Cache
+	privateCIDRs []*net.IPNet
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -43,6 +47,7 @@ func DefaultFilterConfig() FilterConfig {
 		QuietFail:   false, // backwards compatible
 		SkipPrivate: false,
 		FlatFormat:  false,
+		CacheSize:   100000,
 	}
 }
 
@@ -58,6 +63,22 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 	if err != nil {
 		return nil, err
 	}
+	conf.cache, err = lru.New(conf.CacheSize)
+	if err != nil {
+		return nil, err
+	}
+
+	cidrs := []string{
+		"10.0.0.0/8",
+		"100.64.0.0/10",
+		"127.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+	}
+	for _, cidr := range cidrs {
+		_, privateCIDR, _ := net.ParseCIDR(cidr)
+		conf.privateCIDRs = append(conf.privateCIDRs, privateCIDR)
+	}
 
 	return &conf, nil
 }
@@ -65,18 +86,28 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	ipstr := event.GetString(f.IPField)
+	if ipstr == "" {
+		// Passthru if empty
+		return event
+	}
 	ip := net.ParseIP(ipstr)
 	if f.SkipPrivate && f.privateIP(ip) {
 		// Passthru
 		return event
 	}
-	record, err := f.db.City(ip)
-	if err != nil {
-		if f.QuietFail {
-			goglog.Logger.Error(err)
+	var err error
+	var record *geoip2.City
+	if c, ok := f.cache.Get(ipstr); ok {
+		record = c.(*geoip2.City)
+	} else {
+		record, err = f.db.City(ip)
+		if err != nil {
+			if f.QuietFail {
+				goglog.Logger.Error(err)
+			}
+			event.AddTag(ErrorTag)
+			return event
 		}
-		event.AddTag(ErrorTag)
-		return event
 	}
 	if record == nil {
 		event.AddTag(ErrorTag)
@@ -89,7 +120,6 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 
 	if f.FlatFormat {
 		m := map[string]interface{}{
-			"city_name":      record.City.Names["en"],
 			"continent_code": record.Continent.Code,
 			"country_code":   record.Country.IsoCode,
 			"country_name":   record.Country.Names["en"],
@@ -97,12 +127,19 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 			"latitude":       record.Location.Latitude,
 			"location":       []float64{record.Location.Longitude, record.Location.Latitude},
 			"longitude":      record.Location.Longitude,
-			"postal_code":    record.Postal.Code,
-			"timezone":       record.Location.TimeZone,
+		}
+		if record.City.Names != nil {
+			m["city_name"] = record.City.Names["en"]
+		}
+		if record.Postal.Code != "" {
+			m["postal_code"] = record.Postal.Code
 		}
 		if len(record.Subdivisions) > 0 {
 			m["region_code"] = record.Subdivisions[0].IsoCode
 			m["region_name"] = record.Subdivisions[0].Names["en"]
+		}
+		if record.Location.TimeZone != "" {
+			m["timezone"] = record.Location.TimeZone
 		}
 		event.SetValue(f.Key, m)
 	} else {
@@ -137,8 +174,10 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 }
 
 func (f *FilterConfig) privateIP(ip net.IP) bool {
-	_, private24BitBlock, _ := net.ParseCIDR("10.0.0.0/8")
-	_, private20BitBlock, _ := net.ParseCIDR("172.16.0.0/12")
-	_, private16BitBlock, _ := net.ParseCIDR("192.168.0.0/16")
-	return private24BitBlock.Contains(ip) || private20BitBlock.Contains(ip) || private16BitBlock.Contains(ip)
+	for _, cidr := range f.privateCIDRs {
+		if cidr.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }

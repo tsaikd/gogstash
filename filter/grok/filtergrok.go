@@ -19,9 +19,11 @@ const ErrorTag = "gogstash_filter_grok_error"
 type FilterConfig struct {
 	config.FilterConfig
 
-	PatternsPath string   `json:"patterns_path"` // path to patterns file
-	Match        []string `json:"match"`         // match pattern
-	Source       string   `json:"source"`        // source message field name
+	PatternsPath      string            `json:"patterns_path"`       // path to patterns file
+	Patterns          map[string]string `json:"patterns"`            // pattern definitions
+	Match             []string          `json:"match"`               // match pattern
+	Source            string            `json:"source"`              // source message field name
+	RemoveEmptyValues bool              `json:"remove_empty_values"` // remove empty values
 
 	grk *grok.Grok
 }
@@ -34,9 +36,11 @@ func DefaultFilterConfig() FilterConfig {
 				Type: ModuleName,
 			},
 		},
-		PatternsPath: "",
-		Match:        []string{"%{COMMONAPACHELOG}"},
-		Source:       "message",
+		PatternsPath:      "",
+		Patterns:          nil,
+		Match:             []string{"%{COMMONAPACHELOG}"},
+		Source:            "message",
+		RemoveEmptyValues: true,
 	}
 }
 
@@ -48,12 +52,18 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		return nil, err
 	}
 
-	g, err := grok.NewWithConfig(&grok.Config{NamedCapturesOnly: true})
+	g, err := grok.NewWithConfig(&grok.Config{
+		NamedCapturesOnly: true,
+		RemoveEmptyValues: conf.RemoveEmptyValues,
+	})
 	if err != nil {
 		return nil, err
 	}
 	if conf.PatternsPath != "" {
 		g.AddPatternsFromPath(conf.PatternsPath)
+	}
+	if conf.Patterns != nil {
+		g.AddPatternsFromMap(conf.Patterns)
 	}
 
 	conf.grk = g
@@ -67,11 +77,18 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	found := false
 	for _, thisMatch := range f.Match {
 		// grok Parse will success even it doesn't match
-		values, err := f.grk.Parse(thisMatch, message)
+		values, err := f.grk.ParseTyped(thisMatch, message)
 		if err == nil && len(values) > 0 {
 			found = true
 			for key, value := range values {
-				event.SetValue(key, event.Format(value))
+				switch v := value.(type) {
+				case string:
+					event.SetValue(key, v)
+				case nil:
+					// pass
+				default:
+					event.SetValue(key, value)
+				}
 			}
 			break
 		}

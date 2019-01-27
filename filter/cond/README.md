@@ -11,7 +11,8 @@ Built-in functions:
 
 * `empty()` Checks if the argument is `nil`
 * `strlen()` Returns the string argument's length
-* `rand()` Returns a pseudo-random number in `[0.0,1.0)` as a float64
+* `map()` Maps slice to `[]interface{}`
+* `rand()` Returns a pseudo-random number in `[0.0, 1.0)` as a float64
 
 ## Synopsis
 
@@ -25,16 +26,20 @@ filter:
       - type: add_field
         key: foo
         value: bar
+    # (optional) filter config when condition was not met
+    else_filter:
+      - type: add_field
+        key: foo
+        value: bar2
 ```
 
 ```yaml
 filter:
   - type: cond
     # (required) condition need to be satisfied
-    condition: "([nginx.access.url] ?? '') =~ '^/api/'"
+    condition: "!('gogstash_filter_grok_error' IN map([tags]))"
     # (required) filter config
     filter:
-      - type: add_field
-        key: foo
-        value: bar
+      - type: remove_field
+        remove_message: true
 ```

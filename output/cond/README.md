@@ -21,6 +21,9 @@ Condition syntax is same as [`filter/cond`](../../filter/cond).
 				{ "type": "stdout" }
 
 			]
+
+			// (optional)
+			"else_output": []
 		}
 	]
 }

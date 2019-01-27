@@ -2,6 +2,8 @@ package filterdate
 
 import (
 	"context"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/tengattack/jodatime"
@@ -63,7 +65,31 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		err       error
 	)
 	for _, thisFormat := range f.Format {
-		timestamp, err = f.timeParser(thisFormat, event.GetString(f.Source))
+		if thisFormat == "UNIX" {
+			var sec, nsec int64
+			s := event.GetString(f.Source)
+			dot := strings.Index(s, ".")
+			if dot >= 0 {
+				sec, err = strconv.ParseInt(s[:dot], 10, 64)
+				if err != nil {
+					continue
+				}
+				// fraction to nano seconds, avoid precision loss
+				nsec, err = strconv.ParseInt(s[dot+1:], 10, 64)
+				if err != nil {
+					continue
+				}
+				nsec *= exponent(10, 9-(len(s)-dot-1))
+			} else {
+				sec, err = strconv.ParseInt(s, 10, 64)
+				if err != nil {
+					continue
+				}
+			}
+			timestamp = time.Unix(sec, nsec)
+		} else {
+			timestamp, err = f.timeParser(thisFormat, event.GetString(f.Source))
+		}
 		if err == nil {
 			break
 		}
@@ -77,4 +103,15 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 
 	event.Timestamp = timestamp.UTC()
 	return event
+}
+
+func exponent(a int64, n int) int64 {
+	result := int64(1)
+	for i := n; i > 0; i >>= 1 {
+		if i&1 != 0 {
+			result *= a
+		}
+		a *= a
+	}
+	return result
 }
