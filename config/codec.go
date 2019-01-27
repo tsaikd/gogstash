@@ -13,9 +13,10 @@ import (
 
 // errors
 var (
-	ErrorUnknownCodecType1 = errutil.NewFactory("unknown codec config type: %q")
-	ErrorInitCodecFailed1  = errutil.NewFactory("initialize codec module failed: %v")
-	ErrorNotImplement1     = errutil.NewFactory("%q is not implement")
+	ErrorUnknownCodecType1      = errutil.NewFactory("unknown codec config type: %q")
+	ErrorInitCodecFailed1       = errutil.NewFactory("initialize codec module failed: %v")
+	ErrorNotImplement1          = errutil.NewFactory("%q is not implement")
+	ErrorUnsupportedTargetEvent = errors.New("unsupported target event to decode")
 )
 
 // TypeCodecConfig is interface of codec module
@@ -24,6 +25,8 @@ type TypeCodecConfig interface {
 	// The codec’s decode method is where data coming in from an input is transformed into an event.
 	// if event sent to msgChan, ok will be true
 	Decode(ctx context.Context, data interface{}, extra map[string]interface{}, msgChan chan<- logevent.LogEvent) (ok bool, err error)
+	// DecodeEvent data to event
+	DecodeEvent(data []byte, v interface{}) error
 	// The encode method takes an event and serializes it (encodes) into another format.
 	Encode(ctx context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error)
 }
@@ -139,6 +142,23 @@ func (c *DefaultCodec) Decode(ctx context.Context, data interface{},
 	ok = true
 
 	return
+}
+
+// DecodeEvent decodes data to event
+func (c *DefaultCodec) DecodeEvent(data []byte, v interface{}) error {
+	event := logevent.LogEvent{
+		Timestamp: time.Now(),
+		Message:   string(data),
+	}
+	switch e := v.(type) {
+	case *interface{}:
+		*e = event
+	case *logevent.LogEvent:
+		*e = event
+	default:
+		return ErrorUnsupportedTargetEvent
+	}
+	return nil
 }
 
 // Encode function not implement (TODO)
