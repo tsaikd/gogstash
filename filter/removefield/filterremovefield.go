@@ -2,7 +2,6 @@ package filterremovefield
 
 import (
 	"context"
-	"strings"
 
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
@@ -56,7 +55,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	}
 
 	for _, field := range f.Fields {
-		removeField(event.Extra, field)
+		event.Remove(field)
 	}
 
 	if f.RemoveMessage {
@@ -64,17 +63,4 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	}
 
 	return event
-}
-
-func removeField(obj map[string]interface{}, field string) {
-	fieldSplits := strings.Split(field, ".")
-	if len(fieldSplits) < 2 {
-		delete(obj, field)
-		return
-	}
-
-	switch child := obj[fieldSplits[0]].(type) {
-	case map[string]interface{}:
-		removeField(child, strings.Join(fieldSplits[1:], "."))
-	}
 }

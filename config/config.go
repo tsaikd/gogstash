@@ -31,6 +31,8 @@ type Config struct {
 	FilterRaw []ConfigRaw `json:"filter,omitempty" yaml:"filter"`
 	OutputRaw []ConfigRaw `json:"output,omitempty" yaml:"output"`
 
+	Event *logevent.Config `json:"event,omitempty" yaml:"event"`
+
 	// channel size: chInFilter, chFilterOut, chOutDebug
 	ChannelSize int `json:"chsize,omitempty" yaml:"chsize"`
 
@@ -103,6 +105,9 @@ func initConfig(config *Config) {
 	}
 	if config.Worker < 1 {
 		config.Worker = defaultConfig.Worker
+	}
+	if config.Event != nil {
+		logevent.SetConfig(config.Event)
 	}
 
 	config.chInFilter = make(MsgChan, config.ChannelSize)

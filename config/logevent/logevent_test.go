@@ -7,10 +7,9 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/tsaikd/KDGoLib/jsonex"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tsaikd/KDGoLib/jsonex"
 )
 
 func Test_FormatWithEnv(t *testing.T) {
@@ -166,6 +165,57 @@ func Test_SetValue(t *testing.T) {
 					"remote_ip": "1.1.1.1",
 				},
 			},
+		},
+	}, event)
+}
+
+func Test_Remove(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+
+	eventTime := time.Date(2017, time.April, 5, 17, 41, 12, 345, time.UTC)
+	event := LogEvent{
+		Timestamp: eventTime,
+		Message:   "Test Message",
+		Extra: map[string]interface{}{
+			"foo": "bar",
+			"map": map[string]interface{}{
+				"foo2": "bar2",
+			},
+		},
+	}
+
+	assert.True(event.Remove("foo"))
+	require.Equal(LogEvent{
+		Timestamp: eventTime,
+		Message:   "Test Message",
+		Extra: map[string]interface{}{
+			"map": map[string]interface{}{
+				"foo2": "bar2",
+			},
+		},
+	}, event)
+
+	event = LogEvent{
+		Timestamp: eventTime,
+		Message:   "Test Message",
+		Extra: map[string]interface{}{
+			"foo": "bar",
+			"map": map[string]interface{}{
+				"foo2": "bar2",
+			},
+		},
+	}
+
+	assert.True(event.Remove("map.foo2"))
+	require.Equal(LogEvent{
+		Timestamp: eventTime,
+		Message:   "Test Message",
+		Extra: map[string]interface{}{
+			"foo": "bar",
+			"map": map[string]interface{}{},
 		},
 	}, event)
 }
