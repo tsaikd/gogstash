@@ -104,7 +104,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			l = tls.NewListener(l, t.tlsConfig)
 		}
 		return l, err
-	}, addr)
+	}, addr, server.JSONDecoder(t.Codec.DecodeEvent))
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			return nil
 		case data := <-s.ReceiveChan():
 			for _, e := range data.Events {
-				t.Codec.Decode(ctx, e, nil, msgChan)
+				msgChan <- e.(logevent.LogEvent)
 			}
 			data.ACK()
 		}
