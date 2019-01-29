@@ -29,6 +29,7 @@ import (
 	"github.com/tsaikd/gogstash/output/cond"
 	"github.com/tsaikd/gogstash/output/elastic"
 	"github.com/tsaikd/gogstash/output/email"
+	"github.com/tsaikd/gogstash/output/http"
 	"github.com/tsaikd/gogstash/output/prometheus"
 	"github.com/tsaikd/gogstash/output/redis"
 	"github.com/tsaikd/gogstash/output/report"
@@ -64,6 +65,7 @@ func init() {
 	config.RegistOutputHandler(outputcond.ModuleName, outputcond.InitHandler)
 	config.RegistOutputHandler(outputelastic.ModuleName, outputelastic.InitHandler)
 	config.RegistOutputHandler(outputemail.ModuleName, outputemail.InitHandler)
+	config.RegistOutputHandler(outputhttp.ModuleName, outputhttp.InitHandler)
 	config.RegistOutputHandler(outputprometheus.ModuleName, outputprometheus.InitHandler)
 	config.RegistOutputHandler(outputredis.ModuleName, outputredis.InitHandler)
 	config.RegistOutputHandler(outputreport.ModuleName, outputreport.InitHandler)

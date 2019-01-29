@@ -97,6 +97,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	}
 	var err error
 	var record *geoip2.City
+	// single-thread here
 	if c, ok := f.cache.Get(ipstr); ok {
 		record = c.(*geoip2.City)
 	} else {
