@@ -118,6 +118,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	ua := event.GetString(f.Source)
 	if ua != "" {
 		var client *uaparser.Client
+		// single-thread here
 		if c, ok := f.cache.Get(ua); ok {
 			client = c.(*uaparser.Client)
 		} else {
