@@ -131,7 +131,8 @@ func Test_GetValue(t *testing.T) {
 		Extra: map[string]interface{}{
 			"nginx": map[string]interface{}{
 				"access": map[string]interface{}{
-					"response_code": 200,
+					"response_code":  200,
+					"remote_ip_list": []string{"1.1.1.1"},
 				},
 			},
 		},
@@ -140,6 +141,10 @@ func Test_GetValue(t *testing.T) {
 	responseCode, ok := event.GetValue("nginx.access.response_code")
 	assert.True(ok)
 	assert.Equal(200, responseCode)
+
+	ip, ok := event.GetValue("nginx.access.remote_ip_list[0]")
+	assert.True(ok)
+	assert.Equal("1.1.1.1", ip)
 }
 
 func Test_SetValue(t *testing.T) {

@@ -106,7 +106,7 @@ func (t LogEvent) getJSONMap() map[string]interface{} {
 		event[TagsField] = t.Tags
 	}
 	for _, field := range config.RemoveField {
-		removeField(event, field)
+		removePathValue(event, field)
 	}
 	return event
 }
@@ -142,7 +142,7 @@ func (t LogEvent) GetString(field string) string {
 	case "message":
 		return t.Message
 	default:
-		v, ok := getValueFromObject(t.Extra, field)
+		v, ok := getPathValue(t.Extra, field)
 		if ok {
 			if s, ok := v.(string); ok {
 				return s
@@ -154,82 +154,18 @@ func (t LogEvent) GetString(field string) string {
 }
 
 func (t LogEvent) GetValue(field string) (interface{}, bool) {
-	return getValueFromObject(t.Extra, field)
+	return getPathValue(t.Extra, field)
 }
 
 func (t *LogEvent) SetValue(field string, v interface{}) bool {
 	if t.Extra == nil {
 		t.Extra = map[string]interface{}{}
 	}
-	return setValueToObject(t.Extra, field, v)
+	return setPathValue(t.Extra, field, v)
 }
 
 func (t *LogEvent) Remove(field string) bool {
-	return removeField(t.Extra, field)
-}
-
-func getValueFromObject(obj map[string]interface{}, field string) (interface{}, bool) {
-	fieldSplits := strings.Split(field, ".")
-	for i, key := range fieldSplits {
-		if i >= len(fieldSplits)-1 {
-			v, ok := obj[key]
-			return v, ok
-		} else if node, ok := obj[key]; ok {
-			switch v := node.(type) {
-			case map[string]interface{}:
-				obj = v
-			default:
-				return nil, false
-			}
-		} else {
-			break
-		}
-	}
-	return nil, false
-}
-
-func setValueToObject(obj map[string]interface{}, field string, v interface{}) bool {
-	fieldSplits := strings.Split(field, ".")
-	for i, key := range fieldSplits {
-		if i >= len(fieldSplits)-1 {
-			obj[key] = v
-			return true
-		} else if node, ok := obj[key]; ok {
-			switch v := node.(type) {
-			case map[string]interface{}:
-				obj = v
-			case nil:
-				obj[key] = map[string]interface{}{}
-				obj = obj[key].(map[string]interface{})
-			default:
-				return false
-			}
-		} else {
-			obj[key] = map[string]interface{}{}
-			obj = obj[key].(map[string]interface{})
-		}
-	}
-	return false
-}
-
-func removeField(obj map[string]interface{}, field string) bool {
-	fieldSplits := strings.Split(field, ".")
-	for i, key := range fieldSplits {
-		if i >= len(fieldSplits)-1 {
-			delete(obj, key)
-			return true
-		} else if node, ok := obj[key]; ok {
-			switch v := node.(type) {
-			case map[string]interface{}:
-				obj = v
-			default:
-				return false
-			}
-		} else {
-			break
-		}
-	}
-	return false
+	return removePathValue(t.Extra, field)
 }
 
 var (
