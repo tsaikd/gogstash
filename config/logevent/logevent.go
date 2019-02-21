@@ -39,6 +39,7 @@ func SetConfig(c *Config) {
 	json := jsoniter.Config{
 		SortMapKeys:            c.SortMapKeys,
 		ValidateJsonRawMessage: false,
+		EscapeHTML:             false,
 	}.Froze()
 	config.jsonMarshal = json.Marshal
 	config.jsonMarshalIndent = jsonex.MarshalIndent
