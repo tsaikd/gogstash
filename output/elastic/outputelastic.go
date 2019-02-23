@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
@@ -86,6 +87,13 @@ func (l *errorLogger) Printf(format string, args ...interface{}) {
 	l.logger.Errorf(format, args...)
 }
 
+type jsonDecoder struct{}
+
+// Decode decodes with jsoniter.Unmarshal
+func (u *jsonDecoder) Decode(data []byte, v interface{}) error {
+	return jsoniter.Unmarshal(data, v)
+}
+
 // InitHandler initialize the output plugin
 func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputConfig, error) {
 	conf := DefaultOutputConfig()
@@ -101,6 +109,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		elastic.SetURL(conf.URL...),
 		elastic.SetSniff(conf.Sniff),
 		elastic.SetErrorLog(logger),
+		elastic.SetDecoder(&jsonDecoder{}),
 	); err != nil {
 		return nil, ErrorCreateClientFailed1.New(err, conf.URL)
 	}
