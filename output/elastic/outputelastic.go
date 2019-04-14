@@ -111,10 +111,9 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		newURL := logevent.FormatWithEnv(URL)
 		resolvedURLs = append(resolvedURLs, newURL)
 	}
-	conf.URL = resolvedURLs
 
 	if conf.client, err = elastic.NewClient(
-		elastic.SetURL(conf.URL...),
+		elastic.SetURL(resolvedURLs...),
 		elastic.SetSniff(conf.Sniff),
 		elastic.SetErrorLog(logger),
 		elastic.SetDecoder(&jsonDecoder{}),
