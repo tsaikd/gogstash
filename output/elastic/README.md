@@ -50,4 +50,9 @@ output:
     # (optional) default: "5m"
     # ExponentialBackoffMaxTimeout used to set the maximum wait interval in elastic.ExponentialBackoff
     exponential_backoff_max_timeout: "5m"
+
+    # (optional) default: "true"
+    # SSLCertValidation Option to validate the server's certificate. Disabling this severely compromises security. 
+    # For more information on disabling certificate verification please read https://www.cs.utexas.edu/~shmat/shmat_ccs12.pdf     
+    ssl_certificate_validation: false
 ```

@@ -2,6 +2,8 @@ package outputelastic
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -12,12 +14,71 @@ import (
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	elastic "gopkg.in/olivere/elastic.v6"
+	"gopkg.in/olivere/elastic.v6"
 )
 
 func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistOutputHandler(ModuleName, InitHandler)
+}
+
+func Test_SSLCertValidation(t *testing.T) {
+	assert := assert.New(t)
+	// check default config is 'true'
+	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	defer ts.Close()
+	ts.StartTLS()
+
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+output:
+  - type: elastic
+    url: ["` + ts.URL + `"]
+    index: "gogstash-index-test"
+    document_type: "testtype"
+    document_id: "%{fieldstring}"
+    bulk_actions: 0
+	`)))
+	assert.Nil(err)
+	assert.NotNil(conf)
+	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
+	// expect error not nil as certificate is not trusted by default
+	assert.NotNil(err)
+
+	conf, err = config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+output:
+  - type: elastic
+    url: ["` + ts.URL + `"]
+    index: "gogstash-index-test"
+    document_type: "testtype"
+    document_id: "%{fieldstring}"
+    bulk_actions: 0
+    ssl_certificate_validation: true
+	`)))
+	assert.Nil(err)
+	assert.NotNil(conf)
+	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
+	// again expect error not nil as certificate is not trusted and we requested ssl_certificate_validation
+	assert.NotNil(err)
+
+	conf, err = config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+output:
+  - type: elastic
+    url: ["` + ts.URL + `"]
+    index: "gogstash-index-test"
+    document_type: "testtype"
+    document_id: "%{fieldstring}"
+    bulk_actions: 0
+    ssl_certificate_validation: false
+	`)))
+	assert.Nil(err)
+	assert.NotNil(conf)
+	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
+	// expect no error this time as ssl_certificate_validation is false
+	assert.Nil(err)
+
 }
 
 func Test_output_elastic_module(t *testing.T) {
