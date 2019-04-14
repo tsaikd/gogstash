@@ -17,6 +17,10 @@ filter:
     timestamp: time
     # (mandantory if timestamp is set) format string of the time
     timeformat: 2006-01-02T15:04:05.999999999Z
+    # (optional) tags to add on filter success, default: empty
+    add_tag: ["tag1", "tag2"]
+    # (optional) tags to add on filter failure, default: ["gogstash_filter_json_error"]
+    tag_on_failure: ["errortag1", "errortag2"]
 ```
 
 ## Example for JSON append

@@ -23,6 +23,9 @@ type FilterConfig struct {
 	Appendkey string `json:"appendkey"`
 	Tsfield   string `json:"timestamp"`
 	Tsformat  string `json:"timeformat"`
+	Source    string `json:"source"`
+	AddTag            []string          `json:"add_tag"`             // tags to add on filter success
+	TagOnFailure      []string          `json:"tag_on_failure"`      // tags to add on filter failure
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -33,6 +36,8 @@ func DefaultFilterConfig() FilterConfig {
 				Type: ModuleName,
 			},
 		},
+		Source:"message",
+		TagOnFailure: []string{ErrorTag},
 	}
 }
 
@@ -49,12 +54,14 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	var parsedMessage map[string]interface{}
-	if err := jsoniter.Unmarshal([]byte(event.Message), &parsedMessage); err != nil {
-		event.AddTag(ErrorTag)
-		goglog.Logger.Error(err)
+	source := event.GetString(f.Source)
+	if err := jsoniter.Unmarshal([]byte(source), &parsedMessage); err != nil {
+		event.AddTag(f.TagOnFailure...)
+		goglog.Logger.Errorf("json error when reading %v %v\n", source, err)
 		return event
 	}
 
+	event.AddTag(f.AddTag...)
 	if f.Appendkey != "" {
 		event.SetValue(f.Appendkey, parsedMessage)
 	} else {
