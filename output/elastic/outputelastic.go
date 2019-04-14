@@ -54,7 +54,7 @@ type OutputConfig struct {
 	ExponentialBackoffMaxTimeout string `json:"exponential_backoff_max_timeout,omitempty"`
 	exponentialBackoffMaxTimeout time.Duration
 
-	// SslCertValidation Option to validate the server’s certificate. Disabling this severely compromises security.
+	// SslCertValidation Option to validate the server's certificate. Disabling this severely compromises security.
 	// For more information on disabling certificate verification please read https://www.cs.utexas.edu/~shmat/shmat_ccs12.pdf
 	SslCertValidation bool `json:"ssl_certificate_validation,omitempty"`
 
