@@ -126,12 +126,13 @@ func (t LogEvent) Get(field string) (v interface{}) {
 	switch field {
 	case "@timestamp":
 		v = t.Timestamp
-	case "message":
-		v = t.Message
 	case TagsField:
 		v = t.Tags
 	default:
 		v = t.Extra[field]
+		if v == nil && field == "message"{
+			v = t.Message
+		}
 	}
 	return
 }
@@ -140,8 +141,6 @@ func (t LogEvent) GetString(field string) string {
 	switch field {
 	case "@timestamp":
 		return t.Timestamp.UTC().Format(timeFormat)
-	case "message":
-		return t.Message
 	default:
 		v, ok := getPathValue(t.Extra, field)
 		if ok {
@@ -149,6 +148,9 @@ func (t LogEvent) GetString(field string) string {
 				return s
 			}
 			return fmt.Sprintf("%v", v)
+		}
+		if field == "message" {
+			return t.Message
 		}
 		return ""
 	}
