@@ -26,7 +26,7 @@ func init() {
 func Test_SslCertValidation(t *testing.T) {
 	a := assert.New(t)
 	// check default config is 'true'
-	a.True(DefaultOutputConfig().SslCertValidation, "Default ssl validation must be true")
+	a.True(DefaultOutputConfig().SSLCertValidation, "Default ssl validation must be true")
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("%v\n", r)
 		w.WriteHeader(200)

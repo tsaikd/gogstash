@@ -54,9 +54,9 @@ type OutputConfig struct {
 	ExponentialBackoffMaxTimeout string `json:"exponential_backoff_max_timeout,omitempty"`
 	exponentialBackoffMaxTimeout time.Duration
 
-	// SslCertValidation Option to validate the server's certificate. Disabling this severely compromises security.
+	// SSLCertValidation Option to validate the server's certificate. Disabling this severely compromises security.
 	// For more information on disabling certificate verification please read https://www.cs.utexas.edu/~shmat/shmat_ccs12.pdf
-	SslCertValidation bool `json:"ssl_certificate_validation,omitempty"`
+	SSLCertValidation bool `json:"ssl_certificate_validation,omitempty"`
 
 	client    *elastic.Client        // elastic client instance
 	processor *elastic.BulkProcessor // elastic bulk processor
@@ -76,7 +76,7 @@ func DefaultOutputConfig() OutputConfig {
 		BulkFlushInterval:                30 * time.Second,
 		ExponentialBackoffInitialTimeout: "10s",
 		ExponentialBackoffMaxTimeout:     "5m",
-		SslCertValidation:                true,
+		SSLCertValidation:                true,
 	}
 }
 
@@ -119,7 +119,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		elastic.SetDecoder(&jsonDecoder{}),
 	}
 	// set httpclient explicitly if we need to avoid https cert checks
-	if !conf.SslCertValidation {
+	if !conf.SSLCertValidation {
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
