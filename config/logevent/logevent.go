@@ -159,6 +159,12 @@ func (t LogEvent) GetValue(field string) (interface{}, bool) {
 }
 
 func (t *LogEvent) SetValue(field string, v interface{}) bool {
+	if field == "message" {
+		if value, ok := v.(string); ok {
+			t.Message = value
+			return false
+		}
+	}
 	if t.Extra == nil {
 		t.Extra = map[string]interface{}{}
 	}
