@@ -2,6 +2,10 @@ package outputelastic
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -18,6 +22,35 @@ import (
 func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistOutputHandler(ModuleName, InitHandler)
+}
+
+func Test_ResolveVars(t *testing.T) {
+	a := assert.New(t)
+
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("%v\n", r)
+		w.WriteHeader(200)
+	}
+	ts := httptest.NewServer(http.HandlerFunc(handler))
+	defer ts.Close()
+
+	err := os.Setenv("MYVAR", ts.URL)
+	a.Nil(err)
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+output:
+  - type: elastic
+    url: ["%{MYVAR}"]
+    index: "gogstash-index-test"
+    document_type: "testtype"
+    document_id: "%{fieldstring}"
+    bulk_actions: 0
+	`)))
+	a.Nil(err)
+	a.NotNil(conf)
+	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
+	a.Nil(err)
+
 }
 
 func Test_output_elastic_module(t *testing.T) {
