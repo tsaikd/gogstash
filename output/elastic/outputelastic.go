@@ -2,6 +2,8 @@ package outputelastic
 
 import (
 	"context"
+	"crypto/tls"
+	"net/http"
 	"strings"
 	"time"
 
@@ -52,6 +54,10 @@ type OutputConfig struct {
 	ExponentialBackoffMaxTimeout string `json:"exponential_backoff_max_timeout,omitempty"`
 	exponentialBackoffMaxTimeout time.Duration
 
+	// SslCertValidation Option to validate the server's certificate. Disabling this severely compromises security.
+	// For more information on disabling certificate verification please read https://www.cs.utexas.edu/~shmat/shmat_ccs12.pdf
+	SslCertValidation bool `json:"ssl_certificate_validation,omitempty"`
+
 	client    *elastic.Client        // elastic client instance
 	processor *elastic.BulkProcessor // elastic bulk processor
 }
@@ -70,6 +76,7 @@ func DefaultOutputConfig() OutputConfig {
 		BulkFlushInterval:                30 * time.Second,
 		ExponentialBackoffInitialTimeout: "10s",
 		ExponentialBackoffMaxTimeout:     "5m",
+		SslCertValidation:                true,
 	}
 }
 
@@ -105,12 +112,22 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 	// map Printf to error level
 	logger := &errorLogger{logger: goglog.Logger}
 
-	if conf.client, err = elastic.NewClient(
+	options := []elastic.ClientOptionFunc{
 		elastic.SetURL(conf.URL...),
 		elastic.SetSniff(conf.Sniff),
 		elastic.SetErrorLog(logger),
 		elastic.SetDecoder(&jsonDecoder{}),
-	); err != nil {
+	}
+	// set httpclient explicitly if we need to avoid https cert checks
+	if !conf.SslCertValidation {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		client := &http.Client{Transport: tr}
+		options = append(options, elastic.SetHttpClient(client))
+	}
+
+	if conf.client, err = elastic.NewClient(options...); err != nil {
 		return nil, ErrorCreateClientFailed1.New(err, conf.URL)
 	}
 
