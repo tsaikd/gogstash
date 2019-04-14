@@ -24,8 +24,9 @@ type FilterConfig struct {
 	Match             []string          `json:"match"`               // match pattern
 	Source            string            `json:"source"`              // source message field name
 	RemoveEmptyValues bool              `json:"remove_empty_values"` // remove empty values
-
-	grk *grok.Grok
+	AddTag            []string          `json:"add_tag"`             // tags to add on grok success
+	TagOnFailure      []string          `json:"tag_on_failure"`      // tags to add on grok failure
+	grk               *grok.Grok
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -41,6 +42,7 @@ func DefaultFilterConfig() FilterConfig {
 		Match:             []string{"%{COMMONAPACHELOG}"},
 		Source:            "message",
 		RemoveEmptyValues: true,
+		TagOnFailure:      []string{ErrorTag},
 	}
 }
 
@@ -94,9 +96,11 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		}
 	}
 
-	if !found {
-		event.AddTag(ErrorTag)
-		goglog.Logger.Errorf("grok: no matches for %q", message)
+	if found {
+		event.AddTag(f.AddTag...)
+	} else {
+		event.AddTag(f.TagOnFailure...)
+		goglog.Logger.Errorf("grok: no matches for %q %v %v", message, f.Match, event)
 	}
 
 	return event
