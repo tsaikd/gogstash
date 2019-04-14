@@ -105,6 +105,14 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 	// map Printf to error level
 	logger := &errorLogger{logger: goglog.Logger}
 
+	// replace env var names with values on URL config
+	var resolvedUrls []string
+	for _, url := range conf.URL {
+		newUrl := logevent.FormatWithEnv(url)
+		resolvedUrls = append(resolvedUrls, newUrl)
+	}
+	conf.URL = resolvedUrls
+
 	if conf.client, err = elastic.NewClient(
 		elastic.SetURL(conf.URL...),
 		elastic.SetSniff(conf.Sniff),
