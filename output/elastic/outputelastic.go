@@ -107,8 +107,8 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 
 	// replace env var names with values on URL config
 	var resolvedURLs []string
-	for _, URL := range conf.URL {
-		newURL := logevent.FormatWithEnv(URL)
+	for _, url := range conf.URL {
+		newURL := logevent.FormatWithEnv(url)
 		resolvedURLs = append(resolvedURLs, newURL)
 	}
 
