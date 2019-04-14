@@ -23,7 +23,7 @@ func init() {
 	config.RegistOutputHandler(ModuleName, InitHandler)
 }
 
-func Test_SslCertValidation(t *testing.T) {
+func Test_SSLCertValidation(t *testing.T) {
 	a := assert.New(t)
 	// check default config is 'true'
 	a.True(DefaultOutputConfig().SSLCertValidation, "Default ssl validation must be true")
