@@ -2,7 +2,6 @@ package outputelastic
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,7 +14,7 @@ import (
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	elastic "gopkg.in/olivere/elastic.v6"
+	"gopkg.in/olivere/elastic.v6"
 )
 
 func init() {
@@ -24,14 +23,9 @@ func init() {
 }
 
 func Test_SSLCertValidation(t *testing.T) {
-	a := assert.New(t)
+	assert := assert.New(t)
 	// check default config is 'true'
-	a.True(DefaultOutputConfig().SSLCertValidation, "Default ssl validation must be true")
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("%v\n", r)
-		w.WriteHeader(200)
-	}
-	ts := httptest.NewUnstartedServer(http.HandlerFunc(handler))
+	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer ts.Close()
 	ts.StartTLS()
 
@@ -45,11 +39,11 @@ output:
     document_id: "%{fieldstring}"
     bulk_actions: 0
 	`)))
-	a.Nil(err)
-	a.NotNil(conf)
+	assert.Nil(err)
+	assert.NotNil(conf)
 	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
 	// expect error not nil as certificate is not trusted by default
-	a.NotNil(err)
+	assert.NotNil(err)
 
 	conf, err = config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
@@ -62,11 +56,11 @@ output:
     bulk_actions: 0
     ssl_certificate_validation: true
 	`)))
-	a.Nil(err)
-	a.NotNil(conf)
+	assert.Nil(err)
+	assert.NotNil(conf)
 	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
 	// again expect error not nil as certificate is not trusted and we requested ssl_certificate_validation
-	a.NotNil(err)
+	assert.NotNil(err)
 
 	conf, err = config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
@@ -79,11 +73,11 @@ output:
     bulk_actions: 0
     ssl_certificate_validation: false
 	`)))
-	a.Nil(err)
-	a.NotNil(conf)
+	assert.Nil(err)
+	assert.NotNil(conf)
 	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
 	// expect no error this time as ssl_certificate_validation is false
-	a.Nil(err)
+	assert.Nil(err)
 
 }
 
