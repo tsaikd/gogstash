@@ -5,8 +5,16 @@ go:
   - 1.11.x
   - master
 
+env:
+  - GO111MODULE=on
+
+cache:
+  directories:
+    - $HOME/.cache/go-build
+    - $HOME/gopath/pkg/mod
+
 install:
-  - gobuilder version -c ">=0.1.5" &>/dev/null || go get -u -v "github.com/tsaikd/gobuilder"
+  - gobuilder version -c ">=0.1.5" &>/dev/null || GO111MODULE=auto go get -u -v "github.com/tsaikd/gobuilder"
 
 script:
   - gobuilder --all --check --test
