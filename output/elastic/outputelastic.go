@@ -13,7 +13,7 @@ import (
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	elastic "gopkg.in/olivere/elastic.v6"
+	"gopkg.in/olivere/elastic.v6"
 )
 
 // ModuleName is the name used in config file
@@ -22,7 +22,8 @@ const ModuleName = "elastic"
 // OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
-	URL             []string `json:"url"`               // elastic API entrypoints
+	URL             []string `json:"url"` // elastic API entrypoints
+	resolvedURLs    []string // URLs after resolving environment vars
 	Index           string   `json:"index"`             // index name to log
 	DocumentType    string   `json:"document_type"`     // type name to log
 	DocumentID      string   `json:"document_id"`       // id to log, used if you want to control id format
@@ -112,12 +113,19 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 	// map Printf to error level
 	logger := &errorLogger{logger: goglog.Logger}
 
+	// replace env var names with values on URL config
+	for _, url := range conf.URL {
+		newURL := logevent.FormatWithEnv(url)
+		conf.resolvedURLs = append(conf.resolvedURLs, newURL)
+	}
+
 	options := []elastic.ClientOptionFunc{
-		elastic.SetURL(conf.URL...),
+		elastic.SetURL(conf.resolvedURLs...),
 		elastic.SetSniff(conf.Sniff),
 		elastic.SetErrorLog(logger),
 		elastic.SetDecoder(&jsonDecoder{}),
 	}
+
 	// set httpclient explicitly if we need to avoid https cert checks
 	if !conf.SSLCertValidation {
 		tr := &http.Transport{
