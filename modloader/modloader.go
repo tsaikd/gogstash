@@ -14,6 +14,7 @@ import (
 	"github.com/tsaikd/gogstash/filter/ratelimit"
 	"github.com/tsaikd/gogstash/filter/removefield"
 	"github.com/tsaikd/gogstash/filter/typeconv"
+	"github.com/tsaikd/gogstash/filter/urlparam"
 	"github.com/tsaikd/gogstash/filter/useragent"
 	"github.com/tsaikd/gogstash/input/beats"
 	"github.com/tsaikd/gogstash/input/dockerlog"
@@ -60,6 +61,7 @@ func init() {
 	config.RegistFilterHandler(filterremovefield.ModuleName, filterremovefield.InitHandler)
 	config.RegistFilterHandler(filtertypeconv.ModuleName, filtertypeconv.InitHandler)
 	config.RegistFilterHandler(filteruseragent.ModuleName, filteruseragent.InitHandler)
+	config.RegistFilterHandler(filterurlparam.ModuleName, filterurlparam.InitHandler)
 
 	config.RegistOutputHandler(outputamqp.ModuleName, outputamqp.InitHandler)
 	config.RegistOutputHandler(outputcond.ModuleName, outputcond.InitHandler)
