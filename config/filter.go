@@ -17,11 +17,35 @@ var (
 type TypeFilterConfig interface {
 	TypeCommonConfig
 	Event(context.Context, logevent.LogEvent) logevent.LogEvent
+	CommonFilter(context.Context, logevent.LogEvent) logevent.LogEvent
+}
+
+func (f *FilterConfig) CommonFilter(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
+
+	event.AddTag(f.AddTags...)
+	event.RemoveTag(f.RemoveTags...)
+	for _, field := range f.RemoveFields {
+		event.Remove(field)
+	}
+	for _, f := range f.AddFields {
+		event.SetValue(f.Key, event.Format(f.Value))
+	}
+	return event
 }
 
 // FilterConfig is basic filter config struct
 type FilterConfig struct {
 	CommonConfig
+	AddTags      []string      `yaml:"add_tag" json:"add_tag"`
+	RemoveTags   []string      `yaml:"remove_tag" json:"remove_tag"`
+	AddFields    []FieldConfig `yaml:"add_field" json:"add_field"`
+	RemoveFields []string      `yaml:"remove_field" json:"remove_field"`
+}
+
+// FieldConfig is a name/value field config
+type FieldConfig struct {
+	Key   string `yaml:"key"`
+	Value string `yaml:"value"`
 }
 
 // FilterHandler is a handler to regist filter module
@@ -73,6 +97,7 @@ func (t *Config) startFilters() (err error) {
 				}
 			case event := <-t.chInFilter:
 				for _, filter := range filters {
+					event = filter.CommonFilter(t.ctx, event)
 					event = filter.Event(t.ctx, event)
 				}
 				t.chFilterOut <- event

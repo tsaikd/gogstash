@@ -217,6 +217,28 @@ See [input modules](input) for more information
 
 ## Supported filters
 
+All filters support the following commmon functionality/configuration:
+
+```yaml
+filter:
+  - type: "whatever"
+
+    # list of tags to add
+    add_tag: ["addtag1", "addtag2"]
+    
+    # list of tags to remove
+    remove_tag: ["removetag1", "removetag2"]
+    
+    # list of fields (key/value) to add
+    add_field:
+      - key: "field1"
+        value: "value1"
+      - key: "field2"
+        value: "value2"
+    # list of fields to remove
+    remove_field: ["removefield1", "removefield2"]   
+```
+
 See [filter modules](filter) for more information
 
 * [add field](filter/addfield)
