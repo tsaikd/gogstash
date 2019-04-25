@@ -66,6 +66,20 @@ func (t *LogEvent) AddTag(tags ...string) {
 	}
 }
 
+// RemoveTag removes tags from event.Tags
+func (t *LogEvent) RemoveTag(tags ...string) {
+	for _, tag := range tags {
+		ftag := t.Format(tag)
+		var newTags []string
+		for _, existingTag := range t.Tags {
+			if existingTag != ftag {
+				newTags = append(newTags, existingTag)
+			}
+		}
+		t.Tags = newTags
+	}
+}
+
 // ParseTags parse tags into event.Tags
 func (t *LogEvent) ParseTags(tags interface{}) bool {
 	switch v := tags.(type) {

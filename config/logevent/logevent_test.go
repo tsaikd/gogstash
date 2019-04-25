@@ -118,6 +118,12 @@ func Test_Tags(t *testing.T) {
 	logevent.AddTag("tag1", "tag%{int}")
 	assert.Len(logevent.Tags, 6)
 	assert.Contains(logevent.Tags, "tag123")
+
+	logevent.RemoveTag("foo", "bar")
+	assert.Len(logevent.Tags, 4)
+	logevent.RemoveTag("notfoundtag")
+	assert.Len(logevent.Tags, 4)
+	assert.Equal([]string{"tag1", "tag2", "tag3", "tag123"}, logevent.Tags)
 }
 
 func Test_GetValue(t *testing.T) {
