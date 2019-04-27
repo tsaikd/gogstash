@@ -299,3 +299,21 @@ func Benchmark_Marshal_StdJSON(b *testing.B) {
 		json.Marshal(jsonMap)
 	}
 }
+
+func TestChangeMessage(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+
+	newMessage := "changed"
+
+	event := LogEvent{
+		Message: "Test Message",
+	}
+
+	event.SetValue("message", newMessage)
+
+	assert.Equal(newMessage, event.Message)
+	assert.Equal(newMessage, event.Get("message"))
+	assert.Equal(newMessage, event.GetString("message"))
+
+}
