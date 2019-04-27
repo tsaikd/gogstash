@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -78,7 +79,32 @@ output:
 	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
 	// expect no error this time as ssl_certificate_validation is false
 	assert.Nil(err)
+}
 
+func Test_ResolveVars(t *testing.T) {
+	assert := assert.New(t)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	defer ts.Close()
+
+	err := os.Setenv("MYVAR", ts.URL)
+	assert.Nil(err)
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+output:
+  - type: elastic
+    url: ["%{MYVAR}"]
+    index: "gogstash-index-test"
+    document_type: "testtype"
+    document_id: "%{fieldstring}"
+    bulk_actions: 0
+	`)))
+	assert.Nil(err)
+	assert.NotNil(conf)
+	resolvedConf, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	assert.Nil(err)
+	outputConf := resolvedConf.(*OutputConfig)
+	assert.Equal(ts.URL, outputConf.resolvedURLs[0])
 }
 
 func Test_output_elastic_module(t *testing.T) {
