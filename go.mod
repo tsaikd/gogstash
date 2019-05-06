@@ -16,6 +16,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/fsouza/go-dockerclient v1.3.6
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
+	github.com/golang/mock v1.2.0
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/hashicorp/go-version v0.0.0-20180716215031-270f2f71b1ee // indirect
 	github.com/hashicorp/golang-lru v0.5.1

@@ -30,6 +30,7 @@ import (
 	"github.com/tsaikd/gogstash/output/cond"
 	"github.com/tsaikd/gogstash/output/elastic"
 	"github.com/tsaikd/gogstash/output/email"
+	"github.com/tsaikd/gogstash/output/file"
 	"github.com/tsaikd/gogstash/output/http"
 	"github.com/tsaikd/gogstash/output/prometheus"
 	"github.com/tsaikd/gogstash/output/redis"
@@ -72,6 +73,7 @@ func init() {
 	config.RegistOutputHandler(outputredis.ModuleName, outputredis.InitHandler)
 	config.RegistOutputHandler(outputreport.ModuleName, outputreport.InitHandler)
 	config.RegistOutputHandler(outputstdout.ModuleName, outputstdout.InitHandler)
+	config.RegistOutputHandler(outputfile.ModuleName, outputfile.InitHandler)
 
 	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
