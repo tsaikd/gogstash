@@ -134,3 +134,37 @@ filter:
 		require.Equal(expectedEvent, event)
 	}
 }
+
+func Test_filter_mutate_module_merge_error(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+
+	ctx := context.Background()
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+filter:
+  - type: mutate
+    merge: ["key", "value"]
+	`)))
+	require.NoError(err)
+	require.NoError(conf.Start(ctx))
+
+	expectedEvent := logevent.LogEvent{
+		Extra: map[string]interface{}{
+			"key": 1,
+		},
+		Tags: []string{ErrorTag},
+	}
+
+	conf.TestInputEvent(logevent.LogEvent{
+		Extra: map[string]interface{}{
+			"key": 1,
+		},
+	})
+
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal(expectedEvent, event)
+	}
+}

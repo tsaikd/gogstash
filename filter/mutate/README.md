@@ -3,7 +3,9 @@ gogstash mutate filter module
 
 ## Synopsis
 
-At least one of split, replace or merge need to be set
+At least one of split, replace or merge need to be set for this filter configuration to be valid.
+If merging does not succeed because destination field is not a string nor []string, gogstash_filter_mutate_error will be added to the event
+
 ```yaml
 filter:
   - type: mutate
