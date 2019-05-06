@@ -95,6 +95,47 @@ filter:
 	}
 }
 
+func Test_filter_date_module_UNIX_target(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+
+	ctx := context.Background()
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+filter:
+  - type: date
+    format: ["UNIX"]
+    source: time_local
+    target: mytimestamp
+	`)))
+	require.NoError(err)
+	require.NoError(conf.Start(ctx))
+
+	timestamp, err := time.Parse("2006-01-02T15:04:05Z", "2019-01-23T09:57:51.471Z")
+	require.NoError(err)
+	eventIn := logevent.LogEvent{
+		Extra: map[string]interface{}{
+			"time_local": "1548237471.471",
+		},
+	}
+
+	expectedEvent := logevent.LogEvent{
+		Timestamp: eventIn.Timestamp,
+		Extra: map[string]interface{}{
+			"time_local":  "1548237471.471",
+			"mytimestamp": timestamp.UTC(),
+		},
+	}
+
+	conf.TestInputEvent(eventIn)
+
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal(expectedEvent, event)
+	}
+}
+
 func Test_filter_date_module_joda(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)

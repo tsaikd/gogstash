@@ -12,4 +12,6 @@ filter:
     source: time_local
     # (optional) using joda time format, eg. "YYYY-MM-dd HH:mm:ss,SSS", default: false
     joda: false
+    # (optional) target field. default: @timestamp
+    target: mytimestamp
 ```
