@@ -23,6 +23,7 @@ type FilterConfig struct {
 
 	Split   [2]string `yaml:"split"`
 	Replace [3]string `yaml:"replace"`
+	Merge   [2]string `yaml:"merge"` // merge string value into existing string slice field
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -44,7 +45,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		return nil, err
 	}
 
-	if conf.Split[0] == "" && conf.Replace[0] == "" {
+	if conf.Split[0] == "" && conf.Replace[0] == "" && conf.Merge[0] == "" {
 		return nil, ErrNotConfigured
 	}
 
@@ -58,6 +59,32 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	}
 	if f.Replace[0] != "" {
 		event.SetValue(f.Replace[0], strings.Replace(event.GetString(f.Replace[0]), f.Replace[1], f.Replace[2], -1))
+	}
+	if f.Merge[0] != "" {
+		event = mergeField(event, f.Merge[0], f.Merge[1])
+	}
+	return event
+}
+
+func mergeField(event logevent.LogEvent, destinationName, source string) logevent.LogEvent {
+	destinationValue := event.Get(destinationName)
+	value := event.Format(source)
+	if destinationValue == nil {
+		destinationValue = []string{value}
+		event.SetValue(destinationName, destinationValue)
+		return event
+	}
+	switch currentDestination := destinationValue.(type) {
+	case string:
+		var newDestination []string
+		if currentDestination != "" {
+			newDestination = append(newDestination, currentDestination)
+		}
+		newDestination = append(newDestination, value)
+		event.SetValue(destinationName, newDestination)
+	case []string:
+		currentDestination = append(currentDestination, value)
+		event.SetValue(destinationName, currentDestination)
 	}
 	return event
 }
