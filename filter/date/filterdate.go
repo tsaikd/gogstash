@@ -18,6 +18,9 @@ const ModuleName = "date"
 // ErrorTag tag added to event when process module failed
 const ErrorTag = "gogstash_filter_date_error"
 
+// DefaultTarget default event field to store date as
+const DefaultTarget = "@timestamp"
+
 // FilterConfig holds the configuration json fields and internal objects
 type FilterConfig struct {
 	config.FilterConfig
@@ -25,6 +28,7 @@ type FilterConfig struct {
 	Format []string `json:"format"` // date parse format
 	Source string   `json:"source"` // source message field name
 	Joda   bool     `json:"joda"`   // whether using joda time format
+	Target string   `json:"target"` // target field where date should be stored
 
 	timeParser func(layout, value string) (time.Time, error)
 }
@@ -39,6 +43,7 @@ func DefaultFilterConfig() FilterConfig {
 		},
 		Format: []string{time.RFC3339Nano},
 		Source: "message",
+		Target: DefaultTarget,
 	}
 }
 
@@ -100,8 +105,12 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		goglog.Logger.Error(err)
 		return event
 	}
+	if f.Target == DefaultTarget {
+		event.Timestamp = timestamp.UTC()
+	} else {
+		event.SetValue(f.Target, timestamp.UTC())
+	}
 
-	event.Timestamp = timestamp.UTC()
 	return event
 }
 
