@@ -6,11 +6,16 @@ import (
 	"strings"
 
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
-// ModuleName is the name used in config file
-const ModuleName = "mutate"
+const (
+	// ModuleName is the name used in config file
+	ModuleName = "mutate"
+	// ErrorTag tag added to event when process module failed
+	ErrorTag = "gogstash_filter_mutate_error"
+)
 
 // errors
 var (
@@ -85,6 +90,9 @@ func mergeField(event logevent.LogEvent, destinationName, source string) logeven
 	case []string:
 		currentDestination = append(currentDestination, value)
 		event.SetValue(destinationName, currentDestination)
+	default:
+		goglog.Logger.Warnf("mutate: destination field %s is not string nor []string", destinationName)
+		event.AddTag(ErrorTag)
 	}
 	return event
 }
