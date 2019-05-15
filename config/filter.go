@@ -20,6 +20,11 @@ type TypeFilterConfig interface {
 	CommonFilter(context.Context, logevent.LogEvent) logevent.LogEvent
 }
 
+// IsConfigured returns whether common configuration has been setup
+func (f *FilterConfig) IsConfigured() bool {
+	return len(f.AddTags) != 0 || len(f.AddFields) != 0 || len(f.RemoveTags) != 0 || len(f.RemoveFields) != 0
+}
+
 func (f *FilterConfig) CommonFilter(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 
 	event.AddTag(f.AddTags...)
