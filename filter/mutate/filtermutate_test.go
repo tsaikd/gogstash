@@ -65,6 +65,20 @@ filter:
 		require.Equal(expectedEvent, event)
 	}
 }
+func Test_filter_mutate_module_configured(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(require)
+
+	ctx := context.Background()
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+filter:
+  - type: mutate
+    add_tag: ["testing"]
+	`)))
+	require.NoError(err)
+	require.NoError(conf.Start(ctx))
+}
 
 func Test_filter_mutate_module_split(t *testing.T) {
 	assert := assert.New(t)

@@ -25,6 +25,23 @@ func TestCommonAddTag(t *testing.T) {
 	assert.Equal("add", event.Tags[0])
 }
 
+func TestCommonIsConfigured(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+
+	var filter FilterConfig
+
+	assert.False(filter.IsConfigured(), "should be not configured")
+	withAddTag := FilterConfig{AddTags: []string{"tag"}}
+	assert.True(withAddTag.IsConfigured(), "should be configured")
+	withAddFields := FilterConfig{AddFields: []FieldConfig{FieldConfig{Key: "name", Value: "value"}}}
+	assert.True(withAddFields.IsConfigured(), "should be configured")
+	withRemoveTag := FilterConfig{RemoveTags: []string{"tag"}}
+	assert.True(withRemoveTag.IsConfigured(), "should be configured")
+	withRemoveFields := FilterConfig{RemoveFields: []string{"field"}}
+	assert.True(withRemoveFields.IsConfigured(), "should be configured")
+}
+
 func TestCommonRemoveTag(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
