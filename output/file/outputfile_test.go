@@ -8,9 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 	fs "github.com/tsaikd/gogstash/output/file/filesystem"
@@ -233,7 +232,7 @@ output:
 	// channel to prevent test from finishing before gorouting writes to file
 	done := make(chan bool)
 	// file will reply with '10 bytes written'
-	mockfile.EXPECT().Write([]byte("test")).DoAndReturn(func(b []byte) (int, error) {
+	mockfile.EXPECT().Write([]byte("test\n")).DoAndReturn(func(b []byte) (int, error) {
 		done <- true
 		return 10, nil
 	})
@@ -283,7 +282,7 @@ output:
 	// channel to prevent test from finishing before gorouting writes to file
 	done := make(chan bool)
 	// file will reply with '10 bytes written'
-	mockfile.EXPECT().Write([]byte("logvalue")).DoAndReturn(func(b []byte) (int, error) {
+	mockfile.EXPECT().Write([]byte("logvalue\n")).DoAndReturn(func(b []byte) (int, error) {
 		done <- true
 		return 10, nil
 	})
@@ -332,15 +331,16 @@ output:
 	// channel to prevent test from finishing before gorouting writes to file
 	done := make(chan bool)
 	// first write, file will respond no error
-	mockfile.EXPECT().Write(gomock.Any()).DoAndReturn(func(b []byte) (int, error) {
+	expectedWriteValue := []byte("logvalue\n")
+	mockfile.EXPECT().Write(expectedWriteValue).DoAndReturn(func(b []byte) (int, error) {
 		return 10, nil
 	})
 	// second write, file will reply with 'ErrNotExist'
-	mockfile.EXPECT().Write(gomock.Any()).DoAndReturn(func(b []byte) (int, error) {
+	mockfile.EXPECT().Write(expectedWriteValue).DoAndReturn(func(b []byte) (int, error) {
 		return 0, os.ErrNotExist
 	})
 	// third write after re-creating file, will respond no error
-	mockfile.EXPECT().Write(gomock.Any()).DoAndReturn(func(b []byte) (int, error) {
+	mockfile.EXPECT().Write(expectedWriteValue).DoAndReturn(func(b []byte) (int, error) {
 		done <- true
 		return 10, nil
 	})
@@ -587,14 +587,15 @@ output:
 	// simulate dir does not exist. should be created with right permissions
 	mockfs := mocks.NewMockFileSystem(ctrl)
 	config.fs = mockfs
-	event := logevent.LogEvent{}
+	var event logevent.LogEvent
+	event.SetValue("log", "message")
 	// filesystem will reply with 'file exists'
 	mockfs.EXPECT().Stat(path).Return("", nil)
 	mockfile := mocks.NewMockFile(ctrl)
 	// channel to prevent test from finishing before gorouting writes to file
 	done := make(chan bool)
 	// file will reply with '10 bytes written'
-	mockfile.EXPECT().Write(gomock.Any()).DoAndReturn(func(b []byte) (int, error) {
+	mockfile.EXPECT().Write([]byte("message\n")).DoAndReturn(func(b []byte) (int, error) {
 		done <- true
 		return 10, nil
 	})
