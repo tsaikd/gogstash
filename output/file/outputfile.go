@@ -2,6 +2,7 @@ package outputfile
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -162,7 +163,8 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 				fileChanged := false
 				select {
 				case msg := <-channel:
-					written, err := file.Write([]byte(msg))
+					msgToWrite := []byte(fmt.Sprintf("%s\n", msg))
+					written, err := file.Write(msgToWrite)
 					if os.IsNotExist(err) && t.CreateIfDeleted {
 						// re-create file if it was deleted and configured as such
 						file, err = t.createFile(path)
@@ -170,7 +172,7 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 							goglog.Logger.Errorf("problems re-creating file. Routine will not write anything else to file %s. %v.\n", path, err)
 							return
 						}
-						written, err = file.Write([]byte(msg))
+						written, err = file.Write(msgToWrite)
 						if err != nil {
 							goglog.Logger.Errorf("problems writting after re-creating file. Routine will not write anything else to file %s. %v.\n", path, err)
 							return
