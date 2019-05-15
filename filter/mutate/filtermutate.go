@@ -28,7 +28,8 @@ type FilterConfig struct {
 
 	Split   [2]string `yaml:"split"`
 	Replace [3]string `yaml:"replace"`
-	Merge   [2]string `yaml:"merge"` // merge string value into existing string slice field
+	Merge   [2]string `yaml:"merge"`  // merge string value into existing string slice field
+	Rename  [2]string `yaml:"rename"` // rename field name into new field name
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -50,7 +51,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		return nil, err
 	}
 
-	if conf.Split[0] == "" && conf.Replace[0] == "" && conf.Merge[0] == "" {
+	if conf.Split[0] == "" && conf.Replace[0] == "" && conf.Merge[0] == "" && conf.Rename[0] == "" {
 		return nil, ErrNotConfigured
 	}
 
@@ -67,6 +68,11 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	}
 	if f.Merge[0] != "" {
 		event = mergeField(event, f.Merge[0], f.Merge[1])
+	}
+	if f.Rename[0] != "" {
+		value := event.Get(f.Rename[0])
+		event.SetValue(f.Rename[1], value)
+		event.Remove(f.Rename[0])
 	}
 	return event
 }
