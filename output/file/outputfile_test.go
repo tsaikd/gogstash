@@ -2,12 +2,13 @@ package outputfile
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/golang/mock/gomock"
 	"github.com/tsaikd/gogstash/config"
@@ -140,7 +141,7 @@ output:
 		return 10, nil
 	})
 
-	mockfs.EXPECT().OpenFile(path, appendPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
+	mockfs.EXPECT().OpenFile(path, createPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
 		return mockfile, nil
 	})
 	err = config.Output(context.TODO(), event)
@@ -188,7 +189,7 @@ output:
 		return 10, nil
 	})
 
-	mockfs.EXPECT().OpenFile(path, appendPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
+	mockfs.EXPECT().OpenFile(path, createPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
 		return mockfile, nil
 	})
 	err = config.Output(context.TODO(), event)
@@ -237,7 +238,7 @@ output:
 		return 10, nil
 	})
 
-	mockfs.EXPECT().OpenFile(path, appendPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
+	mockfs.EXPECT().OpenFile(path, createPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
 		return mockfile, nil
 	})
 	err = config.Output(context.TODO(), event)
@@ -287,7 +288,7 @@ output:
 		return 10, nil
 	})
 
-	mockfs.EXPECT().OpenFile(path, appendPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
+	mockfs.EXPECT().OpenFile(path, createPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
 		return mockfile, nil
 	})
 	err = config.Output(context.TODO(), event)
@@ -320,11 +321,11 @@ output:
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(fileMode)
-	// simulate dir does not exist. should be created with right permissions
 	mockfs := mocks.NewMockFileSystem(ctrl)
 	config.fs = mockfs
 	event := logevent.LogEvent{}
 	event.SetValue("log", "logvalue")
+	// simulate file does not exist. should be created with right permissions
 	// filesystem will reply with 'file does not exist'
 	mockfs.EXPECT().Stat(path).Return(nil, os.ErrNotExist).Times(2)
 	mockfile := mocks.NewMockFile(ctrl)
@@ -338,8 +339,13 @@ output:
 	mockfile.EXPECT().Write(gomock.Any()).DoAndReturn(func(b []byte) (int, error) {
 		return 0, os.ErrNotExist
 	})
+	// third write after re-creating file, will respond no error
+	mockfile.EXPECT().Write(gomock.Any()).DoAndReturn(func(b []byte) (int, error) {
+		done <- true
+		return 10, nil
+	})
 	// file will be opened twice. initial time and after error writing second time
-	mockfs.EXPECT().OpenFile(path, appendPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
+	mockfs.EXPECT().OpenFile(path, createPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
 		return mockfile, nil
 	}).Times(2)
 	err = config.Output(context.TODO(), event)
@@ -391,10 +397,11 @@ output:
 	})
 	// second write, file will reply with 'ErrNotExist'
 	mockfile.EXPECT().Write(gomock.Any()).DoAndReturn(func(b []byte) (int, error) {
+		done <- true
 		return 0, os.ErrNotExist
 	})
 	// file will be opened twice. initial time and after error writing second time
-	mockfs.EXPECT().OpenFile(path, appendPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
+	mockfs.EXPECT().OpenFile(path, createPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
 		return mockfile, nil
 	})
 	err = config.Output(context.TODO(), event)
@@ -436,7 +443,7 @@ output:
 	mockfs := mocks.NewMockFileSystem(ctrl)
 	config.fs = mockfs
 	event := logevent.LogEvent{}
-	// filesystem will reply with 'dir does not exist'
+	// filesystem will reply with 'dir' does not exist and 'file' does not exist
 	mockfs.EXPECT().Stat(path).Return(nil, os.ErrNotExist)
 	mockfs.EXPECT().Stat("dir").Return(nil, os.ErrNotExist)
 	mockfs.EXPECT().MkdirAll("dir", dPerm).Return(nil)
@@ -449,7 +456,7 @@ output:
 		return 10, nil
 	})
 
-	mockfs.EXPECT().OpenFile(path, appendPerm, fPerm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
+	mockfs.EXPECT().OpenFile(path, createPerm, fPerm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
 		return mockfile, nil
 	})
 	err = config.Output(context.TODO(), event)
@@ -461,6 +468,102 @@ output:
 	case <-time.Tick(2 * time.Second):
 	}
 
+}
+
+func TestDefaultOutputConfigNewFileExistingDir(t *testing.T) {
+	assert := assert.New(t)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	path := "dir/file"
+	fileMode := 666
+	dirMode := 777
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+output:
+  - type: file
+    path: ` + path + `    
+    flush_interval: 1000
+    file_mode: "` + strconv.Itoa(fileMode) + `"
+    dir_mode: "` + strconv.Itoa(dirMode) + `"
+	`)))
+	assert.Nil(err)
+	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	assert.Nil(err)
+	config := c.(*OutputConfig)
+	fPerm := os.FileMode(fileMode)
+	// simulate dir does not exist. should be created with right permissions
+	mockfs := mocks.NewMockFileSystem(ctrl)
+	config.fs = mockfs
+	event := logevent.LogEvent{}
+	// filesystem will reply with 'dir' DOES exist and 'file' does NOT exist
+	mockfs.EXPECT().Stat(path).Return(nil, os.ErrNotExist)
+	mockfs.EXPECT().Stat("dir").Return(true, nil)
+	mockfile := mocks.NewMockFile(ctrl)
+	// channel to prevent test from finishing before gorouting writes to file
+	done := make(chan bool)
+	// file will reply with '10 bytes written'
+	mockfile.EXPECT().Write(gomock.Any()).DoAndReturn(func(b []byte) (int, error) {
+		done <- true
+		return 10, nil
+	})
+
+	mockfs.EXPECT().OpenFile(path, createPerm, fPerm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
+		return mockfile, nil
+	})
+	err = config.Output(context.TODO(), event)
+	assert.Nil(err)
+
+	// wait for done channel or 2 seconds delay, whatever happends first
+	select {
+	case <-done:
+	case <-time.Tick(2 * time.Second):
+	}
+
+}
+func TestDefaultOutputConfigExistingAppendedFile(t *testing.T) {
+	assert := assert.New(t)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	path := "p"
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+output:
+  - type: file
+    path: ` + path + `    
+    flush_interval: 1000
+    write_behavior: append
+	`)))
+	assert.Nil(err)
+	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	assert.Nil(err)
+	config := c.(*OutputConfig)
+	perm := os.FileMode(640)
+	// simulate dir does not exist. should be created with right permissions
+	mockfs := mocks.NewMockFileSystem(ctrl)
+	config.fs = mockfs
+	event := logevent.LogEvent{}
+	// filesystem will reply with 'file exists'
+	mockfs.EXPECT().Stat(path).Return("", nil)
+	mockfile := mocks.NewMockFile(ctrl)
+	// channel to prevent test from finishing before gorouting writes to file
+	done := make(chan bool)
+	// file will reply with '10 bytes written'
+	mockfile.EXPECT().Write(gomock.Any()).DoAndReturn(func(b []byte) (int, error) {
+		done <- true
+		return 10, nil
+	})
+
+	mockfs.EXPECT().OpenFile(path, appendPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
+		return mockfile, nil
+	})
+	err = config.Output(context.TODO(), event)
+	assert.Nil(err)
+
+	// wait for done channel or 2 seconds delay, whatever happends first
+	select {
+	case <-done:
+	case <-time.Tick(2 * time.Second):
+	}
 }
 
 func TestDefaultOutputConfigExistingOverwrittenFile(t *testing.T) {
@@ -507,7 +610,6 @@ output:
 	case <-done:
 	case <-time.Tick(2 * time.Second):
 	}
-
 }
 
 func TestDefaultOutputConfigSync(t *testing.T) {

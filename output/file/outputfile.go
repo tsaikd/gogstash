@@ -2,15 +2,16 @@ package outputfile
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"strconv"
+	"time"
+
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	fs "github.com/tsaikd/gogstash/output/file/filesystem"
-	"os"
-	"path/filepath"
-	"strconv"
-	"time"
 )
 
 const (
@@ -113,7 +114,8 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 }
 
 func (t *OutputConfig) createFile(path string) (fs.File, error) {
-	if !t.exists(path) {
+	fileExists := t.exists(path)
+	if !fileExists {
 		dir := filepath.Dir(path)
 		if dir != "." && !t.exists(dir) {
 			if err := t.fs.MkdirAll(dir, t.dirMode); err != nil {
@@ -124,7 +126,11 @@ func (t *OutputConfig) createFile(path string) (fs.File, error) {
 	var flags int
 	switch t.WriteBehavior {
 	case appendBehavior:
-		flags = appendPerm
+		if fileExists {
+			flags = appendPerm
+		} else {
+			flags = createPerm
+		}
 	case overwriteBehavior:
 		flags = createPerm
 	default:
@@ -162,6 +168,11 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 						file, err = t.createFile(path)
 						if err != nil {
 							goglog.Logger.Errorf("problems re-creating file. Routine will not write anything else to file %s. %v.\n", path, err)
+							return
+						}
+						written, err = file.Write([]byte(msg))
+						if err != nil {
+							goglog.Logger.Errorf("problems writting after re-creating file. Routine will not write anything else to file %s. %v.\n", path, err)
 							return
 						}
 					}
