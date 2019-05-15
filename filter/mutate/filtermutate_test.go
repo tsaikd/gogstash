@@ -33,6 +33,39 @@ filter:
 	require.Error(conf.Start(ctx))
 }
 
+func Test_filter_mutate_module_rename(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+
+	ctx := context.Background()
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+filter:
+  - type: mutate
+    rename: ["key", "key2"]
+	`)))
+	require.NoError(err)
+	require.NoError(conf.Start(ctx))
+
+	expectedEvent := logevent.LogEvent{
+		Extra: map[string]interface{}{
+			"key2": "foo,bar",
+		},
+	}
+
+	conf.TestInputEvent(logevent.LogEvent{
+		Extra: map[string]interface{}{
+			"key": "foo,bar",
+		},
+	})
+
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal(expectedEvent, event)
+	}
+}
+
 func Test_filter_mutate_module_split(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
