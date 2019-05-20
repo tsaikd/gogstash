@@ -133,7 +133,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		}
 	}
 	conf.expression, err = govaluate.NewEvaluableExpressionWithFunctions(conf.Condition, BuiltInFunctions)
-	return &conf, nil
+	return &conf, err
 }
 
 // Event the main filter event

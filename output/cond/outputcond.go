@@ -63,7 +63,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		}
 	}
 	conf.expression, err = govaluate.NewEvaluableExpressionWithFunctions(conf.Condition, filtercond.BuiltInFunctions)
-	return &conf, nil
+	return &conf, err
 }
 
 // Output event
