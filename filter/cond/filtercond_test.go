@@ -21,6 +21,26 @@ func init() {
 	config.RegistFilterHandler(ModuleName, InitHandler)
 }
 
+func Test_filter_cond_module_invalid(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+filter:
+  - type: cond
+    condition: "!'level' == 'ERROR'"
+    filter:
+      - type: add_field
+        key: foo
+        value: bar    
+    `)))
+	require.Nil(err)
+	_, err = InitHandler(context.TODO(), &conf.FilterRaw[0])
+	require.NotNil(err)
+}
+
 func Test_filter_cond_module(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
