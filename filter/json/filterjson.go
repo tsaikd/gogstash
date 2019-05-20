@@ -23,6 +23,7 @@ type FilterConfig struct {
 	Appendkey string `json:"appendkey"`
 	Tsfield   string `json:"timestamp"`
 	Tsformat  string `json:"timeformat"`
+	Source    string `json:"source"`
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -33,6 +34,7 @@ func DefaultFilterConfig() FilterConfig {
 				Type: ModuleName,
 			},
 		},
+		Source: "message",
 	}
 }
 
@@ -49,7 +51,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
 	var parsedMessage map[string]interface{}
-	if err := jsoniter.Unmarshal([]byte(event.Message), &parsedMessage); err != nil {
+	if err := jsoniter.Unmarshal([]byte(event.GetString(f.Source)), &parsedMessage); err != nil {
 		event.AddTag(ErrorTag)
 		goglog.Logger.Error(err)
 		return event

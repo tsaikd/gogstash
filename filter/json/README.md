@@ -17,6 +17,8 @@ filter:
     timestamp: time
     # (mandantory if timestamp is set) format string of the time
     timeformat: 2006-01-02T15:04:05.999999999Z
+    # (optional) key to use as source of the json data. Default is 'message'
+    source: myfield
 ```
 
 ## Example for JSON append
