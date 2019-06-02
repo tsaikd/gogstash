@@ -2,6 +2,7 @@ package filtercond
 
 import (
 	"context"
+	filtermutate "github.com/tsaikd/gogstash/filter/mutate"
 	"strings"
 	"testing"
 	"time"
@@ -103,5 +104,49 @@ filter:
 	})
 	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
 		require.Equal(expectedEvent2, event)
+	}
+}
+
+func Test_filter_cond_module_common(t *testing.T) {
+	config.RegistFilterHandler(filtermutate.ModuleName, filtermutate.InitHandler)
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+	// if branch
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+filter:
+  - type: cond
+    condition: "true"
+    filter:
+      - type: mutate
+        add_tag: ["added"]
+    `)))
+	require.Nil(err)
+	require.NoError(conf.Start(context.Background()))
+	conf.TestInputEvent(logevent.LogEvent{})
+	if output, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal([]string{"added"}, output.Tags)
+	}
+
+	// else branch
+	conf, err = config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+filter:
+  - type: cond
+    condition: "false"
+    filter:
+      - type: mutate
+        add_tag: ["error"]
+    else_filter:
+      - type: mutate
+        add_tag: ["added"]
+    `)))
+	require.Nil(err)
+	require.NoError(conf.Start(context.Background()))
+	conf.TestInputEvent(logevent.LogEvent{})
+	if output, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal([]string{"added"}, output.Tags)
 	}
 }

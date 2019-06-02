@@ -149,10 +149,12 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		if r, ok := ret.(bool); ok {
 			if r {
 				for _, filter := range f.filters {
+					event = filter.CommonFilter(ctx, event)
 					event = filter.Event(ctx, event)
 				}
 			} else {
 				for _, filter := range f.elseFilters {
+					event = filter.CommonFilter(ctx, event)
 					event = filter.Event(ctx, event)
 				}
 			}
