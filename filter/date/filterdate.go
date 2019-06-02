@@ -2,6 +2,7 @@ package filterdate
 
 import (
 	"context"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -72,24 +73,15 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	for _, thisFormat := range f.Format {
 		if thisFormat == "UNIX" {
 			var sec, nsec int64
-			s := event.GetString(f.Source)
-			dot := strings.Index(s, ".")
-			if dot >= 0 {
-				sec, err = strconv.ParseInt(s[:dot], 10, 64)
-				if err != nil {
-					continue
-				}
-				// fraction to nano seconds, avoid precision loss
-				nsec, err = strconv.ParseInt(s[dot+1:], 10, 64)
-				if err != nil {
-					continue
-				}
-				nsec *= exponent(10, 9-(len(s)-dot-1))
-			} else {
-				sec, err = strconv.ParseInt(s, 10, 64)
-				if err != nil {
-					continue
-				}
+			value := event.Get(f.Source)
+			switch value := value.(type) {
+			case float64:
+				sec, nsec = convertFloat(value)
+			default:
+				sec, nsec, err = convert(event.GetString(f.Source))
+			}
+			if err != nil {
+				continue
 			}
 			timestamp = time.Unix(sec, nsec)
 		} else {
@@ -112,6 +104,49 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	}
 
 	return event
+}
+
+func convertFloat(value float64) (int64, int64) {
+	sec := int64(value)
+	rounded := value - float64(sec)
+	nsec := int64(rounded * 1000000000)
+	return sec, nsec
+}
+
+func convert(s string) (int64, int64, error) {
+	var sec, nsec int64
+	var err error
+	dot := strings.Index(s, ".")
+
+	if indexOfe := strings.Index(s, "e"); dot == 1 && indexOfe != -1 {
+		// looks like exponential notation
+		result, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return 0, 0, err
+		}
+		sec = int64(result)
+		rounded := math.Round((result - float64(sec)) * 1000)
+		nsec = int64(rounded)
+		return sec, nsec, nil
+	}
+	if dot >= 0 {
+		sec, err = strconv.ParseInt(s[:dot], 10, 64)
+		if err != nil {
+			return 0, 0, err
+		}
+		// fraction to nano seconds, avoid precision loss
+		nsec, err = strconv.ParseInt(s[dot+1:], 10, 64)
+		if err != nil {
+			return 0, 0, err
+		}
+		nsec *= exponent(10, 9-(len(s)-dot-1))
+	} else {
+		sec, err = strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+	return sec, nsec, nil
 }
 
 func exponent(a int64, n int) int64 {
