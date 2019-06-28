@@ -22,8 +22,10 @@ const invalidAccessToken = "Invalid access token. Access denied."
 // InputConfig holds the configuration json fields and internal objects
 type InputConfig struct {
 	config.InputConfig
-	Address       string   `json:"address"`        // host:port to listen on
-	Path          string   `json:"path"`           // The path to accept json HTTP POST requests on
+	Address       string   `json:"address"` // host:port to listen on
+	Path          string   `json:"path"`    // The path to accept json HTTP POST requests on
+	ServerCert    string   `json:"cert"`
+	ServerKey     string   `json:"key"`
 	RequireHeader []string `json:"require_header"` // Require this header to be present to accept the POST ("X-Access-Token: Potato")
 }
 
@@ -82,7 +84,12 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 	})
 	go func() {
 		logger.Infof("accepting POST requests to %s%s", i.Address, i.Path)
-		if err = http.ListenAndServe(i.Address, nil); err != nil {
+		if i.ServerCert != "" && i.ServerKey != "" {
+			err = http.ListenAndServeTLS(i.Address, i.ServerCert, i.ServerKey, nil)
+		} else {
+			err = http.ListenAndServe(i.Address, nil)
+		}
+		if err != nil {
 			logger.Fatal(err)
 		}
 	}()
