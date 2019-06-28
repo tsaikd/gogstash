@@ -7,7 +7,6 @@ require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/alicebob/gopher-json v0.0.0-20180125190556-5a6b3ba71ee6 // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible
-	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/bitly/go-hostpool v0.0.0-20171023180738-a3a6125de932
 	github.com/codegangsta/inject v0.0.0-20140425184007-37d7f8432a3e // indirect
 	github.com/drhodes/golorem v0.0.0-20160418191928-ecccc744c2d9
@@ -33,20 +32,14 @@ require (
 	github.com/magiconair/properties v1.8.0 // indirect
 	github.com/mailru/easyjson v0.0.0-20180723221831-d5012789d665 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v0.0.0-20180715050151-f15292f7a699 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/olivere/elastic v6.2.17+incompatible // indirect
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/oschwald/geoip2-golang v1.2.1
 	github.com/oschwald/maxminddb-golang v1.3.0 // indirect
 	github.com/pelletier/go-toml v1.2.0 // indirect
-	github.com/prometheus/client_golang v0.8.0
-	github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910 // indirect
-	github.com/prometheus/common v0.0.0-20180518154759-7600349dcfe1 // indirect
-	github.com/prometheus/procfs v0.0.0-20180725123919-05ee40e3a273 // indirect
+	github.com/prometheus/client_golang v1.0.0
 	github.com/satyrius/gonx v1.3.1-0.20181123214749-d96bd26e3b2c
 	github.com/sirupsen/logrus v1.3.0
 	github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a // indirect

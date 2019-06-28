@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -60,7 +61,7 @@ func (o *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 
 func (o *OutputConfig) serveHTTP() {
 	logger := goglog.Logger
-	http.Handle("/metrics", prometheus.Handler())
+	http.Handle("/metrics", promhttp.Handler())
 	logger.Infof("Listen %s", o.Address)
 	if err := http.ListenAndServe(o.Address, nil); err != nil {
 		logger.Fatal(err)
