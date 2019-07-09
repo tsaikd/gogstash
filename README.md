@@ -212,6 +212,7 @@ See [input modules](input) for more information
 * [file](input/file)
 * [http](input/http)
 * [httplisten](input/httplisten)
+* [nats](input/nats)
 * [redis](input/redis)
 * [socket](input/socket)
 
