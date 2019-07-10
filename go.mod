@@ -3,7 +3,6 @@ module github.com/tsaikd/gogstash
 go 1.12
 
 require (
-	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/alicebob/gopher-json v0.0.0-20180125190556-5a6b3ba71ee6 // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible
@@ -11,7 +10,6 @@ require (
 	github.com/codegangsta/inject v0.0.0-20140425184007-37d7f8432a3e // indirect
 	github.com/drhodes/golorem v0.0.0-20160418191928-ecccc744c2d9
 	github.com/elastic/go-lumber v0.1.0
-	github.com/fortytw2/leaktest v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/fsouza/go-dockerclient v1.3.6
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
@@ -27,15 +25,15 @@ require (
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
 	github.com/klauspost/compress v1.4.1 // indirect
 	github.com/klauspost/cpuid v1.2.0 // indirect
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lib/pq v0.0.0-20180523175426-90697d60dd84 // indirect
 	github.com/libp2p/go-reuseport v0.0.1
 	github.com/magiconair/properties v1.8.0 // indirect
-	github.com/mailru/easyjson v0.0.0-20180723221831-d5012789d665 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
 	github.com/mitchellh/mapstructure v0.0.0-20180715050151-f15292f7a699 // indirect
 	github.com/nats-io/nats-server/v2 v2.0.0
 	github.com/nats-io/nats.go v1.8.1
-	github.com/olivere/elastic v6.2.17+incompatible // indirect
+	github.com/olivere/elastic/v7 v7.0.4
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/oschwald/geoip2-golang v1.2.1
@@ -62,7 +60,6 @@ require (
 	google.golang.org/appengine v1.5.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
-	gopkg.in/olivere/elastic.v6 v6.2.17
 	gopkg.in/redis.v5 v5.2.9
-	gopkg.in/yaml.v2 v2.2.1
+	gopkg.in/yaml.v2 v2.2.2
 )
