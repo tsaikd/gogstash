@@ -14,7 +14,7 @@ output:
     # index name to log
     index: "gogstash-index-test"
 
-    # (required)
+    # (deprecated)
     # type name to log
     document_type: "testtype"
 

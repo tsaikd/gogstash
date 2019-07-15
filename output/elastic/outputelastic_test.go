@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/olivere/elastic/v7"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"gopkg.in/olivere/elastic.v6"
 )
 
 func init() {
@@ -157,7 +157,7 @@ output:
 	require.NoError(err)
 	require.NotNil(result)
 	require.NotNil(result.Source)
-	require.Equal(`{"@timestamp":"2017-04-18T19:53:01.000000002Z","fieldnumber":123,"fieldstring":"ABC","message":"output elastic test message"}`, string(*result.Source))
+	require.Equal(`{"@timestamp":"2017-04-18T19:53:01.000000002Z","fieldnumber":123,"fieldstring":"ABC","message":"output elastic test message"}`, string(result.Source))
 
 	_, err = client.DeleteIndex("gogstash-index-test").Do(ctx)
 	require.NoError(err)
