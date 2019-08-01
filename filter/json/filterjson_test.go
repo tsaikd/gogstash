@@ -33,6 +33,7 @@ filter:
     message: message
     timestamp: time
     timeformat: "2006-01-02T15:04:05Z"
+    remove_field: ["myfield"]
 	`)))
 	require.NoError(err)
 	require.NoError(conf.Start(ctx))
@@ -52,6 +53,31 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   "{ \"message\": \"Test\", \"host\": \"Hostname\", \"time\":\"2016-12-04T09:09:41.193Z\", \"tags\": [ \"foo\" ] }",
+		Extra: map[string]interface{}{
+			"myfield": "test",
+		},
+	})
+
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal(expectedEvent, event)
+	}
+
+	// not ok
+	expectedEvent = logevent.LogEvent{
+		Timestamp: timestamp,
+		Message:   "Test",
+		Extra: map[string]interface{}{
+			"myfield": "test",
+		},
+		Tags: []string{"gogstash_filter_json_error"},
+	}
+
+	conf.TestInputEvent(logevent.LogEvent{
+		Timestamp: timestamp,
+		Message:   "Test",
+		Extra: map[string]interface{}{
+			"myfield": "test",
+		},
 	})
 
 	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
