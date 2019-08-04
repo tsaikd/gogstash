@@ -16,7 +16,7 @@ var (
 // TypeFilterConfig is interface of filter module
 type TypeFilterConfig interface {
 	TypeCommonConfig
-	Event(context.Context, logevent.LogEvent) logevent.LogEvent
+	Event(context.Context, logevent.LogEvent) (logevent.LogEvent, bool)
 	CommonFilter(context.Context, logevent.LogEvent) logevent.LogEvent
 }
 
@@ -101,9 +101,12 @@ func (t *Config) startFilters() (err error) {
 					return nil
 				}
 			case event := <-t.chInFilter:
+				var ok bool
 				for _, filter := range filters {
-					event = filter.CommonFilter(t.ctx, event)
-					event = filter.Event(t.ctx, event)
+					event, ok = filter.Event(t.ctx, event)
+					if ok {
+						event = filter.CommonFilter(t.ctx, event)
+					}
 				}
 				t.chFilterOut <- event
 			}

@@ -2,10 +2,11 @@ package config
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	"github.com/tsaikd/gogstash/config/logevent"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 func TestCommonAddTag(t *testing.T) {
@@ -110,10 +111,10 @@ filter:
 
     # list of tags to add
     add_tag: ["addtag1", "addtag2"]
-    
+
     # list of tags to remove
     remove_tag: ["removetag1", "removetag2"]
-    
+
     # list of fields (key/value) to add
     add_field:
       - key: "field1"
@@ -121,7 +122,7 @@ filter:
       - key: "field2"
         value: "value2"
     # list of fields to remove
-    remove_field: ["removefield1", "removefield2"]   
+    remove_field: ["removefield1", "removefield2"]
 	`)))
 	assert.NoError(err)
 
@@ -171,6 +172,6 @@ type WhateverFilterConfig struct {
 	FilterConfig
 }
 
-func (f *WhateverFilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
-	return event
+func (f *WhateverFilterConfig) Event(ctx context.Context, event logevent.LogEvent) (logevent.LogEvent, bool) {
+	return event, true
 }

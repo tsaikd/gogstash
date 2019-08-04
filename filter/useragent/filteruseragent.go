@@ -114,44 +114,45 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 }
 
 // Event the main filter event
-func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
+func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (logevent.LogEvent, bool) {
 	ua := event.GetString(f.Source)
-	if ua != "" {
-		var client *uaparser.Client
-		// single-thread here
-		if c, ok := f.cache.Get(ua); ok {
-			client = c.(*uaparser.Client)
-		} else {
-			client = f.parser.Parse(ua)
-			f.cache.Add(ua, client)
+	if ua == "" {
+		return event, false
+	}
+	var client *uaparser.Client
+	// single-thread here
+	if c, ok := f.cache.Get(ua); ok {
+		client = c.(*uaparser.Client)
+	} else {
+		client = f.parser.Parse(ua)
+		f.cache.Add(ua, client)
+	}
+	if client.Os != nil {
+		event.SetValue(f.fields.OS, client.Os.Family)
+		if client.Os.Family != "" {
+			event.SetValue(f.fields.OSName, client.Os.Family)
 		}
-		if client.Os != nil {
-			event.SetValue(f.fields.OS, client.Os.Family)
-			if client.Os.Family != "" {
-				event.SetValue(f.fields.OSName, client.Os.Family)
-			}
-			if client.Os.Major != "" {
-				event.SetValue(f.fields.OSMajor, client.Os.Major)
-			}
-			if client.Os.Minor != "" {
-				event.SetValue(f.fields.OSMinor, client.Os.Minor)
-			}
+		if client.Os.Major != "" {
+			event.SetValue(f.fields.OSMajor, client.Os.Major)
 		}
-		if client.Device != nil {
-			event.SetValue(f.fields.Device, client.Device.Family)
-		}
-		if client.UserAgent != nil {
-			event.SetValue(f.fields.Name, client.UserAgent.Family)
-			if client.UserAgent.Major != "" {
-				event.SetValue(f.fields.Major, client.UserAgent.Major)
-			}
-			if client.UserAgent.Minor != "" {
-				event.SetValue(f.fields.Minor, client.UserAgent.Minor)
-			}
-			if client.UserAgent.Patch != "" {
-				event.SetValue(f.fields.Patch, client.UserAgent.Patch)
-			}
+		if client.Os.Minor != "" {
+			event.SetValue(f.fields.OSMinor, client.Os.Minor)
 		}
 	}
-	return event
+	if client.Device != nil {
+		event.SetValue(f.fields.Device, client.Device.Family)
+	}
+	if client.UserAgent != nil {
+		event.SetValue(f.fields.Name, client.UserAgent.Family)
+		if client.UserAgent.Major != "" {
+			event.SetValue(f.fields.Major, client.UserAgent.Major)
+		}
+		if client.UserAgent.Minor != "" {
+			event.SetValue(f.fields.Minor, client.UserAgent.Minor)
+		}
+		if client.UserAgent.Patch != "" {
+			event.SetValue(f.fields.Patch, client.UserAgent.Patch)
+		}
+	}
+	return event, true
 }

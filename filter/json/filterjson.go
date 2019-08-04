@@ -49,12 +49,12 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 }
 
 // Event the main filter event
-func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
+func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (logevent.LogEvent, bool) {
 	var parsedMessage map[string]interface{}
 	if err := jsoniter.Unmarshal([]byte(event.GetString(f.Source)), &parsedMessage); err != nil {
 		event.AddTag(ErrorTag)
 		goglog.Logger.Error(err)
-		return event
+		return event, false
 	}
 
 	if f.Appendkey != "" {
@@ -79,5 +79,5 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		}
 	}
 
-	return event
+	return event, true
 }

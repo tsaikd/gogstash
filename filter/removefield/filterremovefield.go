@@ -49,7 +49,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 }
 
 // Event the main filter event
-func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
+func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (logevent.LogEvent, bool) {
 	if event.Extra == nil {
 		event.Extra = map[string]interface{}{}
 	}
@@ -62,5 +62,6 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 		event.Message = ""
 	}
 
-	return event
+	// TODO: remove unset field return false
+	return event, true
 }

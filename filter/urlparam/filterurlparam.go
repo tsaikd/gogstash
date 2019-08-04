@@ -85,7 +85,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 }
 
 // Event the main filter event
-func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
+func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (logevent.LogEvent, bool) {
 	message := event.GetString(f.Source)
 	var (
 		u      *url.URL
@@ -101,6 +101,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 	}
 	if err != nil {
 		goglog.Logger.Errorf("parse param failed, %s, %v", message, err)
+		return event, false
 	}
 
 	//url decode
@@ -134,5 +135,5 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logev
 			}
 		}
 	}
-	return event
+	return event, true
 }

@@ -70,15 +70,15 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 }
 
 // Event the main filter event
-func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) logevent.LogEvent {
+func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (logevent.LogEvent, bool) {
 	if event.Extra == nil {
 		event.Extra = map[string]interface{}{}
 	}
 
 	if f.throttle == nil {
-		return event
+		return event, false
 	}
 
 	<-f.throttle
-	return event
+	return event, true
 }
