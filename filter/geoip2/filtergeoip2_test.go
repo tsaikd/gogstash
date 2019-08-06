@@ -85,6 +85,19 @@ filter:
 	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
 		require.Equal(expectedEvent, event)
 	}
+
+	// try using cache
+	conf.TestInputEvent(logevent.LogEvent{
+		Timestamp: timestamp,
+		Message:   `223.137.229.27 - - [20/Mar/2017:00:42:51 +0000] "GET /explore HTTP/1.1" 200 1320 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"`,
+		Extra: map[string]interface{}{
+			"clientip": "223.137.229.27",
+		},
+	})
+
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal(expectedEvent, event)
+	}
 }
 
 func Test_filter_geoip2_module_flat_format(t *testing.T) {
