@@ -109,6 +109,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 			event.AddTag(ErrorTag)
 			return event, false
 		}
+		f.cache.Add(ipstr, record)
 	}
 	if record == nil {
 		event.AddTag(ErrorTag)
