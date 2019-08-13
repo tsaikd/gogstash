@@ -2,9 +2,12 @@ package inputhttplisten
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
@@ -26,6 +29,7 @@ type InputConfig struct {
 	Path          string   `json:"path"`    // The path to accept json HTTP POST requests on
 	ServerCert    string   `json:"cert"`
 	ServerKey     string   `json:"key"`
+	CA            string   `json:"ca"`             // for client certification
 	RequireHeader []string `json:"require_header"` // Require this header to be present to accept the POST ("X-Access-Token: Potato")
 }
 
@@ -85,7 +89,48 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 	go func() {
 		logger.Infof("accepting POST requests to %s%s", i.Address, i.Path)
 		if i.ServerCert != "" && i.ServerKey != "" {
-			err = http.ListenAndServeTLS(i.Address, i.ServerCert, i.ServerKey, nil)
+			var tlsConfig *tls.Config
+			srvCert, err := tls.LoadX509KeyPair(i.ServerCert, i.ServerKey)
+			if err != nil {
+				logger.Fatal(err)
+				return
+			}
+
+			if i.CA != "" {
+				// enable client certificate
+				f, err := os.Open(i.CA)
+				if err != nil {
+					logger.Fatal(err)
+					return
+				}
+				content, err := ioutil.ReadAll(f)
+				ferr := f.Close()
+				if ferr != nil {
+					logger.Warning(ferr)
+				}
+				if err != nil {
+					logger.Fatal(err)
+					return
+				}
+
+				certPool := x509.NewCertPool()
+				certPool.AppendCertsFromPEM(content)
+				tlsConfig = &tls.Config{
+					ClientCAs:    certPool,
+					ClientAuth:   tls.RequireAndVerifyClientCert,
+					Certificates: []tls.Certificate{srvCert},
+				}
+			} else {
+				tlsConfig = &tls.Config{
+					Certificates: []tls.Certificate{srvCert},
+				}
+			}
+			l, err := tls.Listen("tcp", i.Address, tlsConfig)
+			if err != nil {
+				logger.Fatal(err)
+				return
+			}
+			err = http.Serve(l, nil)
 		} else {
 			err = http.ListenAndServe(i.Address, nil)
 		}
