@@ -1,3 +1,4 @@
+/.vscode/
 /vendor/
 /filter/geoip2/GeoLite2-City.mmdb
 /gogstash
