@@ -1,4 +1,4 @@
-FROM busybox:ubuntu-14.04
+FROM busybox:1-glibc
 
 MAINTAINER tsaikd <tsaikd@gmail.com>
 

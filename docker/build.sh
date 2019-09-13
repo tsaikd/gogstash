@@ -13,7 +13,7 @@ projname="gogstash"
 repo="github.com/${orgname}/${projname}"
 githash="$(git rev-parse HEAD | cut -c1-6)"
 cachedir="/tmp/${orgname}-${projname}-cache"
-buildtoolimg="golang:latest"
+buildtoolimg="golang:1"
 
 if [ -d "${cachedir}" ] ; then
 	if [ "$(stat -c %Y "${cachedir}")" -lt "$(date +%s -d -7day)" ] ; then
