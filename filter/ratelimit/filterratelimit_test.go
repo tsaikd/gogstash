@@ -140,5 +140,5 @@ filter:
 	_, err = conf.TestGetOutputEvent(100 * time.Millisecond)
 	require.NoError(err)
 
-	require.WithinDuration(start.Add(350*time.Millisecond), time.Now(), 150*time.Millisecond)
+	require.WithinDuration(start.Add(400*time.Millisecond), time.Now(), 150*time.Millisecond)
 }
