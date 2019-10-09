@@ -4,12 +4,26 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	lru "github.com/hashicorp/golang-lru"
 )
 
 type pathtoken struct {
 	isSlice bool
 	index   int
 	key     string
+}
+
+const cacheSize = 200
+
+var cache *lru.Cache
+
+func init() {
+	var err error
+	cache, err = lru.New(cacheSize)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func getPathArrayToken(path string) []pathtoken {
@@ -58,8 +72,20 @@ func compilePath(path string) []pathtoken {
 	return tokens
 }
 
+func compilePathWithCache(path string) []pathtoken {
+	var tokens []pathtoken
+	cachedTokens, ok := cache.Get(path)
+	if ok {
+		tokens = cachedTokens.([]pathtoken)
+	} else {
+		tokens = compilePath(path)
+		cache.Add(path, tokens)
+	}
+	return tokens
+}
+
 func getPathValue(obj interface{}, path string) (interface{}, bool) {
-	tokens := compilePath(path)
+	tokens := compilePathWithCache(path)
 	return getPathValueFromTokens(obj, tokens)
 }
 
