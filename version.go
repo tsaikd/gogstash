@@ -2,11 +2,11 @@ package main
 
 import "github.com/tsaikd/KDGoLib/version"
 
-var (
-	// Version for gogstash
-	Version = "0.1.18"
-)
+// Development version of gogstash
+const devVersion = "0.1.18"
 
 func init() {
-	version.VERSION = Version
+	if version.VERSION == "0.0.0" {
+		version.VERSION = devVersion + "-dev"
+	}
 }

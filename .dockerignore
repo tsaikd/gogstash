@@ -1,14 +1,14 @@
-# /.*
-# !/.git
+/.*
+!/.git
 /.vscode/
-# /docker/
+/docker/
 /filter/geoip2/GeoLite2-City.mmdb
 /vendor/
 /config.json
 /config.yaml
 /config.yml
 /gogstash
-# /*.md
+/*.md
 
 .DS_Store
 .idea
