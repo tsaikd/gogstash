@@ -6,6 +6,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func BenchmarkCompilePath(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		compilePath("a.b.c")
+		compilePath("a.b[1].c")
+		compilePath("a.b[0][2].c")
+		compilePath("[0]")
+		compilePath("nginx.access.url")
+	}
+}
+
+func BenchmarkCompilePathWithCache(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		compilePathWithCache("a.b.c")
+		compilePathWithCache("a.b[1].c")
+		compilePathWithCache("a.b[0][2].c")
+		compilePathWithCache("[0]")
+		compilePathWithCache("nginx.access.url")
+	}
+}
+
 func TestCompilePath(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
