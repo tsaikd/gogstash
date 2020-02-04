@@ -26,6 +26,10 @@ type InputConfig struct {
 	Key         string `json:"key"`         // where to get data, default: "gogstash"
 	Connections int    `json:"connections"` // maximum number of socket connections, default: 10
 	BatchCount  int    `json:"batch_count"` // The number of events to return from Redis using EVAL, default: 125
+//Adding support to password protected redis server
+	Password  string    `json:"password"` // Password of the config
+//Adding support for database selection
+	Database  int    `json:"db"`
 
 	// BlockingTimeout used for set the blocking timeout interval in redis BLPOP command
 	// Defaults to 600s
@@ -49,6 +53,7 @@ func DefaultInputConfig() InputConfig {
 		Connections:     10,
 		BatchCount:      125,
 		BlockingTimeout: "600s",
+		Database:		 0,
 	}
 }
 
@@ -72,6 +77,8 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 
 	conf.client = redis.NewClient(&redis.Options{
 		Addr:     conf.Host,
+		Password: conf.Password,
+		DB:		  conf.Database,
 		PoolSize: conf.Connections,
 	})
 	conf.client = conf.client.WithContext(ctx)
