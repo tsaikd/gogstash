@@ -27,6 +27,10 @@ type OutputConfig struct {
 	Timeout           int      `json:"timeout,omitempty"`
 	ReconnectInterval int      `json:"reconnect_interval,omitempty"`
 	Connections       int      `json:"connections"` // maximum number of socket connections, default: 10
+	//Adding support to password protected redis server
+	Password  string    `json:"password"` // Password of the config
+	//Adding support for database selection
+	Database  int    `json:"db"`
 
 	client *redis.Client
 }
@@ -45,6 +49,7 @@ func DefaultOutputConfig() OutputConfig {
 		Timeout:           5,
 		ReconnectInterval: 1,
 		Connections:       10,
+		Database:		 0,
 	}
 }
 
@@ -68,7 +73,9 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 	}
 
 	conf.client = redis.NewClient(&redis.Options{
-		Addr:     conf.Host[0],
+		Addr:     conf.Host[0],		
+		Password: conf.Password,
+		DB:		  conf.Database,
 		PoolSize: conf.Connections,
 	})
 

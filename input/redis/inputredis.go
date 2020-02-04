@@ -26,9 +26,9 @@ type InputConfig struct {
 	Key         string `json:"key"`         // where to get data, default: "gogstash"
 	Connections int    `json:"connections"` // maximum number of socket connections, default: 10
 	BatchCount  int    `json:"batch_count"` // The number of events to return from Redis using EVAL, default: 125
-//Adding support to password protected redis server
+	//Adding support to password protected redis server
 	Password  string    `json:"password"` // Password of the config
-//Adding support for database selection
+	//Adding support for database selection
 	Database  int    `json:"db"`
 
 	// BlockingTimeout used for set the blocking timeout interval in redis BLPOP command
