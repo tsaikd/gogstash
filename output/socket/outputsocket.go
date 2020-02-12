@@ -1,4 +1,4 @@
-package socket
+package outputsocket
 
 import (
 	"context"

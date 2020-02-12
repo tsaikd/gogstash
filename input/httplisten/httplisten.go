@@ -152,7 +152,7 @@ func (i *InputConfig) postHandler(msgChan chan<- logevent.LogEvent, rw http.Resp
 		return
 	}
 
-	ok, err := i.Codec.Decode(context.TODO(), data, nil, msgChan)
+	ok, err := i.Codec.Decode(context.TODO(), data, nil, []string{}, msgChan)
 	if err != nil {
 		logger.Errorf("decode request body error: %v", err)
 	}

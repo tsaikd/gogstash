@@ -86,6 +86,10 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 		return nil, ErrorPingFailed.New(err)
 	}
 
+	// This is really a "reference" codec instance, with each Stream getting their own copy.
+	//  copying codec instances is needed to allow codecs to do sequential processing, such as milti-line logs with proper isolation.
+	conf.Codec, err = config.GetCodecOrDefault(ctx, *raw)
+
 	return &conf, nil
 }
 

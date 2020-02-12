@@ -27,7 +27,7 @@ func (t *InputConfig) containerLogLoop(ctx context.Context, container interface{
 	}
 
 	retry := 5
-	stream := NewContainerLogStream(msgChan, id, eventExtra, since, nil)
+	stream := NewContainerLogStream(msgChan, id, eventExtra, since, nil, t.Codec)
 
 	for err == nil || retry > 0 {
 		err = t.client.Logs(docker.LogsOptions{

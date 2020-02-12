@@ -207,6 +207,6 @@ func (i *InputConfig) parse(ctx context.Context, r io.Reader, msgChan chan<- log
 			return
 		}
 
-		i.Codec.Decode(ctx, line, nil, msgChan)
+		i.Codec.Decode(ctx, line, nil, []string{}, msgChan)
 	}
 }
