@@ -69,12 +69,9 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 		return nil, err
 	}
 
-	conf.Codec, err = config.GetCodec(ctx, *raw)
-	if err != nil {
-		return nil, err
-	}
+	conf.Codec, err = config.GetCodecOrDefault(ctx, *raw)
 
-	return &conf, nil
+	return &conf, err
 }
 
 // Start wraps the actual function starting the plugin
@@ -228,6 +225,7 @@ func (t *InputConfig) fileReadLoop(
 				"path":   fpath,
 				"offset": since.Offset,
 			},
+			[]string{},
 			msgChan)
 
 		if err == nil {

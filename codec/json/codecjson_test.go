@@ -27,8 +27,9 @@ func TestDecode(t *testing.T) {
 	require.NoError(err)
 
 	msgChan := make(chan logevent.LogEvent, 1)
+	emptyTags := []string{}
 
-	ok, err := codec.Decode(ctx, []byte(`{"foo":"bar"}`), nil, msgChan)
+	ok, err := codec.Decode(ctx, []byte(`{"foo":"bar"}`), nil, emptyTags, msgChan)
 	require.NoError(err)
 	assert.True(ok)
 	require.Len(msgChan, 1)
@@ -37,7 +38,7 @@ func TestDecode(t *testing.T) {
 	assert.Equal("", event.Message)
 
 	// string should be ok
-	ok, err = codec.Decode(ctx, `{"foo":"bar"}`, nil, msgChan)
+	ok, err = codec.Decode(ctx, `{"foo":"bar"}`, nil, emptyTags, msgChan)
 	require.NoError(err)
 	assert.True(ok)
 	require.Len(msgChan, 1)
@@ -46,7 +47,7 @@ func TestDecode(t *testing.T) {
 	assert.Equal("", event.Message)
 
 	// map[string]interface{} should be ok
-	ok, err = codec.Decode(ctx, map[string]interface{}{"foo": "bar"}, nil, msgChan)
+	ok, err = codec.Decode(ctx, map[string]interface{}{"foo": "bar"}, nil, emptyTags, msgChan)
 	require.NoError(err)
 	assert.True(ok)
 	require.Len(msgChan, 1)
@@ -55,7 +56,7 @@ func TestDecode(t *testing.T) {
 	assert.Equal("", event.Message)
 
 	// ok will be true, as message sent
-	ok, err = codec.Decode(ctx, []byte(`{"foo":"bar"dr.who}`), nil, msgChan)
+	ok, err = codec.Decode(ctx, []byte(`{"foo":"bar"dr.who}`), nil, emptyTags, msgChan)
 	require.Error(err) // fail to decode
 	assert.True(ok)
 	require.Len(msgChan, 1)
@@ -65,7 +66,7 @@ func TestDecode(t *testing.T) {
 
 	// timestamp will be parsed
 	ts := time.Date(2019, time.January, 4, 0, 55, 36, 0, time.UTC)
-	ok, err = codec.Decode(ctx, []byte(`{"@timestamp":"`+ts.Format(time.RFC3339)+`"}`), nil, msgChan)
+	ok, err = codec.Decode(ctx, []byte(`{"@timestamp":"`+ts.Format(time.RFC3339)+`"}`), nil, emptyTags, msgChan)
 	require.NoError(err)
 	assert.True(ok)
 	require.Len(msgChan, 1)
@@ -73,7 +74,7 @@ func TestDecode(t *testing.T) {
 	assert.Equal(ts, event.Timestamp)
 
 	// message will map to event.Message
-	ok, err = codec.Decode(ctx, []byte(`{"message":"hello"}`), nil, msgChan)
+	ok, err = codec.Decode(ctx, []byte(`{"message":"hello"}`), nil, emptyTags, msgChan)
 	require.NoError(err)
 	assert.True(ok)
 	require.Len(msgChan, 1)
@@ -81,7 +82,7 @@ func TestDecode(t *testing.T) {
 	assert.Equal("hello", event.Message)
 
 	// tags will map to event.Tags
-	ok, err = codec.Decode(ctx, []byte(`{"tags":["foo","bar"]}`), nil, msgChan)
+	ok, err = codec.Decode(ctx, []byte(`{"tags":["foo","bar"]}`), nil, emptyTags, msgChan)
 	require.NoError(err)
 	assert.True(ok)
 	require.Len(msgChan, 1)
@@ -92,7 +93,7 @@ func TestDecode(t *testing.T) {
 	ok, err = codec.Decode(ctx, []byte(`{"foo":"bar2"}`), map[string]interface{}{
 		"foo": "bar",
 		"one": "more thing",
-	}, msgChan)
+	}, emptyTags, msgChan)
 	require.NoError(err)
 	assert.True(ok)
 	require.Len(msgChan, 1)

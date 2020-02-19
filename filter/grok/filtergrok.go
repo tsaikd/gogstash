@@ -60,10 +60,16 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		return nil, err
 	}
 	if conf.PatternsPath != "" {
-		g.AddPatternsFromPath(conf.PatternsPath)
+		err = g.AddPatternsFromPath(conf.PatternsPath)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if conf.Patterns != nil {
-		g.AddPatternsFromMap(conf.Patterns)
+		err = g.AddPatternsFromMap(conf.Patterns)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	conf.grk = g
@@ -90,6 +96,8 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 					event.SetValue(key, value)
 				}
 			}
+			goglog.Logger.Debugf("Grok Filter: %q %v - Matched: %v in %q", f.Match, event, values, message)
+
 			break
 		}
 	}

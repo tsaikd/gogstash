@@ -42,17 +42,16 @@ func (t *InputConfig) containerLogLoop(ctx context.Context, container interface{
 
 					filterStatsByMode(stats, t.LogMode)
 
-					event := logevent.LogEvent{
-						Timestamp: time.Now(),
-						Extra: map[string]interface{}{
-							"host":          t.hostname,
-							"containerid":   id,
-							"containername": name,
-							"stats":         *stats,
-						},
+					extra := map[string]interface{}{
+						"host":          t.hostname,
+						"containerid":   id,
+						"containername": name,
+						"stats":         *stats,
 					}
+
 					*since = time.Now()
-					msgChan <- event
+
+					t.Codec.Decode(ctx, "", extra, []string{}, msgChan)
 				}
 			}
 		}()

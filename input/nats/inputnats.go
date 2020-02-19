@@ -78,7 +78,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 
 func msgHandler(msg *nats.Msg) {
 	goglog.Logger.Infof("Rx Msg Topic: %s", msg.Subject)
-	_, err := ic.Codec.Decode(cont, msg.Data, nil, msgChannel)
+	_, err := ic.Codec.Decode(cont, msg.Data, nil, []string{}, msgChannel)
 	if err != nil {
 		goglog.Logger.Warnf("Decode failed: %v", err)
 	}

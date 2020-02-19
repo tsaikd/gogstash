@@ -16,6 +16,7 @@ import (
 func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistInputHandler(ModuleName, InitHandler)
+	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 }
 
 func Test_input_dockerlog_module(t *testing.T) {

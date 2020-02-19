@@ -96,7 +96,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 }
 
 func (i *InputConfig) queueMessage(ctx context.Context, message string, msgChan chan<- logevent.LogEvent) {
-	i.Codec.Decode(ctx, []byte(message), nil, msgChan)
+	i.Codec.Decode(ctx, []byte(message), nil, []string{}, msgChan)
 }
 
 func (i *InputConfig) listSingle(ctx context.Context, msgChan chan<- logevent.LogEvent) error {
