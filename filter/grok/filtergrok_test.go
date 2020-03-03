@@ -107,3 +107,53 @@ filter:
 	err = os.Remove(fileName)
 	require.NoError(err)
 }
+
+func Test_filter_grok_module_datestamp(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+
+	ctx := context.Background()
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+filter:
+  - type: grok
+    source: message
+    match: ["%{SPACE}%{GREEDYDATA:timestamp} \\[%{LOGLEVEL:loglevel}] %{DATA}"]
+	`)))
+	require.NoError(err)
+	require.NoError(conf.Start(ctx))
+
+	hostname, err := os.Hostname()
+	require.NoError(err)
+	timestamp, err := time.Parse("2006-01-02T15:04:05Z", "2016-12-04T09:09:41.193Z")
+	require.NoError(err)
+	message := "    2018/03/05 08:42:34.833265 [WARN] nomad.heartbeat: node '5dedbc43-7c23-a6f8-33de-e25d0ac835fd' TTL expired"
+
+	expectedEvent := logevent.LogEvent{
+		Timestamp: timestamp,
+		Message:   message,
+		Extra: map[string]interface{}{
+			"host":      hostname,
+			"path":      "/test/file/path",
+			"offset":    0,
+			"timestamp": "2018/03/05 08:42:34.833265",
+			"loglevel":  "WARN",
+		},
+	}
+
+	conf.TestInputEvent(logevent.LogEvent{
+		Timestamp: timestamp,
+		Message:   message,
+		Extra: map[string]interface{}{
+			"host":   hostname,
+			"path":   "/test/file/path",
+			"offset": 0,
+		},
+	})
+
+	if event, err := conf.TestGetOutputEvent(30000 * time.Millisecond); assert.NoError(err) {
+		require.Equal(expectedEvent, event)
+	}
+}

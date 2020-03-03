@@ -34,13 +34,14 @@ func InitHandler(context.Context, *config.ConfigRaw) (config.TypeCodecConfig, er
 
 // Decode returns an event from 'data' as JSON format, adding provided 'eventExtra'
 func (c *Codec) Decode(ctx context.Context, data interface{},
-	eventExtra map[string]interface{},
+	eventExtra map[string]interface{}, tags []string,
 	msgChan chan<- logevent.LogEvent) (ok bool, err error) {
 
 	event := logevent.LogEvent{
 		Timestamp: time.Now(),
 		Extra:     eventExtra,
 	}
+	event.AddTag(tags...)
 
 	switch v := data.(type) {
 	case string:

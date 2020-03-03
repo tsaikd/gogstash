@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -54,12 +55,9 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 		return nil, err
 	}
 
-	conf.Codec, err = config.GetCodec(ctx, *raw)
-	if err != nil {
-		return nil, err
-	}
+	conf.Codec, err = config.GetCodecOrDefault(ctx, *raw)
 
-	return &conf, nil
+	return &conf, err
 }
 
 // Start wraps the actual function starting the plugin
@@ -88,17 +86,18 @@ func (t *InputConfig) Request(ctx context.Context, msgChan chan<- logevent.LogEv
 		"host": t.hostname,
 		"url":  t.URL,
 	}
+	tags := []string{}
 	if err != nil {
-		event := logevent.LogEvent{
-			Timestamp: time.Now(),
-			Extra:     extra,
-		}
-		event.AddTag(ErrorTag)
-		msgChan <- event
-		return
+		tags = append(tags, ErrorTag)
 	}
+	_, err = t.Codec.Decode(ctx, []byte(data),
+		extra,
+		tags,
+		msgChan)
 
-	t.Codec.Decode(ctx, data, extra, msgChan)
+	if err != nil {
+		goglog.Logger.Errorf("%v", err)
+	}
 
 	return
 }

@@ -4,10 +4,10 @@
 # /docker/
 /filter/geoip2/GeoLite2-City.mmdb
 /vendor/
+/gogstash*
 /config.json
 /config.yaml
 /config.yml
-/gogstash
 # /*.md
 
 .DS_Store

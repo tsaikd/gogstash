@@ -36,6 +36,7 @@ import (
 	"github.com/tsaikd/gogstash/output/prometheus"
 	"github.com/tsaikd/gogstash/output/redis"
 	"github.com/tsaikd/gogstash/output/report"
+	"github.com/tsaikd/gogstash/output/socket"
 	"github.com/tsaikd/gogstash/output/stdout"
 )
 
@@ -74,6 +75,7 @@ func init() {
 	config.RegistOutputHandler(outputprometheus.ModuleName, outputprometheus.InitHandler)
 	config.RegistOutputHandler(outputredis.ModuleName, outputredis.InitHandler)
 	config.RegistOutputHandler(outputreport.ModuleName, outputreport.InitHandler)
+	config.RegistOutputHandler(outputsocket.ModuleName, outputsocket.InitHandler)
 	config.RegistOutputHandler(outputstdout.ModuleName, outputstdout.InitHandler)
 	config.RegistOutputHandler(outputfile.ModuleName, outputfile.InitHandler)
 

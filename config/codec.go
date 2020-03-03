@@ -23,11 +23,14 @@ var (
 type TypeCodecConfig interface {
 	TypeCommonConfig
 	// The codec’s decode method is where data coming in from an input is transformed into an event.
-	// if event sent to msgChan, ok will be true
-	Decode(ctx context.Context, data interface{}, extra map[string]interface{}, msgChan chan<- logevent.LogEvent) (ok bool, err error)
+	//  'ok' returns a boolean indicating if an event was created and sent to a provided 'msgChan' channel
+	//  'error' is returned in case of any failure handling input 'data', but 'ok' == false DOES NOT indicate an error
+	Decode(ctx context.Context, data interface{}, extra map[string]interface{}, tags []string, msgChan chan<- logevent.LogEvent) (ok bool, err error)
 	// DecodeEvent data to event
 	DecodeEvent(data []byte, v interface{}) error
 	// The encode method takes an event and serializes it (encodes) into another format.
+	//  'ok' returns a boolean indicating if an event was encoded and sent to a provided 'dataChan' channel
+	//  'error' is returned in case of any failure encoding 'event', but 'ok' == false DOES NOT indicate an error
 	Encode(ctx context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error)
 }
 
@@ -46,6 +49,19 @@ var (
 // RegistCodecHandler regist a codec handler
 func RegistCodecHandler(name string, handler CodecHandler) {
 	mapCodecHandler[name] = handler
+}
+
+// GetCodecOrDefault returns a codec based on the `codec` configuration, if specified in `ConfigRaw` input,
+//  else an instance of `DefaultCodec` is returned
+func GetCodecOrDefault(ctx context.Context, raw ConfigRaw) (TypeCodecConfig, error) {
+	c, err := GetCodec(ctx, raw)
+	if err != nil {
+		return nil, err
+	}
+	if c == nil {
+		return DefaultCodecInitHandler(nil, nil)
+	}
+	return c, nil
 }
 
 // GetCodec returns a codec based on the 'codec' configuration from provided 'ConfigRaw' input
@@ -121,12 +137,15 @@ func DefaultCodecInitHandler(context.Context, *ConfigRaw) (TypeCodecConfig, erro
 // Decode returns an event based on current timestamp and converting 'data' to 'string', adding provided 'eventExtra'
 func (c *DefaultCodec) Decode(ctx context.Context, data interface{},
 	eventExtra map[string]interface{},
+	tags []string,
 	msgChan chan<- logevent.LogEvent) (ok bool, err error) {
 
 	event := logevent.LogEvent{
 		Timestamp: time.Now(),
 		Extra:     eventExtra,
 	}
+	event.AddTag(tags...)
+
 	switch v := data.(type) {
 	case string:
 		event.Message = v
@@ -161,7 +180,7 @@ func (c *DefaultCodec) DecodeEvent(data []byte, v interface{}) error {
 	return nil
 }
 
-// Encode function not implement (TODO)
+// Encode function not implemented (TODO)
 func (c *DefaultCodec) Encode(ctx context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
 	return false, ErrorNotImplement1.New(nil)
 }

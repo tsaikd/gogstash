@@ -51,7 +51,7 @@ func TestDefaultCodecDecode(t *testing.T) {
 
 	msgChan := make(chan logevent.LogEvent, 1)
 
-	ok, err := codec.Decode(ctx, []byte("foobar"), nil, msgChan)
+	ok, err := codec.Decode(ctx, []byte("foobar"), nil, []string{}, msgChan)
 	require.NoError(err)
 	assert.True(ok)
 	require.Len(msgChan, 1)
@@ -59,7 +59,7 @@ func TestDefaultCodecDecode(t *testing.T) {
 	assert.Equal("foobar", event.Message)
 
 	// string should be ok
-	ok, err = codec.Decode(ctx, "johnsmith", nil, msgChan)
+	ok, err = codec.Decode(ctx, "johnsmith", nil, []string{}, msgChan)
 	require.NoError(err)
 	assert.True(ok)
 	require.Len(msgChan, 1)
@@ -67,7 +67,7 @@ func TestDefaultCodecDecode(t *testing.T) {
 	assert.Equal("johnsmith", event.Message)
 
 	// ok will be true, as message sent
-	ok, err = codec.Decode(ctx, 114514, nil, msgChan)
+	ok, err = codec.Decode(ctx, 114514, nil, []string{}, msgChan)
 	require.Error(err) // fail to decode
 	assert.True(ok)
 	require.Len(msgChan, 1)
