@@ -212,6 +212,7 @@ See [input modules](input) for more information
 * [file](input/file)
 * [http](input/http)
 * [httplisten](input/httplisten)
+* [kafka](input/kafka)
 * [nats](input/nats)
 * [redis](input/redis)
 * [socket](input/socket)
@@ -226,10 +227,10 @@ filter:
 
     # list of tags to add
     add_tag: ["addtag1", "addtag2"]
-    
+
     # list of tags to remove
     remove_tag: ["removetag1", "removetag2"]
-    
+
     # list of fields (key/value) to add
     add_field:
       - key: "field1"
@@ -237,7 +238,7 @@ filter:
       - key: "field2"
         value: "value2"
     # list of fields to remove
-    remove_field: ["removefield1", "removefield2"]   
+    remove_field: ["removefield1", "removefield2"]
 ```
 
 See [filter modules](filter) for more information
