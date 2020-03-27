@@ -124,8 +124,6 @@ func (t *InputConfig) exec(msgChan chan<- logevent.LogEvent) {
 	}
 
 	msgChan <- event
-
-	return
 }
 
 func (t *InputConfig) doExecCommand() (data string, err error) {

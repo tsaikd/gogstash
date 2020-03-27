@@ -98,8 +98,6 @@ func (t *InputConfig) Request(ctx context.Context, msgChan chan<- logevent.LogEv
 	if err != nil {
 		goglog.Logger.Errorf("%v", err)
 	}
-
-	return
 }
 
 func (t *InputConfig) SendRequest() (data []byte, err error) {

@@ -6,13 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fsouza/go-dockerclient"
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"github.com/tsaikd/gogstash/input/dockerlog/dockertool"
-)
-
-var (
-	containerMap = map[string]interface{}{}
 )
 
 func (t *InputConfig) containerLogLoop(ctx context.Context, container interface{}, since *time.Time, msgChan chan<- logevent.LogEvent) (err error) {

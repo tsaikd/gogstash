@@ -45,11 +45,6 @@ type OutputConfig struct {
 	amqpClients        map[string]amqpClient
 }
 
-type amqpConn struct {
-	Channel    *amqp.Channel
-	Connection *amqp.Connection
-}
-
 // DefaultOutputConfig returns an OutputConfig struct with default values
 func DefaultOutputConfig() OutputConfig {
 	return OutputConfig{
@@ -159,52 +154,46 @@ func (o *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 }
 
 func (o *OutputConfig) reconnect(url string) {
-	for {
-		select {
-		case poolResponse := <-o.amqpClients[url].reconnect:
-			// When a reconnect event is received
-			// start reconnect loop until reconnected
-			for {
-				time.Sleep(time.Duration(o.ReconnectDelay) * time.Second)
+	for poolResponse := range o.amqpClients[url].reconnect {
+		// When a reconnect event is received
+		// start reconnect loop until reconnected
+		for {
+			time.Sleep(time.Duration(o.ReconnectDelay) * time.Second)
 
-				logrus.Info("Reconnecting to ", poolResponse.Host())
+			logrus.Info("Reconnecting to ", poolResponse.Host())
 
-				if conn, err := o.getConnection(poolResponse.Host()); err == nil {
-					if ch, err := conn.Channel(); err == nil {
-						if err := ch.ExchangeDeclare(
-							o.Exchange,
-							o.ExchangeType,
-							o.ExchangeDurable,
-							o.ExchangeAutoDelete,
-							false,
-							false,
-							nil,
-						); err == nil {
-							logrus.Info("Reconnected to ", poolResponse.Host())
-							o.amqpClients[poolResponse.Host()] = amqpClient{
-								client:    ch,
-								reconnect: make(chan hostpool.HostPoolResponse, 1),
-							}
-							poolResponse.Mark(nil)
-							break
+			if conn, err := o.getConnection(poolResponse.Host()); err == nil {
+				if ch, err := conn.Channel(); err == nil {
+					if err := ch.ExchangeDeclare(
+						o.Exchange,
+						o.ExchangeType,
+						o.ExchangeDurable,
+						o.ExchangeAutoDelete,
+						false,
+						false,
+						nil,
+					); err == nil {
+						logrus.Info("Reconnected to ", poolResponse.Host())
+						o.amqpClients[poolResponse.Host()] = amqpClient{
+							client:    ch,
+							reconnect: make(chan hostpool.HostPoolResponse, 1),
 						}
+						poolResponse.Mark(nil)
+						break
 					}
 				}
-
-				logrus.Info("Failed to reconnect to ", url, ". Waiting ", o.ReconnectDelay, " seconds...")
 			}
+
+			logrus.Info("Failed to reconnect to ", url, ". Waiting ", o.ReconnectDelay, " seconds...")
 		}
 	}
 }
 
 func (o *OutputConfig) getConnection(url string) (c *amqp.Connection, e error) {
 	if strings.HasPrefix(url, "amqps") {
-		cfg := new(tls.Config)
-		cfg.RootCAs = x509.NewCertPool()
-
-		cfg.InsecureSkipVerify = false
-		if o.TLSSkipVerify == true {
-			cfg.InsecureSkipVerify = true
+		cfg := &tls.Config{
+			RootCAs:            x509.NewCertPool(),
+			InsecureSkipVerify: o.TLSSkipVerify,
 		}
 
 		for _, ca := range o.TLSCACerts {

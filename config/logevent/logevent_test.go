@@ -278,6 +278,7 @@ func Benchmark_Marshal_JSONEx(b *testing.B) {
 	}
 	b.SetBytes(int64(len(d)))
 	for n := 0; n < b.N; n++ {
+		//nolint: errcheck
 		jsonex.Marshal(jsonMap)
 	}
 }
@@ -290,6 +291,7 @@ func Benchmark_Marshal_JSONIter(b *testing.B) {
 	}
 	b.SetBytes(int64(len(d)))
 	for n := 0; n < b.N; n++ {
+		//nolint: errcheck
 		jsoniter.Marshal(jsonMap)
 	}
 }
@@ -302,6 +304,7 @@ func Benchmark_Marshal_StdJSON(b *testing.B) {
 	}
 	b.SetBytes(int64(len(d)))
 	for n := 0; n < b.N; n++ {
+		//nolint: errcheck
 		json.Marshal(jsonMap)
 	}
 }

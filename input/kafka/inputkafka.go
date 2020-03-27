@@ -2,14 +2,15 @@ package inputkafka
 
 import (
 	"context"
-	"github.com/Shopify/sarama"
-	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/goglog"
-	"github.com/tsaikd/gogstash/config/logevent"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+
+	"github.com/Shopify/sarama"
+	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 // ModuleName is the name used in config file
@@ -112,6 +113,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 	}
 
 	ct, cancel := context.WithCancel(ctx)
+	defer cancel()
 	client, err := sarama.NewConsumerGroup(t.Brokers, t.Group, t.saConf)
 	if err != nil {
 		goglog.Logger.Errorf("Error creating consumer group client: %v", err)
