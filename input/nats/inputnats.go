@@ -102,17 +102,12 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		}
 	}
 
-	for {
-		select {
-		case <-ctx.Done():
-			goglog.Logger.Info("input nats stopped")
-			for _, sub := range subList {
-				sub.Drain()
-			}
-			return nil
-		default:
+	<-ctx.Done()
+	goglog.Logger.Info("input nats stopped")
+	for _, sub := range subList {
+		if err := sub.Drain(); err != nil {
+			goglog.Logger.Error(err)
 		}
-
 	}
 	return nil
 }
