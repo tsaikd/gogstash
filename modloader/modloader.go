@@ -23,6 +23,7 @@ import (
 	"github.com/tsaikd/gogstash/input/file"
 	"github.com/tsaikd/gogstash/input/http"
 	"github.com/tsaikd/gogstash/input/httplisten"
+	"github.com/tsaikd/gogstash/input/kafka"
 	"github.com/tsaikd/gogstash/input/lorem"
 	"github.com/tsaikd/gogstash/input/nats"
 	"github.com/tsaikd/gogstash/input/redis"
@@ -48,6 +49,7 @@ func init() {
 	config.RegistInputHandler(inputfile.ModuleName, inputfile.InitHandler)
 	config.RegistInputHandler(inputhttp.ModuleName, inputhttp.InitHandler)
 	config.RegistInputHandler(inputhttplisten.ModuleName, inputhttplisten.InitHandler)
+	config.RegistInputHandler(inputkafka.ModuleName, inputkafka.InitHandler)
 	config.RegistInputHandler(inputlorem.ModuleName, inputlorem.InitHandler)
 	config.RegistInputHandler(inputnats.ModuleName, inputnats.InitHandler)
 	config.RegistInputHandler(inputredis.ModuleName, inputredis.InitHandler)
