@@ -3,15 +3,16 @@ package inputkafka
 import (
 	"context"
 	"fmt"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/Shopify/sarama"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
-	"strings"
-	"testing"
-	"time"
 )
 
 func init() {
@@ -40,6 +41,11 @@ func Test_input_kafka_module_batch(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 	initc()
+
+	if client == nil {
+		t.Skip("kafka client init failed, skip test")
+	}
+
 	for i := 0; i < 10; i++ {
 		msg := &sarama.ProducerMessage{
 			Topic: "testTopic",
