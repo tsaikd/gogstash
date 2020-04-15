@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
+	github.com/Shopify/sarama v1.19.0
 	github.com/alicebob/gopher-json v0.0.0-20180125190556-5a6b3ba71ee6 // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible
 	github.com/bitly/go-hostpool v0.0.0-20171023180738-a3a6125de932

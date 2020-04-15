@@ -73,7 +73,7 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 
 	message.SetBody("text/html", event.GetString("message"))
 	dialer := gomail.NewDialer(t.Address, t.Port, t.UserName, t.Password)
-	if t.UseTLS == true {
+	if t.UseTLS {
 		dialer.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 	err = dialer.DialAndSend(message)

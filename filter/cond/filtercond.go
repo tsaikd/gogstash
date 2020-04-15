@@ -88,7 +88,7 @@ type EventParameters struct {
 
 // Get obtaining value from event's specified field recursively
 func (ep *EventParameters) Get(field string) (interface{}, error) {
-	if strings.IndexRune(field, '.') < 0 {
+	if !strings.ContainsRune(field, '.') {
 		// no nest fields
 		return ep.Event.Get(field), nil
 	}

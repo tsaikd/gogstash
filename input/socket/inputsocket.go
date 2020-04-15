@@ -108,6 +108,9 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		defer l.Close()
 	case "udp":
 		address, err := net.ResolveUDPAddr(i.Socket, i.Address)
+		if err != nil {
+			return err
+		}
 		logger.Debugf("listen %q on %q", i.Socket, address.String())
 		var conn net.PacketConn
 		if i.ReusePort {
@@ -126,10 +129,8 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
-		select {
-		case <-ctx.Done():
-			return l.Close()
-		}
+		<-ctx.Done()
+		return l.Close()
 	})
 
 	eg.Go(func() error {
@@ -158,12 +159,10 @@ func (i *InputConfig) handleUDP(ctx context.Context, conn net.PacketConn, msgCha
 	defer pw.Close()
 
 	eg.Go(func() error {
-		select {
-		case <-ctx.Done():
-			pr.Close()
-			conn.Close()
-			return nil
-		}
+		<-ctx.Done()
+		pr.Close()
+		conn.Close()
+		return nil
 	})
 
 	eg.Go(func() error {

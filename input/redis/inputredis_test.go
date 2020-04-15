@@ -48,7 +48,8 @@ func Test_input_redis_module_batch(t *testing.T) {
 	require.NotNil(require)
 
 	for i := 0; i < 10; i++ {
-		s.Lpush("gogstash-test", fmt.Sprintf("{\"@timestamp\":\"%s\",\"message\":\"inputredis test message\"}", timeNow.Format(time.RFC3339Nano)))
+		_, err := s.Lpush("gogstash-test", fmt.Sprintf("{\"@timestamp\":\"%s\",\"message\":\"inputredis test message\"}", timeNow.Format(time.RFC3339Nano)))
+		require.NoError(err)
 	}
 
 	ctx := context.Background()
@@ -82,7 +83,8 @@ func Test_input_redis_module_single(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	s.Lpush("gogstash-test", fmt.Sprintf("{\"@timestamp\":\"%s\",\"message\":\"inputredis test message\"}", timeNow.Format(time.RFC3339Nano)))
+	_, err := s.Lpush("gogstash-test", fmt.Sprintf("{\"@timestamp\":\"%s\",\"message\":\"inputredis test message\"}", timeNow.Format(time.RFC3339Nano)))
+	require.NoError(err)
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)

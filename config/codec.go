@@ -59,7 +59,7 @@ func GetCodecOrDefault(ctx context.Context, raw ConfigRaw) (TypeCodecConfig, err
 		return nil, err
 	}
 	if c == nil {
-		return DefaultCodecInitHandler(nil, nil)
+		return DefaultCodecInitHandler(ctx, nil)
 	}
 	return c, nil
 }
@@ -82,13 +82,13 @@ func GetCodecDefault(ctx context.Context, raw ConfigRaw, defaultType string) (Ty
 		return nil, nil
 	}
 
-	switch codecConfig.(type) {
+	switch cfg := codecConfig.(type) {
 	case map[string]interface{}:
-		return getCodec(ctx, ConfigRaw(codecConfig.(map[string]interface{})))
+		return getCodec(ctx, ConfigRaw(cfg))
 	case string:
 		// shorthand codec config method:
 		// codec: [codecTypeName]
-		return getCodec(ctx, ConfigRaw{"type": codecConfig.(string)})
+		return getCodec(ctx, ConfigRaw{"type": cfg})
 	default:
 		return nil, ErrorUnknownCodecType1.New(nil, codecConfig)
 	}

@@ -2,6 +2,7 @@ package inputnats
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -16,8 +17,6 @@ import (
 	"github.com/tsaikd/gogstash/config/goglog"
 )
 
-var timeNow time.Time
-
 func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistInputHandler(ModuleName, InitHandler)
@@ -27,7 +26,7 @@ func init() {
 func TestMain(m *testing.M) {
 	opts := server.Options{
 		Host:     "127.0.0.1",
-		Port:     -1,
+		Port:     4222,
 		HTTPPort: -1,
 		Cluster:  server.ClusterOpts{Port: -1},
 		NoLog:    true,
@@ -42,6 +41,11 @@ func TestMain(m *testing.M) {
 	}
 
 	go s.Start()
+	defer s.Shutdown()
+
+	ret := m.Run()
+
+	os.Exit(ret)
 }
 
 func TestInputNats(t *testing.T) {
@@ -56,9 +60,9 @@ func TestInputNats(t *testing.T) {
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 input:
-  - type: nats
-    host: localhost
-    topic:"test.*"
+  - type:  "nats"
+    host:  "127.0.0.1:4222"
+    topic: "test.*"
 	`)))
 	require.NoError(err)
 	require.NoError(conf.Start(ctx))

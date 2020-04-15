@@ -123,5 +123,4 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			data.ACK()
 		}
 	}
-	return nil
 }

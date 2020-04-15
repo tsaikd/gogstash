@@ -23,7 +23,10 @@ func init() {
 
 func TestMain(m *testing.M) {
 	http.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
-		rw.Write([]byte("foo"))
+		_, err := rw.Write([]byte("foo"))
+		if err != nil {
+			panic(err)
+		}
 	})
 
 	go func() {

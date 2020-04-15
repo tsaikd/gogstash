@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/fsouza/go-dockerclient"
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -90,7 +90,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 	//  copying codec instances is needed to allow codecs to do sequential processing, such as milti-line logs with proper isolation.
 	conf.Codec, err = config.GetCodecOrDefault(ctx, *raw)
 
-	return &conf, nil
+	return &conf, err
 }
 
 // Start wraps the actual function starting the plugin
@@ -167,8 +167,5 @@ func (t *InputConfig) isValidContainer(names []string) bool {
 			}
 		}
 	}
-	if len(t.includes) > 0 {
-		return false
-	}
-	return true
+	return len(t.includes) < 1
 }

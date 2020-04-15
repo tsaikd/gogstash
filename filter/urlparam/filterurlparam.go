@@ -23,11 +23,11 @@ type FilterConfig struct {
 
 	// Include param keys, "all_fields" or "*" include all fields
 	IncludeKeys []string `json:"include_keys"`
-	includeAll  bool     `json:"-"`
+	includeAll  bool
 
 	// url_decode params, "all_fields" or "*" decode all params values
 	UrlDecode []string `json:"url_decode"`
-	decodeAll bool     `json:"-"`
+	decodeAll bool
 
 	// prefix for param name, default: request_url_args_
 	Prefix string `json:"prefix"`
@@ -76,7 +76,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 	}
 
 	if conf.Prefix != "" {
-		if strings.Index(conf.Prefix, ".") >= 0 {
+		if strings.Contains(conf.Prefix, ".") {
 			return nil, fmt.Errorf("prefix can not includ dot(\".\")")
 		}
 	}

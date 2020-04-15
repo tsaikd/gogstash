@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/fsouza/go-dockerclient"
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -190,8 +190,5 @@ func (t *InputConfig) isValidContainer(names []string) bool {
 		}
 	}
 
-	if len(t.includes) > 0 {
-		return false
-	}
-	return true
+	return len(t.includes) < 1
 }

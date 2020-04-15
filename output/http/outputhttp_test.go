@@ -32,7 +32,8 @@ func Test_output_http_module(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		h.HeaderMap = r.Header
-		io.Copy(h, r.Body)
+		_, err := io.Copy(h, r.Body)
+		require.NoError(err)
 	}
 
 	server := httptest.NewServer(http.HandlerFunc(handler))

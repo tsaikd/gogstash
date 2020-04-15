@@ -43,10 +43,8 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		return nil, err
 	}
 	go func() {
-		select {
-		case <-ctx.Done():
-			conn.Close()
-		}
+		<-ctx.Done()
+		conn.Close()
 	}()
 
 	conf.outputSocket = &conn
