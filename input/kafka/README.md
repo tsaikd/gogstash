@@ -27,4 +27,9 @@ input:
 
     # Consumer group partition assignment strategy (range, roundrobin)
     assignor: roundrobin
+
+    # use SASL authentication (optional)
+    security_protocol: SASL
+    sasl_username: you-username
+    sasl_password: you-password
 ```

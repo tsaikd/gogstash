@@ -19,12 +19,15 @@ const ModuleName = "kafka"
 // InputConfig holds the configuration json fields and internal objects
 type InputConfig struct {
 	config.InputConfig
-	Version      string   `json:"version"`       // Kafka cluster version, eg: 0.10.2.0
-	Brokers      []string `json:"brokers"`       // Kafka bootstrap brokers to connect to, as a comma separated list
-	Topics       []string `json:"topics"`        // Kafka topics to be consumed, as a comma seperated list
-	Group        string   `json:"group"`         // Kafka consumer group definition
-	OffsetOldest bool     `json:"offset_oldest"` // Kafka consumer consume initial offset from oldest
-	Assignor     string   `json:"assignor"`      // Consumer group partition assignment strategy (range, roundrobin)
+	Version          string   `json:"version"`                     // Kafka cluster version, eg: 0.10.2.0
+	Brokers          []string `json:"brokers"`                     // Kafka bootstrap brokers to connect to, as a comma separated list
+	Topics           []string `json:"topics"`                      // Kafka topics to be consumed, as a comma seperated list
+	Group            string   `json:"group"`                       // Kafka consumer group definition
+	OffsetOldest     bool     `json:"offset_oldest"`               // Kafka consumer consume initial offset from oldest
+	Assignor         string   `json:"assignor"`                    // Consumer group partition assignment strategy (range, roundrobin)
+	SecurityProtocol string   `json:"security_protocol,omitempty"` // use SASL authentication
+	User             string   `json:"sasl_username,omitempty"`     // SASL authentication username
+	Password         string   `json:"sasl_password,omitempty"`     // SASL authentication password
 
 	saConf *sarama.Config
 }
@@ -37,6 +40,9 @@ func DefaultInputConfig() InputConfig {
 				Type: ModuleName,
 			},
 		},
+		SecurityProtocol: "",
+		User:             "",
+		Password:         "",
 	}
 }
 
@@ -90,6 +96,13 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 		goglog.Logger.Error("topics should not be empty")
 		return nil, err
 	}
+
+	if conf.SecurityProtocol == "SASL" {
+		sarConfig.Net.SASL.Enable = true
+		sarConfig.Net.SASL.User = conf.User
+		sarConfig.Net.SASL.Password = conf.Password
+	}
+
 	conf.saConf = sarConfig
 
 	conf.Codec, err = config.GetCodecOrDefault(ctx, *raw)
