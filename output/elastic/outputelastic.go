@@ -190,6 +190,12 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 		RetryOnConflict(t.RetryOnConflict).
 		Id(id).
 		Doc(event)
+
+	if t.DocumentType != "" {
+		doctype := event.Format(t.DocumentType)
+		indexRequest.Type(doctype)
+	}
+
 	t.processor.Add(indexRequest)
 
 	return
