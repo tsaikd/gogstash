@@ -26,6 +26,15 @@ gogstash input dockerstats
 
 			// (optional), filter the output by mode, available value: "full" | "simple", "simple" mode will remove some messages to make the log smaller, default: "full"
 			"log_mode": "full"
+
+			// (optional), path of TLS cert, default: ""
+			"tls_cert": "/tmp/cert.pem"
+
+			// (optional), path of TLS key, default: ""
+			"tls_cert_key": "/tmp/key.pem"
+
+			// (optional), path of TLS CA cert, default: ""
+			"tls_ca_cert": "/tmp/ca.pem"
 		}
 	]
 }

@@ -23,6 +23,15 @@ gogstash input docker
 
 			// (optional), in seconds, docker connection retry interval, default: 10
 			"connection_retry_interval": 10
+
+			// (optional), path of TLS cert, default: ""
+			"tls_cert": "/tmp/cert.pem"
+
+			// (optional), path of TLS key, default: ""
+			"tls_cert_key": "/tmp/key.pem"
+
+			// (optional), path of TLS CA cert, default: ""
+			"tls_ca_cert": "/tmp/ca.pem"
 		}
 	]
 }
