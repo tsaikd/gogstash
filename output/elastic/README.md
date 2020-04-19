@@ -14,9 +14,9 @@ output:
     # index name to log
     index: "gogstash-index-test"
 
-    # (deprecated)
+    # Only for old versions of Elasticsearch. Leave empty for recent versions.
     # type name to log
-    document_type: "testtype"
+    document_type: ""
 
     # (optional) default: ""
     # id to log, used if you want to control id format
