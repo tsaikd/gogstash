@@ -34,6 +34,7 @@ import (
 	"github.com/tsaikd/gogstash/output/email"
 	"github.com/tsaikd/gogstash/output/file"
 	"github.com/tsaikd/gogstash/output/http"
+	"github.com/tsaikd/gogstash/output/kafka"
 	"github.com/tsaikd/gogstash/output/prometheus"
 	"github.com/tsaikd/gogstash/output/redis"
 	"github.com/tsaikd/gogstash/output/report"
@@ -80,6 +81,7 @@ func init() {
 	config.RegistOutputHandler(outputsocket.ModuleName, outputsocket.InitHandler)
 	config.RegistOutputHandler(outputstdout.ModuleName, outputstdout.InitHandler)
 	config.RegistOutputHandler(outputfile.ModuleName, outputfile.InitHandler)
+	config.RegistOutputHandler(outputkafka.ModuleName, outputkafka.InitHandler)
 
 	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
