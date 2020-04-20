@@ -21,18 +21,14 @@ func init() {
 	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 }
 
-var timeNow time.Time
-var client sarama.SyncProducer
-
-func initc() {
+func initClient() (sarama.SyncProducer, error) {
 	// initialize kafka client
 	saconf := sarama.NewConfig()
 	saconf.Version = sarama.V0_10_2_0
 	saconf.Producer.RequiredAcks = sarama.WaitForAll          // wait for both leader and follower checked
 	saconf.Producer.Partitioner = sarama.NewRandomPartitioner // select one partition
 	saconf.Producer.Return.Successes = true
-	client, _ = sarama.NewSyncProducer([]string{"127.0.0.1:9092"}, saconf)
-	timeNow = time.Now()
+	return sarama.NewSyncProducer([]string{"127.0.0.1:9092"}, saconf)
 }
 
 func Test_input_kafka_module_batch(t *testing.T) {
@@ -40,11 +36,12 @@ func Test_input_kafka_module_batch(t *testing.T) {
 	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
-	initc()
 
-	if client == nil {
-		t.Skip("kafka client init failed, skip test")
+	client, err := initClient()
+	if err != nil {
+		t.Skipf("skip test output %s module: %+v", ModuleName, err)
 	}
+	require.NotNil(client)
 
 	for i := 0; i < 10; i++ {
 		msg := &sarama.ProducerMessage{

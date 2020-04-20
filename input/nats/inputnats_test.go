@@ -2,7 +2,6 @@ package inputnats
 
 import (
 	"context"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -23,36 +22,24 @@ func init() {
 	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
 }
 
-func TestMain(m *testing.M) {
-	opts := server.Options{
-		Host:     "127.0.0.1",
-		Port:     4222,
-		HTTPPort: -1,
-		Cluster:  server.ClusterOpts{Port: -1},
-		NoLog:    true,
-		NoSigs:   true,
-		Debug:    true,
-		Trace:    true,
-	}
-
-	s, err := server.NewServer(&opts)
-	if err != nil {
-		panic(err)
-	}
-
-	go s.Start()
-	defer s.Shutdown()
-
-	ret := m.Run()
-
-	os.Exit(ret)
-}
-
 func TestInputNats(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
+
+	s, err := server.NewServer(&server.Options{
+		Host:                  "127.0.0.1",
+		Trace:                 true,
+		Debug:                 true,
+		DisableShortFirstPing: true,
+		NoLog:                 true,
+		NoSigs:                true,
+	})
+	require.NoError(err)
+	go s.Start()
+	defer s.Shutdown()
+	time.Sleep(500 * time.Millisecond)
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -61,13 +48,11 @@ func TestInputNats(t *testing.T) {
 debugch: true
 input:
   - type:  "nats"
-    host:  "127.0.0.1:4222"
+    host:  "` + s.ClientURL() + `"
     topic: "test.*"
 	`)))
 	require.NoError(err)
 	require.NoError(conf.Start(ctx))
-
-	time.Sleep(500 * time.Millisecond)
 
 	// start a publisher client
 	opts := []nats.Option{nats.Name("test")}
@@ -75,7 +60,7 @@ input:
 	nc, err := nats.Connect(nats.DefaultURL, opts...)
 	require.NoError(err)
 
-	err = nc.Publish("test.1", []byte("{\"foo\":\"bar\"}"))
+	err = nc.Publish("test.1", []byte(`{"foo":"bar"}`))
 	require.NoError(err)
 
 	err = nc.Flush()
@@ -83,6 +68,6 @@ input:
 
 	// check event
 	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {
-		assert.Equal(map[string]interface{}{"foo": "bar"}, event.Extra)
+		require.EqualValues(map[string]interface{}{"foo": "bar"}, event.Extra)
 	}
 }

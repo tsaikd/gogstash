@@ -1,4 +1,4 @@
-package outputelastic
+package outputelasticv5
 
 import (
 	"context"
@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/olivere/elastic/v7"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
+	"gopkg.in/olivere/elastic.v5"
 )
 
 const testIndexName = "gogstash-index-test"
@@ -42,6 +42,7 @@ output:
   - type: ` + ModuleName + `
     url: ["` + ts.URL + `"]
     index: "` + testIndexName + `"
+    document_type: "testtype"
     document_id: "%{fieldstring}"
     bulk_actions: 0
 	`)))
@@ -59,6 +60,7 @@ output:
   - type: ` + ModuleName + `
     url: ["` + ts.URL + `"]
     index: "` + testIndexName + `"
+    document_type: "testtype"
     document_id: "%{fieldstring}"
     bulk_actions: 0
     ssl_certificate_validation: true
@@ -77,6 +79,7 @@ output:
   - type: ` + ModuleName + `
     url: ["` + ts.URL + `"]
     index: "` + testIndexName + `"
+    document_type: "testtype"
     document_id: "%{fieldstring}"
     bulk_actions: 0
     ssl_certificate_validation: false
@@ -106,6 +109,7 @@ output:
   - type: ` + ModuleName + `
     url: ["%{MYVAR}"]
     index: "` + testIndexName + `"
+    document_type: "testtype"
     document_id: "%{fieldstring}"
     bulk_actions: 0
 	`)))
@@ -130,6 +134,7 @@ output:
   - type: ` + ModuleName + `
     url: ["http://127.0.0.1:9200"]
     index: "` + testIndexName + `"
+    document_type: "testtype"
     document_id: "%{fieldstring}"
     bulk_actions: 0
 	`)))
@@ -167,7 +172,7 @@ output:
 	require.NoError(err)
 	require.NotNil(result)
 	require.NotNil(result.Source)
-	require.JSONEq(`{"@timestamp":"2017-04-18T19:53:01.000000002Z","fieldnumber":123,"fieldstring":"ABC","message":"output elastic test message"}`, string(result.Source))
+	require.JSONEq(`{"@timestamp":"2017-04-18T19:53:01.000000002Z","fieldnumber":123,"fieldstring":"ABC","message":"output elastic test message"}`, string(*result.Source))
 
 	_, err = client.DeleteIndex(testIndexName).Do(ctx)
 	require.NoError(err)

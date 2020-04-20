@@ -32,9 +32,11 @@ import (
 	outputclickhouse "github.com/tsaikd/gogstash/output/clickhouse"
 	outputcond "github.com/tsaikd/gogstash/output/cond"
 	outputelastic "github.com/tsaikd/gogstash/output/elastic"
+	outputelasticv5 "github.com/tsaikd/gogstash/output/elasticv5"
 	outputemail "github.com/tsaikd/gogstash/output/email"
 	outputfile "github.com/tsaikd/gogstash/output/file"
 	outputhttp "github.com/tsaikd/gogstash/output/http"
+	outputkafka "github.com/tsaikd/gogstash/output/kafka"
 	outputprometheus "github.com/tsaikd/gogstash/output/prometheus"
 	outputredis "github.com/tsaikd/gogstash/output/redis"
 	outputreport "github.com/tsaikd/gogstash/output/report"
@@ -74,6 +76,7 @@ func init() {
 	config.RegistOutputHandler(outputcond.ModuleName, outputcond.InitHandler)
 	config.RegistOutputHandler(outputelastic.ModuleName, outputelastic.InitHandler)
 	config.RegistOutputHandler(outputclickhouse.ModuleName, outputclickhouse.InitHandler)
+	config.RegistOutputHandler(outputelasticv5.ModuleName, outputelasticv5.InitHandler)
 	config.RegistOutputHandler(outputemail.ModuleName, outputemail.InitHandler)
 	config.RegistOutputHandler(outputhttp.ModuleName, outputhttp.InitHandler)
 	config.RegistOutputHandler(outputprometheus.ModuleName, outputprometheus.InitHandler)
@@ -82,6 +85,7 @@ func init() {
 	config.RegistOutputHandler(outputsocket.ModuleName, outputsocket.InitHandler)
 	config.RegistOutputHandler(outputstdout.ModuleName, outputstdout.InitHandler)
 	config.RegistOutputHandler(outputfile.ModuleName, outputfile.InitHandler)
+	config.RegistOutputHandler(outputkafka.ModuleName, outputkafka.InitHandler)
 
 	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
