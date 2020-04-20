@@ -1,21 +1,7 @@
-gogstash output stdout
+gogstash output clickhouse
 ======================
 
 ## Synopsis
+Stores messages in ClickHouse using HTTP API and JSONEachRow format
 
-```
-{
-	"output": [
-		{
-			"type": "stdout"
-		}
-	]
-}
-```
-
-## Details
-
-Used for debug
-
-* type
-	* Must be **"stdout"**
+@todo: Document entirely
