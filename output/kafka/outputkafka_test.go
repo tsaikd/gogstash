@@ -2,7 +2,6 @@ package outputkafka
 
 import (
 	"context"
-	"github.com/tsaikd/gogstash/config/logevent"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 func init() {
@@ -39,7 +39,7 @@ output:
 	require.NoError(err)
 	err = conf.Start(ctx)
 	if err != nil {
-		t.Log("skip test output kafka module")
+		t.Skipf("skip test output %s module: %+v", ModuleName, err)
 		require.NoError(err)
 	}
 
@@ -51,5 +51,4 @@ output:
 	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
 		require.Equal("outputkafka test message", event.Message)
 	}
-
 }
