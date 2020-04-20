@@ -42,6 +42,7 @@ require (
 	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/prometheus/client_golang v1.0.0
 	github.com/satyrius/gonx v1.3.1-0.20181123214749-d96bd26e3b2c
+	github.com/sethgrid/pester v1.1.0
 	github.com/sirupsen/logrus v1.3.0
 	github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a // indirect
 	github.com/spf13/afero v1.1.1 // indirect
