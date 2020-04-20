@@ -35,7 +35,7 @@ func DefaultInputConfig() InputConfig {
 				Type: ModuleName,
 			},
 		},
-		Host:  "localhost:4222",
+		Host:  "nats://localhost:4222",
 		Creds: "",
 	}
 }
