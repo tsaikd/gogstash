@@ -26,6 +26,9 @@ type InputConfig struct {
 	SincePath               string   `json:"sincepath"`
 	StartPos                string   `json:"start_position,omitempty"` // one of ["beginning", "end"]
 	ConnectionRetryInterval int      `json:"connection_retry_interval,omitempty"`
+	TLSCert                 string   `json:"tls_cert,omitempty"`
+	TLSCertKey              string   `json:"tls_cert_key,omitempty"`
+	TLSCaCert               string   `json:"tls_ca_cert,omitempty"`
 
 	containerExist dockertool.StringExist
 	sincedb        *SinceDB
@@ -83,8 +86,14 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 	if conf.hostname, err = os.Hostname(); err != nil {
 		return nil, err
 	}
-	if conf.client, err = docker.NewClient(conf.DockerURL); err != nil {
-		return nil, err
+	if conf.TLSCert != "" && conf.TLSCaCert != "" && conf.TLSCertKey != "" {
+		if conf.client, err = docker.NewTLSClient(conf.DockerURL, conf.TLSCert, conf.TLSCertKey, conf.TLSCaCert); err != nil {
+			return nil, err
+		}
+	} else {
+		if conf.client, err = docker.NewClient(conf.DockerURL); err != nil {
+			return nil, err
+		}
 	}
 	if err = conf.client.Ping(); err != nil {
 		return nil, ErrorPingFailed.New(err)
