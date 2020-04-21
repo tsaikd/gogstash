@@ -1,44 +1,46 @@
 package modloader
 
 import (
-	"github.com/tsaikd/gogstash/codec/json"
+	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/filter/addfield"
-	"github.com/tsaikd/gogstash/filter/cond"
-	"github.com/tsaikd/gogstash/filter/date"
-	"github.com/tsaikd/gogstash/filter/geoip2"
-	"github.com/tsaikd/gogstash/filter/gonx"
-	"github.com/tsaikd/gogstash/filter/grok"
-	"github.com/tsaikd/gogstash/filter/json"
-	"github.com/tsaikd/gogstash/filter/mutate"
-	"github.com/tsaikd/gogstash/filter/ratelimit"
-	"github.com/tsaikd/gogstash/filter/removefield"
-	"github.com/tsaikd/gogstash/filter/typeconv"
-	"github.com/tsaikd/gogstash/filter/urlparam"
-	"github.com/tsaikd/gogstash/filter/useragent"
-	"github.com/tsaikd/gogstash/input/beats"
-	"github.com/tsaikd/gogstash/input/dockerlog"
-	"github.com/tsaikd/gogstash/input/dockerstats"
-	"github.com/tsaikd/gogstash/input/exec"
-	"github.com/tsaikd/gogstash/input/file"
-	"github.com/tsaikd/gogstash/input/http"
-	"github.com/tsaikd/gogstash/input/httplisten"
-	"github.com/tsaikd/gogstash/input/kafka"
-	"github.com/tsaikd/gogstash/input/lorem"
-	"github.com/tsaikd/gogstash/input/nats"
-	"github.com/tsaikd/gogstash/input/redis"
-	"github.com/tsaikd/gogstash/input/socket"
-	"github.com/tsaikd/gogstash/output/amqp"
-	"github.com/tsaikd/gogstash/output/cond"
-	"github.com/tsaikd/gogstash/output/elastic"
-	"github.com/tsaikd/gogstash/output/email"
-	"github.com/tsaikd/gogstash/output/file"
-	"github.com/tsaikd/gogstash/output/http"
-	"github.com/tsaikd/gogstash/output/prometheus"
-	"github.com/tsaikd/gogstash/output/redis"
-	"github.com/tsaikd/gogstash/output/report"
-	"github.com/tsaikd/gogstash/output/socket"
-	"github.com/tsaikd/gogstash/output/stdout"
+	filteraddfield "github.com/tsaikd/gogstash/filter/addfield"
+	filtercond "github.com/tsaikd/gogstash/filter/cond"
+	filterdate "github.com/tsaikd/gogstash/filter/date"
+	filtergeoip2 "github.com/tsaikd/gogstash/filter/geoip2"
+	filtergonx "github.com/tsaikd/gogstash/filter/gonx"
+	filtergrok "github.com/tsaikd/gogstash/filter/grok"
+	filterjson "github.com/tsaikd/gogstash/filter/json"
+	filtermutate "github.com/tsaikd/gogstash/filter/mutate"
+	filterratelimit "github.com/tsaikd/gogstash/filter/ratelimit"
+	filterremovefield "github.com/tsaikd/gogstash/filter/removefield"
+	filtertypeconv "github.com/tsaikd/gogstash/filter/typeconv"
+	filterurlparam "github.com/tsaikd/gogstash/filter/urlparam"
+	filteruseragent "github.com/tsaikd/gogstash/filter/useragent"
+	inputbeats "github.com/tsaikd/gogstash/input/beats"
+	inputdockerlog "github.com/tsaikd/gogstash/input/dockerlog"
+	inputdockerstats "github.com/tsaikd/gogstash/input/dockerstats"
+	inputexec "github.com/tsaikd/gogstash/input/exec"
+	inputfile "github.com/tsaikd/gogstash/input/file"
+	inputhttp "github.com/tsaikd/gogstash/input/http"
+	inputhttplisten "github.com/tsaikd/gogstash/input/httplisten"
+	inputkafka "github.com/tsaikd/gogstash/input/kafka"
+	inputlorem "github.com/tsaikd/gogstash/input/lorem"
+	inputnats "github.com/tsaikd/gogstash/input/nats"
+	inputredis "github.com/tsaikd/gogstash/input/redis"
+	inputsocket "github.com/tsaikd/gogstash/input/socket"
+	outputamqp "github.com/tsaikd/gogstash/output/amqp"
+	outputcond "github.com/tsaikd/gogstash/output/cond"
+	outputelastic "github.com/tsaikd/gogstash/output/elastic"
+	outputelasticv5 "github.com/tsaikd/gogstash/output/elasticv5"
+	outputemail "github.com/tsaikd/gogstash/output/email"
+	outputfile "github.com/tsaikd/gogstash/output/file"
+	outputhttp "github.com/tsaikd/gogstash/output/http"
+	outputkafka "github.com/tsaikd/gogstash/output/kafka"
+	outputprometheus "github.com/tsaikd/gogstash/output/prometheus"
+	outputredis "github.com/tsaikd/gogstash/output/redis"
+	outputreport "github.com/tsaikd/gogstash/output/report"
+	outputsocket "github.com/tsaikd/gogstash/output/socket"
+	outputstdout "github.com/tsaikd/gogstash/output/stdout"
 )
 
 func init() {
@@ -72,6 +74,7 @@ func init() {
 	config.RegistOutputHandler(outputamqp.ModuleName, outputamqp.InitHandler)
 	config.RegistOutputHandler(outputcond.ModuleName, outputcond.InitHandler)
 	config.RegistOutputHandler(outputelastic.ModuleName, outputelastic.InitHandler)
+	config.RegistOutputHandler(outputelasticv5.ModuleName, outputelasticv5.InitHandler)
 	config.RegistOutputHandler(outputemail.ModuleName, outputemail.InitHandler)
 	config.RegistOutputHandler(outputhttp.ModuleName, outputhttp.InitHandler)
 	config.RegistOutputHandler(outputprometheus.ModuleName, outputprometheus.InitHandler)
@@ -80,6 +83,7 @@ func init() {
 	config.RegistOutputHandler(outputsocket.ModuleName, outputsocket.InitHandler)
 	config.RegistOutputHandler(outputstdout.ModuleName, outputstdout.InitHandler)
 	config.RegistOutputHandler(outputfile.ModuleName, outputfile.InitHandler)
+	config.RegistOutputHandler(outputkafka.ModuleName, outputkafka.InitHandler)
 
 	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)

@@ -1,10 +1,10 @@
-gogstash input kafka
+gogstash output kafka
 ====================
 
 ## Synopsis
 
 ```yaml
-input:
+output:
   # type Must be "kafka"
   - type: kafka
 
@@ -18,15 +18,6 @@ input:
     # topic for kafka client to listen, (required)
     topics:
       - testTopic
-
-    # consumer group, (required)
-    group: log_center
-
-    # Kafka consumer consume initial offset from oldest
-    offset_oldest: true
-
-    # Consumer group partition assignment strategy (range, roundrobin)
-    assignor: roundrobin
 
     # use SASL authentication (optional)
     security_protocol: SASL

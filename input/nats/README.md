@@ -1,4 +1,4 @@
-gogstash input nats 
+gogstash input nats
 ====================
 
 ## Synopsis
@@ -8,8 +8,8 @@ input:
   # type Must be "nats"
   - type: "nats"
 
-    # nats server host:port, default: "localhost:4222"
-    host: "localhost:4222"
+    # nats server host:port, default: "nats://localhost:4222"
+    host: "nats://localhost:4222"
 
     # creditials for nats, default: ""
     creds: ""
