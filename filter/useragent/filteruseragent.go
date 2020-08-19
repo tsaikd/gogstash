@@ -15,6 +15,7 @@ const ModuleName = "useragent"
 
 // errors
 var (
+	// Deprecated: this error is never returned.
 	ErrRegexesNotConfigured = errors.New("filter useragent `regexes` not configured")
 )
 
@@ -96,12 +97,12 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 	}
 
 	if conf.Regexes == "" {
-		return nil, ErrRegexesNotConfigured
-	}
-
-	conf.parser, err = uaparser.New(conf.Regexes)
-	if err != nil {
-		return nil, err
+		conf.parser = uaparser.NewFromSaved()
+	} else {
+		conf.parser, err = uaparser.New(conf.Regexes)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	conf.fields.Init(conf.Target)

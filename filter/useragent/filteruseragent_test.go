@@ -40,7 +40,7 @@ func init() {
 	}
 }
 
-func Test_filter_useragent_module_error(t *testing.T) {
+func Test_filter_useragent_module_default(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
@@ -51,7 +51,7 @@ filter:
   - type: useragent
 	`)))
 	require.NoError(err)
-	require.Error(conf.Start(ctx))
+	require.NoError(conf.Start(ctx))
 }
 
 func Test_filter_useragent_module_parse(t *testing.T) {
