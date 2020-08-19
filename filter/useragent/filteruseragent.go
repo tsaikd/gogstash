@@ -2,7 +2,6 @@ package filteruseragent
 
 import (
 	"context"
-	"errors"
 
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/tsaikd/gogstash/config"
@@ -12,12 +11,6 @@ import (
 
 // ModuleName is the name used in config file
 const ModuleName = "useragent"
-
-// errors
-var (
-	// Deprecated: this error is never returned.
-	ErrRegexesNotConfigured = errors.New("filter useragent `regexes` not configured")
-)
 
 type uaFields struct {
 	Name    string
