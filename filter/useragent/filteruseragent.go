@@ -2,7 +2,6 @@ package filteruseragent
 
 import (
 	"context"
-	"errors"
 
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/tsaikd/gogstash/config"
@@ -12,11 +11,6 @@ import (
 
 // ModuleName is the name used in config file
 const ModuleName = "useragent"
-
-// errors
-var (
-	ErrRegexesNotConfigured = errors.New("filter useragent `regexes` not configured")
-)
 
 type uaFields struct {
 	Name    string
@@ -96,12 +90,12 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 	}
 
 	if conf.Regexes == "" {
-		return nil, ErrRegexesNotConfigured
-	}
-
-	conf.parser, err = uaparser.New(conf.Regexes)
-	if err != nil {
-		return nil, err
+		conf.parser = uaparser.NewFromSaved()
+	} else {
+		conf.parser, err = uaparser.New(conf.Regexes)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	conf.fields.Init(conf.Target)
