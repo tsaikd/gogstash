@@ -136,7 +136,7 @@ filter:
 
 output:
   - type: elastic
-    url: "http://elastic.server:9200"
+    url: ["http://elastic.server:9200"]
     index: "log-nginx-%{+@2006-01-02}"
     document_type: "%{type}"
 ```
