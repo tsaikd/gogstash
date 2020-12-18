@@ -153,7 +153,7 @@ func (t LogEvent) Get(field string) (v interface{}) {
 	case TagsField:
 		v = t.Tags
 	default:
-		v = t.Extra[field]
+		v, _ = getPathValue(t.Extra, field)
 	}
 	return
 }
