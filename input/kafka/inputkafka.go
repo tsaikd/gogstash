@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/tsaikd/gogstash/config"
@@ -74,6 +75,9 @@ func InitHandler(
 	 */
 	sarConfig := sarama.NewConfig()
 	sarConfig.Version = version
+	sarConfig.Consumer.MaxProcessingTime = 500 * time.Millisecond
+	sarConfig.Consumer.Group.Session.Timeout = 20 * time.Second
+	sarConfig.Consumer.Group.Heartbeat.Interval = 6 * time.Second
 
 	switch conf.Assignor {
 	case "roundrobin":
