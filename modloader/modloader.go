@@ -10,6 +10,7 @@ import (
 	filtergonx "github.com/tsaikd/gogstash/filter/gonx"
 	filtergrok "github.com/tsaikd/gogstash/filter/grok"
 	filterjson "github.com/tsaikd/gogstash/filter/json"
+	filterlookuptable "github.com/tsaikd/gogstash/filter/lookuptable"
 	filtermutate "github.com/tsaikd/gogstash/filter/mutate"
 	filterratelimit "github.com/tsaikd/gogstash/filter/ratelimit"
 	filterremovefield "github.com/tsaikd/gogstash/filter/removefield"
@@ -70,6 +71,7 @@ func init() {
 	config.RegistFilterHandler(filtertypeconv.ModuleName, filtertypeconv.InitHandler)
 	config.RegistFilterHandler(filteruseragent.ModuleName, filteruseragent.InitHandler)
 	config.RegistFilterHandler(filterurlparam.ModuleName, filterurlparam.InitHandler)
+	config.RegistFilterHandler(filterlookuptable.ModuleName, filterlookuptable.InitHandler)
 
 	config.RegistOutputHandler(outputamqp.ModuleName, outputamqp.InitHandler)
 	config.RegistOutputHandler(outputcond.ModuleName, outputcond.InitHandler)

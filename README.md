@@ -250,6 +250,7 @@ See [filter modules](filter) for more information
 * [gonx](filter/gonx)
 * [grok](filter/grok)
 * [json](filter/json)
+* [lookuptable](filter/lookuptable)
 * [mutate](filter/mutate)
 * [rate limit](filter/ratelimit)
 * [remove field](filter/removefield)
