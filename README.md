@@ -3,7 +3,9 @@ gogstash
 
 Logstash like, written in golang
 
-[![Build Status](https://travis-ci.org/tsaikd/gogstash.svg?branch=master)](https://travis-ci.org/tsaikd/gogstash)
+[![Build Status](https://travis-ci.org/jbuchbinder/gogstash.svg?branch=master)](https://travis-ci.org/jbuchbinder/gogstash)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jbuchbinder/gogstash)](https://goreportcard.com/report/github.com/jbuchbinder/gogstash)
+[![GoDoc](https://godoc.org/github.com/jbuchbinder/gogstash?status.png)](https://godoc.org/github.com/jbuchbinder/gogstash)
 
 * Download gogstash from github
 	* [check latest version](https://github.com/tsaikd/gogstash/releases)
