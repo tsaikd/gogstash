@@ -22,6 +22,13 @@ input:
 
     # (optional) BLPOP blocking timeout, default: "600s"
     blocking_timeout: "600s"
+    
+    # (optional) Password for DB, default: null
+    password: 
+    
+    # (option) Number of db to connect, default: 0
+    db: 0
+    
 ```
 
 ## WARNING

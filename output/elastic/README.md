@@ -13,6 +13,14 @@ output:
     # (required)
     # index name to log
     index: "gogstash-index-test"
+    
+    # (required)
+    # elastic auth username
+    Username: "elastic" 
+    
+    # (required)
+    # elastic auth password
+    Password: "changeme"
 
     # (deprecated)
     # type name to log

@@ -23,6 +23,12 @@ gogstash output redis
 
 			// (optional), in seconds, default: 1
 			"reconnect_interval": 1
+			
+			// (optional) Password for DB, default: null
+			password: 
+    
+			// (option) Number of db to connect, default: 0
+			db: 0
 		}
 	]
 }
