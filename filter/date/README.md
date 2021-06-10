@@ -15,3 +15,9 @@ filter:
     # (optional) target field. default: @timestamp
     target: mytimestamp
 ```
+There are two special source formats:
+
+* UNIX
+* UNIXNANO
+
+With these formats, the source is parsed and treated to be in unix time format with second or nanosecond precision.

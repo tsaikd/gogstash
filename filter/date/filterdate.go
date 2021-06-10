@@ -84,6 +84,24 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 				continue
 			}
 			timestamp = time.Unix(sec, nsec)
+		} else if thisFormat == "UNIXNANO" {
+			var nsec int64
+			value := event.Get(f.Source)
+			switch value.(type) {
+			case int64:
+				nsec = value.(int64)
+			case int:
+				r := value.(int)
+				nsec = int64(r)
+			case string:
+				nsec, err = strconv.ParseInt(value.(string), 10, 64)
+			default:
+				continue
+			}
+			if err != nil {
+				continue
+			}
+			timestamp = time.Unix(0, nsec)
 		} else {
 			timestamp, err = f.timeParser(thisFormat, event.GetString(f.Source))
 		}
