@@ -28,6 +28,8 @@ type OutputConfig struct {
 	DocumentType    string   `json:"document_type"`     // type name to log
 	DocumentID      string   `json:"document_id"`       // id to log, used if you want to control id format
 	RetryOnConflict int      `json:"retry_on_conflict"` // the number of times Elasticsearch should internally retry an update/upserted document
+	Username        string   `json:"username"`          // basic auth username to Elasticsearch
+	Password        string   `json:"password"`          // basic auth password to Elasticsearch
 
 	Sniff bool `json:"sniff"` // find all nodes of your cluster, https://github.com/olivere/elastic/wiki/Sniffing
 
@@ -123,6 +125,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		elastic.SetURL(conf.resolvedURLs...),
 		elastic.SetSniff(conf.Sniff),
 		elastic.SetErrorLog(logger),
+		elastic.SetBasicAuth(conf.Username, conf.Password),
 		elastic.SetDecoder(&jsonDecoder{}),
 	}
 
