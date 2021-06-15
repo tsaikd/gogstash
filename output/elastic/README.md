@@ -34,6 +34,10 @@ output:
     # find all nodes of your cluster, https://github.com/olivere/elastic/wiki/Sniffing
     sniff: true
 
+    # (optional) default: false
+    # uses the simpleclient connection type instead of the normal client, helpful in cases you get error messages even when the client can connect
+    simple_client: true
+
     # (optional) default: 1000
     # BulkActions specifies when to flush based on the number of actions
     # currently added. Defaults to 1000 and can be set to -1 to be disabled.
