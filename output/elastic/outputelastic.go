@@ -30,6 +30,7 @@ type OutputConfig struct {
 	RetryOnConflict int      `json:"retry_on_conflict"` // the number of times Elasticsearch should internally retry an update/upserted document
 	Username        string   `json:"username"`          // basic auth username to Elasticsearch
 	Password        string   `json:"password"`          // basic auth password to Elasticsearch
+	SimpleClient    bool     `json:"simple_client"`     // if set uses simpleclient instead of newclient, disables some functionality
 
 	Sniff bool `json:"sniff"` // find all nodes of your cluster, https://github.com/olivere/elastic/wiki/Sniffing
 
@@ -138,7 +139,12 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		options = append(options, elastic.SetHttpClient(client))
 	}
 
-	if conf.client, err = elastic.NewClient(options...); err != nil {
+	if conf.SimpleClient {
+		conf.client, err = elastic.NewSimpleClient(options...)
+	} else {
+		conf.client, err = elastic.NewClient(options...)
+	}
+	if err != nil {
 		return nil, ErrorCreateClientFailed1.New(err, conf.URL)
 	}
 
