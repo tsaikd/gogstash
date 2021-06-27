@@ -104,7 +104,23 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			l = tls.NewListener(l, t.tlsConfig)
 		}
 		return l, err
-	}, addr, server.JSONDecoder(t.Codec.DecodeEvent))
+	}, addr, server.JSONDecoder(func(bytes []byte, v interface{}) error {
+		var event logevent.LogEvent
+		err1 := t.Codec.DecodeEvent(bytes, &event)
+		if err1 != nil {
+			return err1
+		}
+		switch e := v.(type) {
+		case *interface{}:
+			*e = event
+		case *logevent.LogEvent:
+			*e = event
+		default:
+			return config.ErrorUnsupportedTargetEvent
+		}
+
+		return nil
+	}))
 	if err != nil {
 		return err
 	}
