@@ -22,13 +22,14 @@ var (
 // TypeCodecConfig is interface of codec module
 type TypeCodecConfig interface {
 	TypeCommonConfig
-	// The codec’s decode method is where data coming in from an input is transformed into an event.
+	// Decode - The codec’s decode method is where data coming in from an input is transformed into an event.
 	//  'ok' returns a boolean indicating if an event was created and sent to a provided 'msgChan' channel
 	//  'error' is returned in case of any failure handling input 'data', but 'ok' == false DOES NOT indicate an error
 	Decode(ctx context.Context, data interface{}, extra map[string]interface{}, tags []string, msgChan chan<- logevent.LogEvent) (ok bool, err error)
-	// DecodeEvent data to event
-	DecodeEvent(data []byte, v interface{}) error
-	// The encode method takes an event and serializes it (encodes) into another format.
+	// DecodeEvent decodes 'data' to 'event' pointer, creating new current timestamp if IsZero
+	//  'error' is returned in case of any failure handling input 'data'
+	DecodeEvent(data []byte, event *logevent.LogEvent) error
+	// Encode - The encode method takes an event and serializes it (encodes) into another format.
 	//  'ok' returns a boolean indicating if an event was encoded and sent to a provided 'dataChan' channel
 	//  'error' is returned in case of any failure encoding 'event', but 'ok' == false DOES NOT indicate an error
 	Encode(ctx context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error)
@@ -115,7 +116,8 @@ const DefaultErrorTag = "gogstash_codec_default_error"
 
 // codec errors
 var (
-	ErrDecodeData = errors.New("decode data error")
+	ErrDecodeData      = errors.New("decode data error")
+	ErrDecodeNilTarget = errors.New("decode event target is nil")
 )
 
 // DefaultCodec default struct for codec
@@ -163,20 +165,18 @@ func (c *DefaultCodec) Decode(ctx context.Context, data interface{},
 	return
 }
 
-// DecodeEvent decodes data to event
-func (c *DefaultCodec) DecodeEvent(data []byte, v interface{}) error {
-	event := logevent.LogEvent{
-		Timestamp: time.Now(),
-		Message:   string(data),
+// DecodeEvent decodes data to event pointer, creating new current timestamp if IsZero
+func (c *DefaultCodec) DecodeEvent(data []byte, event *logevent.LogEvent) error {
+	if event == nil {
+		goglog.Logger.Errorf("Provided DecodeEvent target event pointer is nil")
+		return ErrDecodeNilTarget
 	}
-	switch e := v.(type) {
-	case *interface{}:
-		*e = event
-	case *logevent.LogEvent:
-		*e = event
-	default:
-		return ErrorUnsupportedTargetEvent
+
+	if event.Timestamp.IsZero() {
+		event.Timestamp = time.Now()
 	}
+	event.Message = string(data)
+
 	return nil
 }
 
