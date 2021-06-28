@@ -21,9 +21,21 @@ output:
     # id to log, used if you want to control id format
     document_id: "%{fieldstring}"
 
+    # (optional) default: ""
+    # username to use in basic auth
+    username: ""
+
+    # (optional) default: ""
+    # password to use in basic auth
+    password: ""
+
     # (optional) default: false
     # find all nodes of your cluster, https://github.com/olivere/elastic/wiki/Sniffing
     sniff: true
+
+    # (optional) default: false
+    # uses the simpleclient connection type instead of the normal client, helpful in cases you get error messages even when the client can connect
+    simple_client: true
 
     # (optional) default: 1000
     # BulkActions specifies when to flush based on the number of actions

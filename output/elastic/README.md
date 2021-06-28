@@ -22,9 +22,21 @@ output:
     # id to log, used if you want to control id format
     document_id: "%{fieldstring}"
 
+    # (optional) default: ""
+    # username to use in basic auth
+    username: ""
+
+    # (optional) default: ""
+    # password to use in basic auth
+    password: ""
+
     # (optional) default: false
     # find all nodes of your cluster, https://github.com/olivere/elastic/wiki/Sniffing
     sniff: true
+
+    # (optional) default: false
+    # uses the simpleclient connection type instead of the normal client, helpful in cases you get error messages even when the client can connect
+    simple_client: true
 
     # (optional) default: 1000
     # BulkActions specifies when to flush based on the number of actions
@@ -52,7 +64,7 @@ output:
     exponential_backoff_max_timeout: "5m"
 
     # (optional) default: "true"
-    # SSLCertValidation Option to validate the server's certificate. Disabling this severely compromises security. 
-    # For more information on disabling certificate verification please read https://www.cs.utexas.edu/~shmat/shmat_ccs12.pdf     
+    # SSLCertValidation Option to validate the server's certificate. Disabling this severely compromises security.
+    # For more information on disabling certificate verification please read https://www.cs.utexas.edu/~shmat/shmat_ccs12.pdf
     ssl_certificate_validation: false
 ```
