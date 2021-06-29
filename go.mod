@@ -27,6 +27,8 @@ require (
 	github.com/libp2p/go-reuseport v0.0.1
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
 	github.com/mitchellh/mapstructure v1.2.2 // indirect
+	github.com/msaf1980/go-stringutils v0.0.8
+	github.com/msaf1980/statsd v0.0.0-20210625220633-8d91df059a07
 	github.com/nats-io/nats-server/v2 v2.1.6
 	github.com/nats-io/nats.go v1.9.2
 	github.com/olivere/elastic/v7 v7.0.14
@@ -44,7 +46,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.6.3 // indirect
 	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.7.0
 	github.com/tengattack/jodatime v0.0.0-20180920000830-48b203d08145
 	github.com/tsaikd/KDGoLib v0.0.0-20191001134900-7f3cf518e07d
 	github.com/ua-parser/uap-go v0.0.0-20200325213135-e1c09f13e2fe
