@@ -42,6 +42,7 @@ import (
 	outputredis "github.com/tsaikd/gogstash/output/redis"
 	outputreport "github.com/tsaikd/gogstash/output/report"
 	outputsocket "github.com/tsaikd/gogstash/output/socket"
+	outputstatsd "github.com/tsaikd/gogstash/output/statsd"
 	outputstdout "github.com/tsaikd/gogstash/output/stdout"
 )
 
@@ -86,6 +87,7 @@ func init() {
 	config.RegistOutputHandler(outputreport.ModuleName, outputreport.InitHandler)
 	config.RegistOutputHandler(outputsocket.ModuleName, outputsocket.InitHandler)
 	config.RegistOutputHandler(outputstdout.ModuleName, outputstdout.InitHandler)
+	config.RegistOutputHandler(outputstatsd.ModuleName, outputstatsd.InitHandler)
 	config.RegistOutputHandler(outputfile.ModuleName, outputfile.InitHandler)
 	config.RegistOutputHandler(outputkafka.ModuleName, outputkafka.InitHandler)
 
