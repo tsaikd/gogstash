@@ -99,7 +99,8 @@ func InitStatsdPool() {
 
 	if clientPool.clients == nil {
 		clientPool.clients = make(map[string]*statsd.Client)
-		//clientPool.used = int32(0)
+		clientPool.last = time.Now().Truncate(time.Minute).Unix()
+		clientPool.used = int32(0)
 	}
 }
 
@@ -238,15 +239,16 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		}
 	}
 
-	clientPool.last = time.Now().Unix()
+	atomic.StoreInt64(&clientPool.last, time.Now().Truncate(time.Minute).Unix())
 
 	go func() {
 		ticker := time.NewTicker(time.Second * 10)
+		defer ticker.Stop()
 	LOOP:
 		for {
 			select {
 			case <-ticker.C:
-				atomic.StoreInt64(&clientPool.last, time.Now().Unix())
+				atomic.StoreInt64(&clientPool.last, time.Now().Truncate(time.Minute).Unix())
 			case <-ctx.Done():
 				break LOOP
 			}
@@ -259,6 +261,11 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 
 // Output event
 func (o *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) error {
+	t := atomic.LoadInt64(&clientPool.last)
+	if event.Timestamp.Unix() < t {
+		// old event, skip
+		return nil
+	}
 	for _, tpl := range o.IncrementTpl {
 		if name, err := tpl.Execute(event.Extra); err == nil && len(name) > 0 {
 			o.client.Increment(name)
