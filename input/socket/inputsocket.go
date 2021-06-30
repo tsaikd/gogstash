@@ -207,7 +207,6 @@ func (i *InputConfig) handleUDPpacketMode(ctx context.Context, conn net.PacketCo
 				return err
 			}
 		}
-		return nil
 	})
 
 	return eg.Wait()
