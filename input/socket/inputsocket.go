@@ -31,6 +31,8 @@ type InputConfig struct {
 	Address    string `json:"address"`
 	ReusePort  bool   `json:"reuseport"`
 	BufferSize int    `json:"buffer_size"`
+	// packetmode is only valid for UDP sessions and handles each packet as a message on its own
+	PacketMode bool `json:"packetmode"`
 }
 
 // DefaultInputConfig returns an InputConfig struct with default values
@@ -121,7 +123,11 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		if err != nil {
 			return err
 		}
-		return i.handleUDP(ctx, conn, msgChan)
+		if i.PacketMode {
+			return i.handleUDPpacketMode(ctx, conn, msgChan)
+		} else {
+			return i.handleUDP(ctx, conn, msgChan)
+		}
 	default:
 		return ErrorUnknownSocketType1.New(nil, i.Socket)
 	}
@@ -146,6 +152,60 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 					return nil
 				})
 			}(conn)
+		}
+	})
+
+	return eg.Wait()
+}
+
+// handleUDPpacketMode receives UDP packets and sends it out as messages one packet at a time
+func (i *InputConfig) handleUDPpacketMode(ctx context.Context, conn net.PacketConn, msgChan chan<- logevent.LogEvent) error {
+	eg, ctx := errgroup.WithContext(ctx)
+	b := make([]byte, i.BufferSize) // make read buffer
+	logger := goglog.Logger
+
+	// code to handle cancellation as ReadFrom is blocking and could take some time to time out if there is no traffic
+	eg.Go(func() error {
+		<-ctx.Done()
+		conn.Close()
+		return nil
+	})
+
+	// code to process input packets
+	eg.Go(func() error {
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			default:
+			}
+			n, addr, err := conn.ReadFrom(b)
+			// handle data
+			if n > 0 {
+				if n >= i.BufferSize {
+					const bufIncSize = 600
+					logger.Errorf("%v UDP receive buffers (%v bytes) too small, should be increased!", i.Address, i.BufferSize)
+					i.BufferSize += bufIncSize
+					b = make([]byte, i.BufferSize)
+				} else {
+					extras := map[string]interface{}{
+						"host_ip": addr.String(),
+					}
+					_, codecErr := i.Codec.Decode(ctx, b[:n], extras, []string{}, msgChan)
+					if codecErr != nil {
+						logger.Errorf("Input socket %v: %v", i.Address, codecErr)
+					}
+				}
+			}
+			// handle error
+			switch err {
+			case nil:
+			// continue processing
+			case io.EOF:
+				return nil
+			default:
+				return err
+			}
 		}
 	})
 
@@ -193,6 +253,7 @@ func (i *InputConfig) handleUDP(ctx context.Context, conn net.PacketConn, msgCha
 
 func (i *InputConfig) parse(ctx context.Context, r io.Reader, msgChan chan<- logevent.LogEvent) {
 	b := bufio.NewReader(r)
+	logger := goglog.Logger
 	for {
 		select {
 		case <-ctx.Done():
@@ -206,6 +267,9 @@ func (i *InputConfig) parse(ctx context.Context, r io.Reader, msgChan chan<- log
 			return
 		}
 
-		i.Codec.Decode(ctx, line, nil, []string{}, msgChan)
+		_, codecErr := i.Codec.Decode(ctx, line, nil, []string{}, msgChan)
+		if codecErr != nil {
+			logger.Errorf("Input socket %v: %v", i.Address, codecErr)
+		}
 	}
 }
