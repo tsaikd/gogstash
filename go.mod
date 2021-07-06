@@ -39,6 +39,7 @@ require (
 	github.com/prometheus/procfs v0.0.11 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect
 	github.com/satyrius/gonx v1.3.1-0.20181123214749-d96bd26e3b2c
+	github.com/sethgrid/pester v1.1.0
 	github.com/sirupsen/logrus v1.5.0
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cast v1.3.1 // indirect

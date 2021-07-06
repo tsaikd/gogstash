@@ -31,6 +31,7 @@ import (
 	inputredis "github.com/tsaikd/gogstash/input/redis"
 	inputsocket "github.com/tsaikd/gogstash/input/socket"
 	outputamqp "github.com/tsaikd/gogstash/output/amqp"
+	outputclickhouse "github.com/tsaikd/gogstash/output/clickhouse"
 	outputcond "github.com/tsaikd/gogstash/output/cond"
 	outputelastic "github.com/tsaikd/gogstash/output/elastic"
 	outputelasticv5 "github.com/tsaikd/gogstash/output/elasticv5"
@@ -79,6 +80,7 @@ func init() {
 	config.RegistOutputHandler(outputamqp.ModuleName, outputamqp.InitHandler)
 	config.RegistOutputHandler(outputcond.ModuleName, outputcond.InitHandler)
 	config.RegistOutputHandler(outputelastic.ModuleName, outputelastic.InitHandler)
+	config.RegistOutputHandler(outputclickhouse.ModuleName, outputclickhouse.InitHandler)
 	config.RegistOutputHandler(outputelasticv5.ModuleName, outputelasticv5.InitHandler)
 	config.RegistOutputHandler(outputemail.ModuleName, outputemail.InitHandler)
 	config.RegistOutputHandler(outputhttp.ModuleName, outputhttp.InitHandler)
