@@ -26,6 +26,7 @@ type FilterConfig struct {
 	Key         string `json:"key"`          // geoip destination field name, default: geoip
 	QuietFail   bool   `json:"quiet"`        // fail quietly
 	SkipPrivate bool   `json:"skip_private"` // skip private IP addresses
+	PrivateNet []string `json:"private_net"` // list of own defined private IP addresses
 	FlatFormat  bool   `json:"flat_format"`  // flat format
 	CacheSize   int    `json:"cache_size"`   // cache size
 
@@ -74,6 +75,12 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		"127.0.0.0/8",
 		"172.16.0.0/12",
 		"192.168.0.0/16",
+		"fc00::/7",
+		"fe80::/10",
+		"169.254.0.0/16",
+	}
+	if len(conf.PrivateNet) > 0 {
+		cidrs = conf.PrivateNet
 	}
 	for _, cidr := range cidrs {
 		_, privateCIDR, _ := net.ParseCIDR(cidr)
