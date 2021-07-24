@@ -117,7 +117,7 @@ func TestDefaultOutputConfigNewFile(t *testing.T) {
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
 	`)))
 	assert.Nil(err)
@@ -164,7 +164,7 @@ func TestDefaultOutputConfigNewFilePerm(t *testing.T) {
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
 	`)))
@@ -194,7 +194,7 @@ output:
 	err = config.Output(context.TODO(), event)
 	assert.Nil(err)
 
-	// wait for done channel or 2 seconds delay, whatever happends first
+	// wait for done channel or 2 seconds delay, whatever happens first
 	select {
 	case <-done:
 	case <-time.Tick(2 * time.Second):
@@ -212,7 +212,7 @@ func TestDefaultOutputConfigCodec(t *testing.T) {
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
     codec: "test"
@@ -261,7 +261,7 @@ func TestDefaultOutputConfigCodecVar(t *testing.T) {
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
     codec: "%{log}"
@@ -311,7 +311,7 @@ func TestDefaultOutputConfigCreateIfNeeded(t *testing.T) {
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
 	`)))
@@ -371,7 +371,7 @@ func TestDefaultOutputConfigCreateIfNeededDisabled(t *testing.T) {
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
     create_if_deleted: false
@@ -428,7 +428,7 @@ func TestDefaultOutputConfigNewFileDir(t *testing.T) {
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
     dir_mode: "` + strconv.Itoa(dirMode) + `"
@@ -481,7 +481,7 @@ func TestDefaultOutputConfigNewFileExistingDir(t *testing.T) {
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
     dir_mode: "` + strconv.Itoa(dirMode) + `"
@@ -529,7 +529,7 @@ func TestDefaultOutputConfigExistingAppendedFile(t *testing.T) {
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     write_behavior: append
 	`)))
@@ -575,7 +575,7 @@ func TestDefaultOutputConfigExistingOverwrittenFile(t *testing.T) {
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     write_behavior: overwrite
 	`)))
@@ -622,7 +622,7 @@ func TestDefaultOutputConfigSync(t *testing.T) {
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 0
 	`)))
 	assert.Nil(err)
@@ -659,4 +659,33 @@ output:
 	case <-time.Tick(2 * time.Second):
 	}
 
+}
+
+func Test_parseAsIntOrOctal(t *testing.T) {
+	type args struct {
+		input string
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantResult int
+		wantErr    bool
+	}{
+		{"NaN", args{"text"}, 0, true},
+		{"10", args{"10"}, 10, false},
+		{"010", args{"010"}, 8, false},
+		{"1e2", args{"1e2"}, 100, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotResult, err := parseAsIntOrOctal(tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseAsIntOrOctal() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotResult != tt.wantResult {
+				t.Errorf("parseAsIntOrOctal() gotResult = %v, want %v", gotResult, tt.wantResult)
+			}
+		})
+	}
 }
