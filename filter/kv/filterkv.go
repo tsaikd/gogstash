@@ -113,7 +113,7 @@ func splitIntoKV(input []string, keepAsString []string) map[string]interface{} {
 	result := make(map[string]interface{})
 	for _, v := range input {
 		separator := strings.IndexRune(v, '=')
-		if separator > 0 && separator < len(v) {
+		if separator > 0 && separator < len(v) -1 {
 			key := v[:separator]
 			var val string
 			if v[separator+1] == '"' {
