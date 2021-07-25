@@ -145,10 +145,20 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			if err != nil {
 				return ErrorSocketAccept.New(err)
 			}
+			doneCh := make(chan struct{})
+			eg.Go(func() error {
+				select {
+				case <-doneCh:
+				case <-ctx.Done():
+					conn.Close()
+				}
+				return nil
+			})
 			func(conn net.Conn) {
 				eg.Go(func() error {
 					defer conn.Close()
 					i.parse(ctx, conn, msgChan)
+					close(doneCh)
 					return nil
 				})
 			}(conn)
