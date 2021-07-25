@@ -3,6 +3,7 @@ package outputhttp
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -27,7 +28,9 @@ var (
 // OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
-	URLs []string `json:"urls"` // Array of HTTP connection strings
+	URLs               []string `json:"urls"` // Array of HTTP connection strings
+	AcceptedHttpResult []int    `json:"http_status_codes" yaml:"http_status_codes"`
+	IgnoreSSL          bool     `json:"ignore_ssl" yaml:"ignore_ssl"`
 
 	httpClient *http.Client
 }
@@ -40,6 +43,7 @@ func DefaultOutputConfig() OutputConfig {
 				Type: ModuleName,
 			},
 		},
+		AcceptedHttpResult: []int{200, 201, 202},
 	}
 }
 
@@ -58,12 +62,12 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		DialContext: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
-			DualStack: true,
 		}).DialContext,
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: conf.IgnoreSSL},
 	}}
 
 	return &conf, nil
@@ -79,7 +83,7 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 	}
 
 	url := t.URLs[i]
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(raw))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(raw))
 	if err != nil {
 		return err
 	}
@@ -96,11 +100,21 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 	if err != nil {
 		return err
 	}
-	if resp.StatusCode != http.StatusOK {
+	if !t.checkIntInList(resp.StatusCode) {
 		err = ErrEndpointDown1.New(nil, url)
-		goglog.Logger.Errorf("output http: %v", err)
+		goglog.Logger.Errorf("output http: %v, status=%v", err, resp.StatusCode)
 		return err
 	}
 
 	return nil
+}
+
+// checkIntInList checks if code is in configured list of accepted status codes
+func (t *OutputConfig) checkIntInList(code int) bool {
+	for _, v := range t.AcceptedHttpResult {
+		if v == code {
+			return true
+		}
+	}
+	return false
 }

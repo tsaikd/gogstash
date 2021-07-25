@@ -57,3 +57,33 @@ output:
 	time.Sleep(100 * time.Millisecond)
 	assert.Contains(h.Body.String(), "\"message\":\"outputhttp test message\"")
 }
+
+func TestOutputConfig_checkIntInList(t1 *testing.T) {
+	myList := []int{100, 200, 300}
+	type fields struct {
+		AcceptedHttpResult []int
+	}
+	type args struct {
+		code int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{"100", fields{myList}, args{code: 100}, true},
+		{"101", fields{myList}, args{code: 101}, false},
+		{"empty list", fields{[]int{}}, args{code: 101}, false},
+	}
+	for _, tt := range tests {
+		t1.Run(tt.name, func(t1 *testing.T) {
+			t := &OutputConfig{
+				AcceptedHttpResult: tt.fields.AcceptedHttpResult,
+			}
+			if got := t.checkIntInList(tt.args.code); got != tt.want {
+				t1.Errorf("checkIntInList() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
