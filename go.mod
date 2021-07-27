@@ -16,12 +16,10 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fsouza/go-dockerclient v1.6.4
 	github.com/golang/mock v1.4.3
-	github.com/golang/protobuf v1.4.0 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/icza/dyno v0.0.0-20200205103839-49cb13720835
 	github.com/json-iterator/go v1.1.9
-	github.com/klauspost/compress v1.10.4 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/lib/pq v1.3.0 // indirect
 	github.com/libp2p/go-reuseport v0.0.1
@@ -29,8 +27,8 @@ require (
 	github.com/mitchellh/mapstructure v1.2.2 // indirect
 	github.com/msaf1980/go-stringutils v0.0.8
 	github.com/msaf1980/statsd v0.0.0-20210625220633-8d91df059a07
-	github.com/nats-io/nats-server/v2 v2.1.6
-	github.com/nats-io/nats.go v1.9.2
+	github.com/nats-io/nats-server/v2 v2.2.0
+	github.com/nats-io/nats.go v1.10.1-0.20210228004050-ed743748acac
 	github.com/olivere/elastic/v7 v7.0.14
 	github.com/oschwald/geoip2-golang v1.4.0
 	github.com/pelletier/go-toml v1.7.0 // indirect
@@ -52,10 +50,7 @@ require (
 	github.com/ua-parser/uap-go v0.0.0-20200325213135-e1c09f13e2fe
 	github.com/vjeantet/grok v1.0.0
 	github.com/yuin/gopher-lua v0.0.0-20190206043414-8bfc7677f583 // indirect
-	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904 // indirect
-	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
-	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4 // indirect
 	google.golang.org/genproto v0.0.0-20200417142217-fb6d0575620b // indirect
 	google.golang.org/grpc v1.28.1 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
