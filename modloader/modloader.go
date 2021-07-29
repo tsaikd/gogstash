@@ -9,6 +9,7 @@ import (
 	filtergeoip2 "github.com/tsaikd/gogstash/filter/geoip2"
 	filtergonx "github.com/tsaikd/gogstash/filter/gonx"
 	filtergrok "github.com/tsaikd/gogstash/filter/grok"
+	filterhash "github.com/tsaikd/gogstash/filter/hash"
 	filterjson "github.com/tsaikd/gogstash/filter/json"
 	filterkv "github.com/tsaikd/gogstash/filter/kv"
 	filterlookuptable "github.com/tsaikd/gogstash/filter/lookuptable"
@@ -75,6 +76,7 @@ func init() {
 	config.RegistFilterHandler(filterurlparam.ModuleName, filterurlparam.InitHandler)
 	config.RegistFilterHandler(filterlookuptable.ModuleName, filterlookuptable.InitHandler)
 	config.RegistFilterHandler(filterkv.ModuleName, filterkv.InitHandler)
+	config.RegistFilterHandler(filterhash.ModuleName, filterhash.InitHandler)
 
 	config.RegistOutputHandler(outputamqp.ModuleName, outputamqp.InitHandler)
 	config.RegistOutputHandler(outputcond.ModuleName, outputcond.InitHandler)
