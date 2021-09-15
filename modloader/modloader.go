@@ -29,6 +29,7 @@ import (
 	inputkafka "github.com/tsaikd/gogstash/input/kafka"
 	inputlorem "github.com/tsaikd/gogstash/input/lorem"
 	inputnats "github.com/tsaikd/gogstash/input/nats"
+	inputnsq "github.com/tsaikd/gogstash/input/nsq"
 	inputredis "github.com/tsaikd/gogstash/input/redis"
 	inputsocket "github.com/tsaikd/gogstash/input/socket"
 	outputamqp "github.com/tsaikd/gogstash/output/amqp"
@@ -58,6 +59,7 @@ func init() {
 	config.RegistInputHandler(inputkafka.ModuleName, inputkafka.InitHandler)
 	config.RegistInputHandler(inputlorem.ModuleName, inputlorem.InitHandler)
 	config.RegistInputHandler(inputnats.ModuleName, inputnats.InitHandler)
+	config.RegistInputHandler(inputnsq.ModuleName, inputnsq.InitHandler)
 	config.RegistInputHandler(inputredis.ModuleName, inputredis.InitHandler)
 	config.RegistInputHandler(inputsocket.ModuleName, inputsocket.InitHandler)
 
