@@ -12,13 +12,14 @@ require (
 	github.com/containerd/containerd v1.5.4 // indirect
 	github.com/drhodes/golorem v0.0.0-20160418191928-ecccc744c2d9
 	github.com/elastic/go-lumber v0.1.0
-	github.com/fsnotify/fsnotify v1.4.9
+	github.com/fsnotify/fsnotify v1.5.1
 	github.com/fsouza/go-dockerclient v1.7.3
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.4.3
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/icza/dyno v0.0.0-20200205103839-49cb13720835
+	github.com/ip2location/ip2location-go/v9 v9.1.0 // indirect
 	github.com/json-iterator/go v1.1.10
 	github.com/lib/pq v1.3.0 // indirect
 	github.com/libp2p/go-reuseport v0.0.1
@@ -29,6 +30,7 @@ require (
 	github.com/msaf1980/statsd v0.0.0-20210625220633-8d91df059a07
 	github.com/nats-io/nats-server/v2 v2.2.0
 	github.com/nats-io/nats.go v1.10.1-0.20210228004050-ed743748acac
+	github.com/nsqio/go-nsq v1.0.8 // indirect
 	github.com/olivere/elastic/v7 v7.0.14
 	github.com/opencontainers/runc v1.0.1 // indirect
 	github.com/oschwald/geoip2-golang v1.4.0
@@ -50,7 +52,7 @@ require (
 	github.com/yuin/gopher-lua v0.0.0-20190206043414-8bfc7677f583 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
+	golang.org/x/sys v0.0.0-20210923061019-b8560ed6a9b7 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/ini.v1 v1.55.0 // indirect
