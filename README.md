@@ -214,6 +214,7 @@ See [input modules](input) for more information
 * [httplisten](input/httplisten)
 * [kafka](input/kafka)
 * [nats](input/nats)
+* [NSQ](input/nsq)
 * [redis](input/redis)
 * [socket](input/socket)
 
@@ -249,7 +250,10 @@ See [filter modules](filter) for more information
 * [geoip2](filter/geoip2)
 * [gonx](filter/gonx)
 * [grok](filter/grok)
+* [ip2location](filter/ip2location)
+* [ip2proxy](filter/ip2proxy)
 * [json](filter/json)
+* [key-values](filter/kv)
 * [lookuptable](filter/lookuptable)
 * [mutate](filter/mutate)
 * [rate limit](filter/ratelimit)
