@@ -443,6 +443,8 @@ github.com/ip2location/ip2location-go v8.3.0+incompatible h1:QwUE+FlSbo6bjOWZpv2
 github.com/ip2location/ip2location-go v8.3.0+incompatible/go.mod h1:3JUY1TBjTx1GdA7oRT7Zeqfc0bg3lMMuU5lXmzdpuME=
 github.com/ip2location/ip2location-go/v9 v9.1.0 h1:DVlKxIcjA7CsA0cgzbidwe6eKzpbkS313LsH9ceutxI=
 github.com/ip2location/ip2location-go/v9 v9.1.0/go.mod h1:s5SV6YZL10TpfPpXw//7fEJC65G/yH7Oh+Tjq9JcQEQ=
+github.com/ip2location/ip2proxy-go v3.0.0+incompatible h1:Huqkp/Lw24CAT4a+UyupNmEoFGmrJAIerqPgMdb5x/A=
+github.com/ip2location/ip2proxy-go v3.0.0+incompatible/go.mod h1:ntasiq+RCKmbpZN+0Ng7qlq5Gw/C4urmGeXaV6z2DqA=
 github.com/j-keck/arping v0.0.0-20160618110441-2cf9dc699c56/go.mod h1:ymszkNOg6tORTn+6F6j+Jc8TOr5osrynvN6ivFWZ2GA=
 github.com/jcmturner/gofork v1.0.0 h1:J7uCkflzTEhUZ64xqKnkDxq3kzc96ajM1Gli5ktUem8=
 github.com/jcmturner/gofork v1.0.0/go.mod h1:MK8+TM0La+2rjBD4jE12Kj1pCCxK7d2LK/UM3ncEo0o=
