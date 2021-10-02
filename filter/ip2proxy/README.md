@@ -33,6 +33,8 @@ filter:
     # (optional) size of cache entries on IP addresses, so lookups don't go through the database, default is 100000
     cache_size: 100000
 
+    # (optional) if true does not log lookup failures from the database, default is false
+    quiet: true
 ```
 
 Based on an input like this:
