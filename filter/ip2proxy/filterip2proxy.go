@@ -136,7 +136,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 		record, err = f.db.GetAll(ipstr)
 		f.dbMtx.RUnlock()
 		if err != nil {
-			if f.QuietFail {
+			if !f.QuietFail {
 				goglog.Logger.Error(err)
 			}
 			event.AddTag(ErrorTag)

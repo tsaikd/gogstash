@@ -37,4 +37,7 @@ filter:
     # `city_name`, `continent_code`, `country_code`, `country_name`,
     # `ip`, `latitude`, `longitude`, `postal_code`, `region_code`, `region_name` and `timezone`.
     flat_format: false
+
+    # (optional) if true does not log lookup failures from the database, default is false
+    quiet: true
 ```

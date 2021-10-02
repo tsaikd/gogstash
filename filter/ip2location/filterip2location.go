@@ -190,7 +190,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 		f.dbMtx.RUnlock()
 		record = &r2
 		if err != nil {
-			if f.QuietFail {
+			if !f.QuietFail {
 				goglog.Logger.Error(err)
 			}
 			event.AddTag(ErrorTag)

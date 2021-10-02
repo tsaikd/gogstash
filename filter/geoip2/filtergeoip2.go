@@ -24,14 +24,14 @@ const ErrorTag = "gogstash_filter_geoip2_error"
 type FilterConfig struct {
 	config.FilterConfig
 
-	DBPath      string   `json:"db_path"`      // geoip2 db file path, default: GeoLite2-City.mmdb
-	IPField     string   `json:"ip_field"`     // IP field to get geoip info
-	Key         string   `json:"key"`          // geoip destination field name, default: geoip
-	QuietFail   bool     `json:"quiet"`        // fail quietly
-	SkipPrivate bool     `json:"skip_private"` // skip private IP addresses
-	PrivateNet  []string `json:"private_net"`  // list of own defined private IP addresses
-	FlatFormat  bool     `json:"flat_format"`  // flat format
-	CacheSize   int      `json:"cache_size"`   // cache size
+	DBPath      string   `json:"db_path" yaml:"db_path"`           // geoip2 db file path, default: GeoLite2-City.mmdb
+	IPField     string   `json:"ip_field" yaml:"ip_field"`         // IP field to get geoip info
+	Key         string   `json:"key" yaml:"key"`                   // geoip destination field name, default: geoip
+	QuietFail   bool     `json:"quiet" yaml:"quiet"`               // fail quietly
+	SkipPrivate bool     `json:"skip_private" yaml:"skip_private"` // skip private IP addresses
+	PrivateNet  []string `json:"private_net" yaml:"private_net"`   // list of own defined private IP addresses
+	FlatFormat  bool     `json:"flat_format" yaml:"flat_format"`   // flat format
+	CacheSize   int      `json:"cache_size" yaml:"cache_size"`     // cache size
 
 	db      *geoip2.Reader
 	dbMtx   sync.RWMutex
@@ -136,7 +136,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 		record, err = f.db.City(ip)
 		f.dbMtx.RUnlock()
 		if err != nil {
-			if f.QuietFail {
+			if !f.QuietFail {
 				goglog.Logger.Error(err)
 			}
 			event.AddTag(ErrorTag)
