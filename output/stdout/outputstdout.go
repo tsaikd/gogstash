@@ -14,6 +14,11 @@ const ModuleName = "stdout"
 // OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
+
+	Codec string                 // name of codec to load
+	msg   chan []byte            // channel to push message from codec to
+	codec config.TypeCodecConfig // the codec we will use
+	ctx   context.Context
 }
 
 // DefaultOutputConfig returns an OutputConfig struct with default values
@@ -24,6 +29,7 @@ func DefaultOutputConfig() OutputConfig {
 				Type: ModuleName,
 			},
 		},
+		msg: make(chan []byte),
 	}
 }
 
@@ -35,16 +41,26 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		return nil, err
 	}
 
+	conf.ctx = ctx
+	conf.codec, err = config.GetCodecOrDefault(ctx, *raw)
+	go conf.backgroundtask()
 	return &conf, nil
+}
+
+// backgroundtask receives messages and prints them to stdout
+func (t *OutputConfig) backgroundtask() {
+	for {
+		select {
+		case <-t.ctx.Done():
+			return
+		case msg := <-t.msg:
+			fmt.Println(string(msg))
+		}
+	}
 }
 
 // Output event
 func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err error) {
-	raw, err := event.MarshalIndent()
-	if err != nil {
-		return
-	}
-
-	fmt.Println(string(raw))
+	t.codec.Encode(ctx, event, t.msg)
 	return
 }

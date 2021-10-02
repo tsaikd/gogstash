@@ -180,7 +180,14 @@ func (c *DefaultCodec) DecodeEvent(data []byte, event *logevent.LogEvent) error 
 	return nil
 }
 
-// Encode function not implemented (TODO)
+// Encode sends the message field, ignoring any extra fields
 func (c *DefaultCodec) Encode(ctx context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
-	return false, ErrorNotImplement1.New(nil)
+	// return if there is no message field
+	if len(event.Message) == 0 {
+		return false, nil
+	}
+	// send message
+	dataChan <- []byte(event.Message)
+
+	return true, nil
 }
