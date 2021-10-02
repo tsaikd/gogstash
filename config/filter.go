@@ -69,16 +69,24 @@ func RegistFilterHandler(name string, handler FilterHandler) {
 func GetFilters(ctx context.Context, filterRaw []ConfigRaw) (filters []TypeFilterConfig, err error) {
 	var filter TypeFilterConfig
 	for _, raw := range filterRaw {
-		handler, ok := mapFilterHandler[raw["type"].(string)]
-		if !ok {
-			return filters, ErrorUnknownFilterType1.New(nil, raw["type"])
+		// check if filter is disabled
+		var disabled bool
+		if result, ok := raw["disabled"].(bool); ok {
+			disabled = result
 		}
+		// load filter if not disabled
+		if !disabled {
+			handler, ok := mapFilterHandler[raw["type"].(string)]
+			if !ok {
+				return filters, ErrorUnknownFilterType1.New(nil, raw["type"])
+			}
 
-		if filter, err = handler(ctx, &raw); err != nil {
-			return filters, ErrorInitFilterFailed1.New(err, raw)
+			if filter, err = handler(ctx, &raw); err != nil {
+				return filters, ErrorInitFilterFailed1.New(err, raw)
+			}
+
+			filters = append(filters, filter)
 		}
-
-		filters = append(filters, filter)
 	}
 	return
 }

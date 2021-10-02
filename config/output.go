@@ -42,16 +42,24 @@ func RegistOutputHandler(name string, handler OutputHandler) {
 func GetOutputs(ctx context.Context, outputRaw []ConfigRaw) (outputs []TypeOutputConfig, err error) {
 	var output TypeOutputConfig
 	for _, raw := range outputRaw {
-		handler, ok := mapOutputHandler[raw["type"].(string)]
-		if !ok {
-			return outputs, ErrorUnknownOutputType1.New(nil, raw["type"])
+		// check if output is disabled
+		var disabled bool
+		if result, ok := raw["disabled"].(bool); ok {
+			disabled = result
 		}
+		// load input if not disabled
+		if !disabled {
+			handler, ok := mapOutputHandler[raw["type"].(string)]
+			if !ok {
+				return outputs, ErrorUnknownOutputType1.New(nil, raw["type"])
+			}
 
-		if output, err = handler(ctx, &raw); err != nil {
-			return outputs, ErrorInitOutputFailed1.New(err, raw)
+			if output, err = handler(ctx, &raw); err != nil {
+				return outputs, ErrorInitOutputFailed1.New(err, raw)
+			}
+
+			outputs = append(outputs, output)
 		}
-
-		outputs = append(outputs, output)
 	}
 	return
 }
