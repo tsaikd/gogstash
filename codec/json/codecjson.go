@@ -94,9 +94,14 @@ func (c *Codec) DecodeEvent(data []byte, event *logevent.LogEvent) (err error) {
 	return
 }
 
-// Encode function not implement (TODO)
-func (c *Codec) Encode(ctx context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
-	return false, config.ErrorNotImplement1.New(nil)
+// Encode encodes the event to a JSON encoded message
+func (c *Codec) Encode(_ context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
+	output, err := event.MarshalJSON()
+	if err != nil {
+		return false, err
+	}
+	dataChan <- output
+	return true, nil
 }
 
 func (c *Codec) populateEventExtras(event *logevent.LogEvent) {
