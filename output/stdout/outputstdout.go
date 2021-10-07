@@ -15,7 +15,6 @@ const ModuleName = "stdout"
 type OutputConfig struct {
 	config.OutputConfig
 
-	Codec string                 // name of codec to load
 	msg   chan []byte            // channel to push message from codec to
 	codec config.TypeCodecConfig // the codec we will use
 	ctx   context.Context

@@ -24,6 +24,7 @@ type TypeOutputConfig interface {
 // OutputConfig is basic output config struct
 type OutputConfig struct {
 	CommonConfig
+	Codec string // name of codec to load
 }
 
 // OutputHandler is a handler to regist output module

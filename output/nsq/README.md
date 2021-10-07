@@ -16,4 +16,7 @@ output:
 
     # (optional) The number of inflight messages to handle, default is 150
     max_inflight: 75
+
+    # (optional) Configures what codec to produce the output on, default is "default"
+    codec: "json"
 ```
