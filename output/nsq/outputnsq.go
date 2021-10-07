@@ -22,6 +22,9 @@ type OutputConfig struct {
 
 	producer *nsq.Producer
 	ctx      context.Context
+
+	msg   chan []byte            // channel to push message from codec to
+	codec config.TypeCodecConfig // the codec we will use
 }
 
 // DefaultOutputConfig returns an OutputConfig struct with default values
@@ -33,6 +36,7 @@ func DefaultOutputConfig() OutputConfig {
 			},
 		},
 		InFlight: 150,
+		msg:      make(chan []byte),
 	}
 }
 
@@ -51,6 +55,11 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		return nil, errors.New("Missing topic")
 	}
 
+	conf.codec, err = config.GetCodecOrDefault(ctx, *raw)
+	if err != nil {
+		return nil, err
+	}
+
 	conf.ctx = ctx
 	cfg := nsq.NewConfig()
 	cfg.MaxInFlight = int(conf.InFlight)
@@ -63,19 +72,27 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 	return &conf, nil
 }
 
-// nsqbackgroundtask runs in the background and handles stopping of the output
+// nsqbackgroundtask runs in the background and handles messages and termination
 func (t *OutputConfig) nsqbackgroundtask() {
-	<-t.ctx.Done()
-	goglog.Logger.Debug("outputnsq: stopping")
-	t.producer.Stop()
-	goglog.Logger.Debug("outputnsq: stopped")
+	for {
+		select {
+		case <-t.ctx.Done():
+			goglog.Logger.Debug("outputnsq: stopping")
+			t.producer.Stop()
+			goglog.Logger.Debug("outputnsq: stopped")
+			close(t.msg)
+			return
+		case msg := <-t.msg:
+			err := t.producer.Publish(t.Topic, msg)
+			if err != nil {
+				goglog.Logger.Errorf("outputnsq: %s", err.Error())
+			}
+		}
+	}
 }
 
 // Output event
 func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err error) {
-	jsonBytes, err := event.MarshalJSON()
-	if err != nil {
-		return err
-	}
-	return t.producer.Publish(t.Topic, jsonBytes)
+	_, err = t.codec.Encode(ctx, event, t.msg)
+	return
 }
