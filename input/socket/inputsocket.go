@@ -3,6 +3,7 @@ package inputsocket
 import (
 	"bufio"
 	"context"
+	"errors"
 	"io"
 	"net"
 	"os"
@@ -30,7 +31,7 @@ type InputConfig struct {
 	// For Unix networks, the address must be a file system path.
 	Address    string `json:"address"`
 	ReusePort  bool   `json:"reuseport"`
-	BufferSize int    `json:"buffer_size"`
+	BufferSize int    `json:"buffer_size" yaml:"buffer_size"`
 	// packetmode is only valid for UDP sessions and handles each packet as a message on its own
 	PacketMode bool `json:"packetmode"`
 }
@@ -143,6 +144,9 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		for {
 			conn, err := l.Accept()
 			if err != nil {
+				if errors.Is(err, net.ErrClosed) {
+					return nil
+				}
 				return ErrorSocketAccept.New(err)
 			}
 			doneCh := make(chan struct{})
@@ -214,6 +218,9 @@ func (i *InputConfig) handleUDPpacketMode(ctx context.Context, conn net.PacketCo
 			case io.EOF:
 				return nil
 			default:
+				if errors.Is(err, net.ErrClosed) {
+					return nil // do not return error on closed socket
+				}
 				return err
 			}
 		}
@@ -243,12 +250,14 @@ func (i *InputConfig) handleUDP(ctx context.Context, conn net.PacketConn, msgCha
 			default:
 			}
 			n, _, err := conn.ReadFrom(b)
-			if err == io.EOF {
+			if n > 0 {
+				pw.Write(b[:n])
+			}
+			if errors.Is(err, net.ErrClosed) || err == io.EOF {
 				break
 			} else if err != nil {
 				return err
 			}
-			pw.Write(b[:n])
 		}
 		return nil
 	})
