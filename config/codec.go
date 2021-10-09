@@ -72,7 +72,7 @@ func GetCodec(ctx context.Context, raw ConfigRaw) (TypeCodecConfig, error) {
 
 // GetCodecDefault returns a codec based on the 'codec' configuration from provided 'ConfigRaw' input
 // defaults to 'defaultType'
-func GetCodecDefault(ctx context.Context, raw ConfigRaw, defaultType string) (TypeCodecConfig, error) {
+func GetCodecDefault(ctx context.Context, raw ConfigRaw, defaultType string) (codec TypeCodecConfig, err error) {
 	codecConfig, err := dyno.Get(map[string]interface{}(raw), "codec")
 	if err != nil {
 		// return default codec here
@@ -85,24 +85,29 @@ func GetCodecDefault(ctx context.Context, raw ConfigRaw, defaultType string) (Ty
 
 	switch cfg := codecConfig.(type) {
 	case map[string]interface{}:
-		return getCodec(ctx, ConfigRaw(cfg))
+		codec, err = getCodec(ctx, ConfigRaw(cfg))
 	case string:
 		// shorthand codec config method:
 		// codec: [codecTypeName]
-		return getCodec(ctx, ConfigRaw{"type": cfg})
+		codec, err = getCodec(ctx, ConfigRaw{"type": cfg})
 	default:
 		return nil, ErrorUnknownCodecType1.New(nil, codecConfig)
 	}
+	if err != nil || codec == nil {
+		codec, err = getCodec(ctx, ConfigRaw{"type": defaultType})
+	}
+	return
 }
 
 func getCodec(ctx context.Context, raw ConfigRaw) (codec TypeCodecConfig, err error) {
-	handler, ok := mapCodecHandler[raw["type"].(string)]
-	if !ok {
-		return nil, ErrorUnknownCodecType1.New(nil, raw["type"])
-	}
-
-	if codec, err = handler(ctx, &raw); err != nil {
-		return nil, ErrorInitCodecFailed1.New(err, raw)
+	if _, ok := raw["type"]; ok {
+		if handler, ok := mapCodecHandler[raw["type"].(string)]; ok {
+			if codec, err = handler(ctx, &raw); err != nil {
+				return nil, ErrorInitCodecFailed1.New(err, raw)
+			}
+		} else {
+			return nil, ErrorUnknownCodecType1.New(nil, raw["type"])
+		}
 	}
 
 	return codec, nil
