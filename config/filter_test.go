@@ -35,7 +35,7 @@ func TestCommonIsConfigured(t *testing.T) {
 	assert.False(filter.IsConfigured(), "should be not configured")
 	withAddTag := FilterConfig{AddTags: []string{"tag"}}
 	assert.True(withAddTag.IsConfigured(), "should be configured")
-	withAddFields := FilterConfig{AddFields: []FieldConfig{FieldConfig{Key: "name", Value: "value"}}}
+	withAddFields := FilterConfig{AddFields: []FieldConfig{{Key: "name", Value: "value"}}}
 	assert.True(withAddFields.IsConfigured(), "should be configured")
 	withRemoveTag := FilterConfig{RemoveTags: []string{"tag"}}
 	assert.True(withRemoveTag.IsConfigured(), "should be configured")
