@@ -55,14 +55,14 @@ var (
 )
 
 // InitHandler initialize the input plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
+func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
 		return nil, err
 	}
 
-	conf.Codec, err = config.GetCodecDefault(ctx, *raw, codecjson.ModuleName)
+	conf.Codec, err = config.GetCodec(ctx, raw["codec"], codecjson.ModuleName)
 	if err != nil {
 		return nil, err
 	}

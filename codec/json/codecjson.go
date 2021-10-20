@@ -22,7 +22,7 @@ type Codec struct {
 }
 
 // InitHandler initialize the codec plugin
-func InitHandler(context.Context, *config.ConfigRaw) (config.TypeCodecConfig, error) {
+func InitHandler(context.Context, config.ConfigRaw) (config.TypeCodecConfig, error) {
 	return &Codec{
 		CodecConfig: config.CodecConfig{
 			CommonConfig: config.CommonConfig{

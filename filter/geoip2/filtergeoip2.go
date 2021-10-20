@@ -2,11 +2,11 @@ package filtergeoip2
 
 import (
 	"context"
-	"github.com/fsnotify/fsnotify"
 	"net"
 	"sync"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	lru "github.com/hashicorp/golang-lru"
 	geoip2 "github.com/oschwald/geoip2-golang"
 	"github.com/tsaikd/gogstash/config"
@@ -60,7 +60,7 @@ func DefaultFilterConfig() FilterConfig {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
+func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {

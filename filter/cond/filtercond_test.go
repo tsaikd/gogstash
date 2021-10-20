@@ -2,7 +2,6 @@ package filtercond
 
 import (
 	"context"
-	filtermutate "github.com/tsaikd/gogstash/filter/mutate"
 	"strings"
 	"testing"
 	"time"
@@ -13,7 +12,8 @@ import (
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"github.com/tsaikd/gogstash/filter/addfield"
+	filteraddfield "github.com/tsaikd/gogstash/filter/addfield"
+	filtermutate "github.com/tsaikd/gogstash/filter/mutate"
 )
 
 func init() {
@@ -35,10 +35,10 @@ filter:
     filter:
       - type: add_field
         key: foo
-        value: bar    
+        value: bar
     `)))
 	require.Nil(err)
-	_, err = InitHandler(context.TODO(), &conf.FilterRaw[0])
+	_, err = InitHandler(context.TODO(), conf.FilterRaw[0])
 	require.NotNil(err)
 }
 

@@ -121,24 +121,17 @@ filter:
 
 	time.Sleep(500 * time.Millisecond)
 
+	const count = 10
 	start := time.Now()
 
-	conf.TestInputEvent(logevent.LogEvent{})
-	conf.TestInputEvent(logevent.LogEvent{})
-	conf.TestInputEvent(logevent.LogEvent{})
-	conf.TestInputEvent(logevent.LogEvent{})
-	conf.TestInputEvent(logevent.LogEvent{})
+	for i := 0; i < count; i++ {
+		conf.TestInputEvent(logevent.LogEvent{})
+	}
 
-	_, err = conf.TestGetOutputEvent(100 * time.Millisecond)
-	require.NoError(err)
-	_, err = conf.TestGetOutputEvent(100 * time.Millisecond)
-	require.NoError(err)
-	_, err = conf.TestGetOutputEvent(100 * time.Millisecond)
-	require.NoError(err)
-	_, err = conf.TestGetOutputEvent(100 * time.Millisecond)
-	require.NoError(err)
-	_, err = conf.TestGetOutputEvent(100 * time.Millisecond)
-	require.NoError(err)
+	for i := 0; i < count; i++ {
+		_, err = conf.TestGetOutputEvent(200 * time.Millisecond)
+		require.NoError(err)
+	}
 
-	require.WithinDuration(start.Add(400*time.Millisecond), time.Now(), 150*time.Millisecond)
+	require.WithinDuration(start.Add((count-1)*100*time.Millisecond), time.Now(), 250*time.Millisecond)
 }

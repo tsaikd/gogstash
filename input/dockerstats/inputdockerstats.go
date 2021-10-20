@@ -66,7 +66,7 @@ var (
 )
 
 // InitHandler initialize the input plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
+func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
@@ -97,7 +97,10 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 
 	// This is really a "reference" codec instance, with each Stream getting their own copy.
 	//  copying codec instances is needed to allow codecs to do sequential processing, such as multi-line logs with proper isolation.
-	conf.Codec, err = config.GetCodecOrDefault(ctx, *raw)
+	conf.Codec, err = config.GetCodecOrDefault(ctx, raw["codec"])
+	if err != nil {
+		return nil, err
+	}
 
 	return &conf, err
 }

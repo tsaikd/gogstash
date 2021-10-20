@@ -2,15 +2,16 @@ package filterip2location
 
 import (
 	"context"
+	"net"
+	"sync"
+	"time"
+
 	"github.com/fsnotify/fsnotify"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/ip2location/ip2location-go/v9"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"net"
-	"sync"
-	"time"
 )
 
 // ModuleName is the name used in config file
@@ -111,7 +112,7 @@ func (fc *FilterConfig) initFsnotifyEventHandler() {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
+func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {

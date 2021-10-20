@@ -7,7 +7,7 @@ import (
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"github.com/tsaikd/gogstash/filter/cond"
+	filtercond "github.com/tsaikd/gogstash/filter/cond"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -38,7 +38,7 @@ func DefaultOutputConfig() OutputConfig {
 }
 
 // InitHandler initialize the output plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputConfig, error) {
+func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeOutputConfig, error) {
 	conf := DefaultOutputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {

@@ -2,13 +2,13 @@ package filterip2proxy
 
 import (
 	"context"
-	"github.com/fsnotify/fsnotify"
-	"github.com/ip2location/ip2proxy-go"
 	"net"
 	"sync"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/ip2location/ip2proxy-go"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -59,7 +59,7 @@ func DefaultFilterConfig() FilterConfig {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
+func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {

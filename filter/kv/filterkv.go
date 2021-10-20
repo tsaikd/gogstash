@@ -2,10 +2,11 @@ package kv
 
 import (
 	"context"
-	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/logevent"
 	"strconv"
 	"strings"
+
+	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 // ModuleName is the name used in the config file
@@ -31,7 +32,7 @@ func DefaultFilterConfig() FilterConfig {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
+func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
 	if err := config.ReflectConfig(raw, &conf); err != nil {
 		return nil, err
@@ -113,7 +114,7 @@ func splitIntoKV(input []string, keepAsString []string) map[string]interface{} {
 	result := make(map[string]interface{})
 	for _, v := range input {
 		separator := strings.IndexRune(v, '=')
-		if separator > 0 && separator < len(v) -1 {
+		if separator > 0 && separator < len(v)-1 {
 			key := v[:separator]
 			var val string
 			if v[separator+1] == '"' {

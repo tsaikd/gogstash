@@ -33,7 +33,7 @@ func DefaultOutputConfig() OutputConfig {
 }
 
 // InitHandler initialize the output plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputConfig, error) {
+func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeOutputConfig, error) {
 	conf := DefaultOutputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
@@ -41,8 +41,13 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 	}
 
 	conf.ctx = ctx
-	conf.codec, err = config.GetCodecOrDefault(ctx, *raw)
+	conf.codec, err = config.GetCodecOrDefault(ctx, raw["codec"])
+	if err != nil {
+		return nil, err
+	}
+
 	go conf.backgroundtask()
+
 	return &conf, nil
 }
 
@@ -60,6 +65,7 @@ func (t *OutputConfig) backgroundtask() {
 
 // Output event
 func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err error) {
-	t.codec.Encode(ctx, event, t.msg)
+	_, err = t.codec.Encode(ctx, event, t.msg)
+
 	return
 }
