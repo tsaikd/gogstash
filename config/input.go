@@ -26,7 +26,7 @@ type InputConfig struct {
 }
 
 // InputHandler is a handler to regist input module
-type InputHandler func(ctx context.Context, raw *ConfigRaw) (TypeInputConfig, error)
+type InputHandler func(ctx context.Context, raw ConfigRaw) (TypeInputConfig, error)
 
 var (
 	mapInputHandler = map[string]InputHandler{}
@@ -52,7 +52,7 @@ func (t *Config) getInputs() (inputs []TypeInputConfig, err error) {
 				return inputs, ErrorUnknownInputType1.New(nil, raw["type"])
 			}
 
-			if input, err = handler(t.ctx, &raw); err != nil {
+			if input, err = handler(t.ctx, raw); err != nil {
 				return inputs, ErrorInitInputFailed1.New(err, raw)
 			}
 

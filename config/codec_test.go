@@ -13,7 +13,6 @@ import (
 
 func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
-	RegistCodecHandler(DefaultCodecName, DefaultCodecInitHandler)
 }
 
 func TestGetCodec(t *testing.T) {
@@ -24,19 +23,21 @@ func TestGetCodec(t *testing.T) {
 
 	ctx := context.Background()
 	// default codec, should be ok
-	codec, err := GetCodec(ctx, ConfigRaw{})
+	codec, err := GetCodecOrDefault(ctx, ConfigRaw{})
 	require.NoError(err)
-	assert.NotNil(codec)
+	require.NotNil(codec)
+	require.EqualValues(DefaultCodecName, codec.GetType())
 
 	// shorthand codec config method, should be ok
-	codec, err = GetCodec(ctx, ConfigRaw{"codec": DefaultCodecName})
+	codec, err = GetCodecOrDefault(ctx, ConfigRaw{"codec": DefaultCodecName})
 	require.NoError(err)
-	assert.NotNil(codec)
+	require.NotNil(codec)
+	require.EqualValues(DefaultCodecName, codec.GetType())
 
 	// undefined codec, should not exists
-	codec, err = GetCodec(ctx, ConfigRaw{"codec": map[string]interface{}{"type": "undefined"}})
+	codec, err = GetCodecOrDefault(ctx, ConfigRaw{"codec": map[string]interface{}{"type": "undefined"}})
 	require.Error(err)
-	assert.Nil(codec)
+	require.Nil(codec)
 }
 
 func TestDefaultCodecDecode(t *testing.T) {

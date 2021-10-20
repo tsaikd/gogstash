@@ -16,8 +16,8 @@ import (
 )
 
 // ReflectConfig set conf from confraw
-func ReflectConfig(confraw *ConfigRaw, conf interface{}) (err error) {
-	data, err := json.Marshal(dyno.ConvertMapI2MapS(map[string]interface{}(*confraw)))
+func ReflectConfig(confraw ConfigRaw, conf interface{}) (err error) {
+	data, err := json.Marshal(dyno.ConvertMapI2MapS(map[string]interface{}(confraw)))
 	if err != nil {
 		return
 	}

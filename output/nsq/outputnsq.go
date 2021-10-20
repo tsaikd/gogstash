@@ -3,6 +3,7 @@ package nsq
 import (
 	"context"
 	"errors"
+
 	"github.com/nsqio/go-nsq"
 	"github.com/tsaikd/KDGoLib/version"
 	"github.com/tsaikd/gogstash/config"
@@ -41,7 +42,7 @@ func DefaultOutputConfig() OutputConfig {
 }
 
 // InitHandler initialize the output plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputConfig, error) {
+func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeOutputConfig, error) {
 	conf := DefaultOutputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
@@ -55,7 +56,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		return nil, errors.New("Missing topic")
 	}
 
-	conf.codec, err = config.GetCodecOrDefault(ctx, *raw)
+	conf.Codec, err = config.GetCodecOrDefault(ctx, raw["codec"])
 	if err != nil {
 		return nil, err
 	}

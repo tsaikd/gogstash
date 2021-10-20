@@ -9,13 +9,14 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/goglog"
-	"github.com/tsaikd/gogstash/config/logevent"
 	"hash"
 	"hash/adler32"
 	"hash/fnv"
 	"math/big"
+
+	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 // ModuleName is the name used in the config file
@@ -82,7 +83,7 @@ var hashAlgos = []hashAlgo{
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
+func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
 	if err := config.ReflectConfig(raw, &conf); err != nil {
 		return nil, err

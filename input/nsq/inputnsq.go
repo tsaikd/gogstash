@@ -3,6 +3,7 @@ package nsq
 import (
 	"context"
 	"errors"
+
 	"github.com/nsqio/go-nsq"
 	"github.com/tsaikd/KDGoLib/version"
 	"github.com/tsaikd/gogstash/config"
@@ -36,7 +37,7 @@ func DefaultInputConfig() InputConfig {
 }
 
 // InitHandler initialize the input plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
+func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
@@ -51,7 +52,11 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 	if len(conf.Channel) == 0 {
 		return nil, errors.New("nsq: missing channel")
 	}
-	conf.Codec, err = config.GetCodecOrDefault(ctx, *raw)
+	conf.Codec, err = config.GetCodecOrDefault(ctx, raw["codec"])
+	if err != nil {
+		return nil, err
+	}
+
 	return &conf, err
 }
 

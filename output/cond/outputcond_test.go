@@ -12,7 +12,7 @@ import (
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"github.com/tsaikd/gogstash/output/stdout"
+	outputstdout "github.com/tsaikd/gogstash/output/stdout"
 )
 
 func init() {
@@ -34,10 +34,10 @@ output:
     output:
       - type: add_field
         key: foo
-        value: bar    
+        value: bar
     `)))
 	require.Nil(err)
-	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0])
 	require.NotNil(err)
 }
 

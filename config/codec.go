@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/icza/dyno"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -41,10 +40,12 @@ type CodecConfig struct {
 }
 
 // CodecHandler is a handler to regist codec module
-type CodecHandler func(ctx context.Context, raw *ConfigRaw) (TypeCodecConfig, error)
+type CodecHandler func(ctx context.Context, raw ConfigRaw) (TypeCodecConfig, error)
 
 var (
-	mapCodecHandler = map[string]CodecHandler{}
+	mapCodecHandler = map[string]CodecHandler{
+		DefaultCodecName: DefaultCodecInitHandler,
+	}
 )
 
 // RegistCodecHandler regist a codec handler
@@ -52,62 +53,55 @@ func RegistCodecHandler(name string, handler CodecHandler) {
 	mapCodecHandler[name] = handler
 }
 
-// GetCodecOrDefault returns a codec based on the `codec` configuration, if specified in `ConfigRaw` input,
-//  else an instance of `DefaultCodec` is returned
-func GetCodecOrDefault(ctx context.Context, raw ConfigRaw) (TypeCodecConfig, error) {
-	c, err := GetCodec(ctx, raw)
-	if err != nil {
-		return nil, err
-	}
-	if c == nil {
-		return DefaultCodecInitHandler(ctx, nil)
-	}
-	return c, nil
+func GetCodecOrDefault(ctx context.Context, raw interface{}) (TypeCodecConfig, error) {
+	return GetCodec(ctx, raw, DefaultCodecName)
 }
 
 // GetCodec returns a codec based on the 'codec' configuration from provided 'ConfigRaw' input
-func GetCodec(ctx context.Context, raw ConfigRaw) (TypeCodecConfig, error) {
-	return GetCodecDefault(ctx, raw, DefaultCodecName)
-}
-
-// GetCodecDefault returns a codec based on the 'codec' configuration from provided 'ConfigRaw' input
 // defaults to 'defaultType'
-func GetCodecDefault(ctx context.Context, raw ConfigRaw, defaultType string) (codec TypeCodecConfig, err error) {
-	codecConfig, err := dyno.Get(map[string]interface{}(raw), "codec")
-	if err != nil {
-		// return default codec here
-		return getCodec(ctx, ConfigRaw{"type": defaultType})
-	}
-
-	if codecConfig == nil {
-		return nil, nil
-	}
-
-	switch cfg := codecConfig.(type) {
+func GetCodec(
+	ctx context.Context,
+	raw interface{},
+	defaultType string,
+) (codec TypeCodecConfig, err error) {
+	switch cfg := raw.(type) {
+	case ConfigRaw:
+		if codecConfig, ok := cfg["codec"]; ok {
+			return GetCodec(ctx, codecConfig, defaultType)
+		}
 	case map[string]interface{}:
-		codec, err = getCodec(ctx, ConfigRaw(cfg))
+		if codecConfig, ok := cfg["codec"]; ok {
+			return GetCodec(ctx, codecConfig, defaultType)
+		}
+		raw = ConfigRaw(cfg)
 	case string:
 		// shorthand codec config method:
 		// codec: [codecTypeName]
-		codec, err = getCodec(ctx, ConfigRaw{"type": cfg})
+		raw = ConfigRaw{"type": cfg}
+	case nil:
+		raw = ConfigRaw{"type": defaultType}
 	default:
-		return nil, ErrorUnknownCodecType1.New(nil, codecConfig)
+		return nil, ErrorUnknownCodecType1.New(nil, raw)
 	}
-	if err != nil || codec == nil {
-		codec, err = getCodec(ctx, ConfigRaw{"type": defaultType})
+	cfg, ok := raw.(ConfigRaw)
+	if !ok {
+		return nil, ErrorUnknownCodecType1.New(nil, raw)
 	}
-	return
-}
+	typeNameRaw, ok := cfg["type"]
+	if !ok {
+		typeNameRaw = defaultType
+	}
+	typeName, ok := typeNameRaw.(string)
+	if !ok {
+		return nil, ErrorUnknownCodecType1.New(nil, typeNameRaw)
+	}
+	handler, ok := mapCodecHandler[typeName]
+	if !ok {
+		return nil, ErrorUnknownCodecType1.New(nil, typeName)
+	}
 
-func getCodec(ctx context.Context, raw ConfigRaw) (codec TypeCodecConfig, err error) {
-	if _, ok := raw["type"]; ok {
-		if handler, ok := mapCodecHandler[raw["type"].(string)]; ok {
-			if codec, err = handler(ctx, &raw); err != nil {
-				return nil, ErrorInitCodecFailed1.New(err, raw)
-			}
-		} else {
-			return nil, ErrorUnknownCodecType1.New(nil, raw["type"])
-		}
+	if codec, err = handler(ctx, cfg); err != nil {
+		return nil, ErrorInitCodecFailed1.New(err, cfg)
 	}
 
 	return codec, nil
@@ -131,7 +125,7 @@ type DefaultCodec struct {
 }
 
 // DefaultCodecInitHandler returns an TypeCodecConfig interface with default handler
-func DefaultCodecInitHandler(context.Context, *ConfigRaw) (TypeCodecConfig, error) {
+func DefaultCodecInitHandler(context.Context, ConfigRaw) (TypeCodecConfig, error) {
 	return &DefaultCodec{
 		CodecConfig: CodecConfig{
 			CommonConfig: CommonConfig{

@@ -47,7 +47,7 @@ output:
 	`)))
 	require.Nil(err)
 	require.NotNil(conf)
-	_, err = InitHandler(ctx, &conf.OutputRaw[0])
+	_, err = InitHandler(ctx, conf.OutputRaw[0])
 	// expect error as certificate is not trusted by default
 	require.Error(err)
 	require.True(ErrorCreateClientFailed1.In(err), "%+v", err)
@@ -65,7 +65,7 @@ output:
 	`)))
 	require.Nil(err)
 	require.NotNil(conf)
-	_, err = InitHandler(ctx, &conf.OutputRaw[0])
+	_, err = InitHandler(ctx, conf.OutputRaw[0])
 	// again expect error as certificate is not trusted and we requested ssl_certificate_validation
 	require.Error(err)
 	require.True(ErrorCreateClientFailed1.In(err), "%+v", err)
@@ -83,7 +83,7 @@ output:
 	`)))
 	require.Nil(err)
 	require.NotNil(conf)
-	_, err = InitHandler(ctx, &conf.OutputRaw[0])
+	_, err = InitHandler(ctx, conf.OutputRaw[0])
 	// expect no error this time as ssl_certificate_validation is false
 	require.NoError(err)
 }
@@ -111,7 +111,7 @@ output:
 	`)))
 	require.Nil(err)
 	require.NotNil(conf)
-	resolvedConf, err := InitHandler(ctx, &conf.OutputRaw[0])
+	resolvedConf, err := InitHandler(ctx, conf.OutputRaw[0])
 	require.Nil(err)
 	outputConf := resolvedConf.(*OutputConfig)
 	require.Equal(ts.URL, outputConf.resolvedURLs[0])

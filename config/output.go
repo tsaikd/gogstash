@@ -28,7 +28,7 @@ type OutputConfig struct {
 }
 
 // OutputHandler is a handler to regist output module
-type OutputHandler func(ctx context.Context, raw *ConfigRaw) (TypeOutputConfig, error)
+type OutputHandler func(ctx context.Context, raw ConfigRaw) (TypeOutputConfig, error)
 
 var (
 	mapOutputHandler = map[string]OutputHandler{}
@@ -40,7 +40,10 @@ func RegistOutputHandler(name string, handler OutputHandler) {
 }
 
 // GetOutputs get outputs from config
-func GetOutputs(ctx context.Context, outputRaw []ConfigRaw) (outputs []TypeOutputConfig, err error) {
+func GetOutputs(
+	ctx context.Context,
+	outputRaw []ConfigRaw,
+) (outputs []TypeOutputConfig, err error) {
 	var output TypeOutputConfig
 	for _, raw := range outputRaw {
 		// check if output is disabled
@@ -55,7 +58,7 @@ func GetOutputs(ctx context.Context, outputRaw []ConfigRaw) (outputs []TypeOutpu
 				return outputs, ErrorUnknownOutputType1.New(nil, raw["type"])
 			}
 
-			if output, err = handler(ctx, &raw); err != nil {
+			if output, err = handler(ctx, raw); err != nil {
 				return outputs, ErrorInitOutputFailed1.New(err, raw)
 			}
 
