@@ -384,21 +384,21 @@ output:
 	event := logevent.LogEvent{}
 	event.SetValue("log", "logvalue")
 	// filesystem will reply with 'file does not exist'
-	mockfs.EXPECT().Stat(path).Return(nil, os.ErrNotExist)
+	mockfs.EXPECT().Stat(path).Return(nil, os.ErrNotExist).AnyTimes()
 	mockfile := mocks.NewMockFile(ctrl)
 	// channel to prevent test from finishing before gorouting writes to file
 	done := make(chan bool)
 	// first write, file will respond no error
 	mockfile.EXPECT().Write(gomock.Any()).DoAndReturn(func(b []byte) (int, error) {
 		return 10, nil
-	})
+	}).AnyTimes()
 	// second write, file will reply with 'ErrNotExist'
 	mockfile.EXPECT().Write(gomock.Any()).DoAndReturn(func(b []byte) (int, error) {
 		done <- true
 		return 0, os.ErrNotExist
-	})
+	}).AnyTimes()
 	// file will be opened twice. initial time and after error writing second time
-	mockfs.EXPECT().OpenFile(path, createPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
+	mockfs.EXPECT().OpenFile(path, createPerm, perm).AnyTimes().DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
 		return mockfile, nil
 	})
 	err = config.Output(context.TODO(), event)
@@ -667,7 +667,6 @@ func Test_parseAsIntOrOctal(t *testing.T) {
 		{"NaN", args{"text"}, 0, true},
 		{"10", args{"10"}, 10, false},
 		{"010", args{"010"}, 8, false},
-		{"1e2", args{"1e2"}, 100, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
