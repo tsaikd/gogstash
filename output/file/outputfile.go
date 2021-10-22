@@ -206,7 +206,12 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 				// syncTick is used to sync file to operating system at regular intervals.
 				// NewTicker can be recycled by the garbagecollector when Tick cannot.
 				// A value of zero disables the ticker.
-				syncTick := time.NewTicker(time.Duration(t.FlushInterval) * time.Second)
+				var syncTick *time.Ticker
+				if t.FlushInterval > 0 {
+					syncTick = time.NewTicker(time.Duration(t.FlushInterval) * time.Second)
+				} else {
+					syncTick = time.NewTicker(time.Hour * 99999) // a ticker that will never tick
+				}
 
 				discardTimer := time.NewTimer(0) // used to handle discard timing
 				discardTimer.Stop()
