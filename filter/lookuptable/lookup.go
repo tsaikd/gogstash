@@ -111,7 +111,7 @@ func (f *FilterConfig) findFromFile(key string) (interface{}, error) {
 	scanner := bufio.NewScanner(f.file)
 
 	line := 0
-	for true {
+	for {
 		ok := scanner.Scan()
 		if !ok {
 			break

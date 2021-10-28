@@ -182,6 +182,17 @@ func (t LoggerType) Panicln(args ...interface{}) {
 	t.stderr.Panicln(args...)
 }
 
+// Panicln wrap logrus function
+func (t LoggerType) Trace(err error) (isErr bool) {
+	if err != nil {
+		t.Error(err)
+
+		return true
+	}
+
+	return false
+}
+
 var _ logrus.FieldLogger = &LoggerType{}
 
 // SetLevel set logger level for filtering output

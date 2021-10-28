@@ -152,7 +152,8 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 				return nil
 			case dockerEvent := <-dockerEventChan:
 				if dockerEvent.Status == "start" {
-					container, err := t.client.InspectContainer(dockerEvent.ID)
+					container, err := t.client.InspectContainerWithOptions(
+						docker.InspectContainerOptions{ID: dockerEvent.ID})
 					if err != nil {
 						return ErrorInspectContainerFailed.New(err)
 					}

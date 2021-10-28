@@ -188,45 +188,6 @@ func newServer(t testing.TB, network, addr string, f func([]byte)) *server {
 	return s
 }
 
-// server with only listen
-func newServerReset(t testing.TB, network, addr string, f func([]byte)) *server {
-	s := &server{t: t, closed: make(chan bool)}
-	switch network {
-	case "udp":
-		laddr, err := net.ResolveUDPAddr("udp", addr)
-		if err != nil {
-			t.Fatal(err)
-		}
-		conn, err := net.ListenUDP("udp", laddr)
-		if err != nil {
-			t.Fatal(err)
-		}
-		s.addr = conn.LocalAddr().String()
-		conn.Close()
-	case "tcp":
-		ln, err := net.Listen("tcp", addr)
-		if err != nil {
-			t.Fatal(err)
-		}
-		s.closer = ln
-		s.addr = ln.Addr().String()
-		go func() {
-			for {
-				conn, err := ln.Accept()
-				if err != nil {
-					s.closed <- true
-					return
-				}
-				conn.Close()
-			}
-		}()
-	default:
-		t.Fatalf("Invalid network: %q", network)
-	}
-
-	return s
-}
-
 func (s *server) Close() {
 	if s.closer != nil {
 		if err := s.closer.Close(); err != nil {

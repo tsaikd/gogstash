@@ -26,8 +26,8 @@ const (
 	createPerm               = os.O_CREATE | os.O_WRONLY
 	appendPerm               = os.O_APPEND | os.O_WRONLY
 	defaultWriteBehavior     = appendBehavior
-	defaultDirMode           = "750"
-	defaultFileMode          = "640"
+	defaultDirMode           = "0750"
+	defaultFileMode          = "0640"
 	defaultFlushInterval     = 2
 	defaultDiscardTime       = 300
 	minDiscardTime           = 10
@@ -148,10 +148,8 @@ func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeOutputCo
 	var doneFunc func()
 	conf.notifyDone, doneFunc = context.WithCancel(ctx)
 	go func() {
-		select {
-		case <-ctx.Done():
-			doneFunc()
-		}
+		<-ctx.Done()
+		doneFunc()
 	}()
 
 	return &conf, nil
@@ -281,7 +279,7 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 						if err != nil {
 							// error writing, close file, retry and go in discard mode if any error
 							goglog.Logger.Errorf("%s: %v", path, err)
-							closeFile(file)
+							goglog.Logger.Trace(closeFile(file))
 							file, err = t.createFile(path)
 							if err != nil {
 								isDiscarding = true

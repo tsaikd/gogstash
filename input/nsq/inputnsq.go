@@ -78,8 +78,12 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		return
 	}
 	consumer.AddHandler(&handler)
-	consumer.ConnectToNSQD(t.NSQ)
-	consumer.ConnectToNSQLookupd(t.Lookupd)
+	if err = consumer.ConnectToNSQD(t.NSQ); err != nil {
+		return
+	}
+	if err = consumer.ConnectToNSQLookupd(t.Lookupd); err != nil {
+		return
+	}
 	// wait for stop signal and exit
 	<-ctx.Done()
 	consumer.Stop()

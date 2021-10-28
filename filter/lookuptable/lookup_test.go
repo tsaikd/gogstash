@@ -3,16 +3,17 @@ package lookuptable
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/goglog"
-	"github.com/tsaikd/gogstash/config/logevent"
 	"os"
 	"path"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 func init() {
@@ -70,7 +71,11 @@ filter:
 		t.Errorf("parse config: %v", err)
 	}
 
-	conf.Start(context.Background())
+	err = conf.Start(context.Background())
+	if err != nil {
+		t.Errorf("start failed: %v", err)
+		t.Fail()
+	}
 
 	tests := []struct {
 		name   string

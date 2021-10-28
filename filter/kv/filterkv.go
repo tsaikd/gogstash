@@ -69,7 +69,7 @@ func splitQuotedStringsBySpace(input string) (result []string) {
 	for x := 0; x < len(input); x++ {
 		switch r := input[x]; r {
 		case ' ':
-			if inBetween == false && x > head && quote == 0 {
+			if !inBetween && x > head && quote == 0 {
 				s := input[head:x]
 				if strings.IndexRune(s, '=') > 0 {
 					result = append(result, s)
@@ -91,7 +91,7 @@ func splitQuotedStringsBySpace(input string) (result []string) {
 	}
 	// get last element if there is one
 	if head != len(input) {
-		s := input[head:len(input)]
+		s := input[head:]
 		if strings.IndexRune(s, '=') > 0 {
 			result = append(result, s)
 		}
@@ -124,7 +124,7 @@ func splitIntoKV(input []string, keepAsString []string) map[string]interface{} {
 			}
 			// check if val is an integer
 			number, err := strconv.Atoi(val)
-			if err == nil && contains(key, &keepAsString) == false {
+			if err == nil && !contains(key, &keepAsString) {
 				result[key] = number
 			} else {
 				result[key] = val

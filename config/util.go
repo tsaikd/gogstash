@@ -87,7 +87,7 @@ func formatReflect(rv reflect.Value) {
 func cleanComments(data []byte) (out []byte, err error) {
 	reForm1 := regexp.MustCompile(`^\s*#`)
 	reForm2 := regexp.MustCompile(`^\s*//`)
-	data = bytes.Replace(data, []byte("\r"), []byte(""), 0) // Windows
+	data = bytes.Replace(data, []byte("\r"), []byte(""), -1) // Windows
 	lines := bytes.Split(data, []byte("\n"))
 	var filtered [][]byte
 

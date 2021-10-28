@@ -95,8 +95,14 @@ func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeInputCon
 	return &conf, nil
 }
 
-func (i *InputConfig) queueMessage(ctx context.Context, message string, msgChan chan<- logevent.LogEvent) {
-	i.Codec.Decode(ctx, []byte(message), nil, []string{}, msgChan)
+func (i *InputConfig) queueMessage(
+	ctx context.Context,
+	message string,
+	msgChan chan<- logevent.LogEvent,
+) (err error) {
+	_, err = i.Codec.Decode(ctx, []byte(message), nil, []string{}, msgChan)
+
+	return
 }
 
 func (i *InputConfig) listSingle(ctx context.Context, msgChan chan<- logevent.LogEvent) error {
@@ -112,9 +118,7 @@ func (i *InputConfig) listSingle(ctx context.Context, msgChan chan<- logevent.Lo
 
 	// we need to use msg[1] because BLPOP returns a tuple of (key, value) where key is
 	// the redis key used to retrieve the message
-	i.queueMessage(ctx, result[1], msgChan)
-
-	return nil
+	return i.queueMessage(ctx, result[1], msgChan)
 }
 
 const batchEmptySleep = time.Duration(250000000) // 250ms
@@ -138,7 +142,9 @@ retry:
 	switch results := r.(type) {
 	case []interface{}:
 		for _, result := range results {
-			i.queueMessage(ctx, result.(string), msgChan)
+			if err := i.queueMessage(ctx, result.(string), msgChan); err != nil {
+				return err
+			}
 		}
 		if len(results) <= 0 {
 			time.Sleep(time.Duration(batchEmptySleep))

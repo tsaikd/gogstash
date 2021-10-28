@@ -82,7 +82,7 @@ func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeInputCon
 		sarConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
 	}
 
-	if len(conf.Topics) < 0 {
+	if len(conf.Topics) < 1 {
 		goglog.Logger.Error("topics should not be empty")
 		return nil, err
 	}

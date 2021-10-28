@@ -71,6 +71,7 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		if req.Method != http.MethodPost {
 			logger.Warnf(invalidMethodError, req.Method)
 			rw.WriteHeader(http.StatusMethodNotAllowed)
+			//nolint: errcheck // no need to check error for abnormal case
 			rw.Write([]byte(fmt.Sprintf(invalidMethodError, req.Method)))
 			return
 		}
@@ -80,6 +81,7 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			if req.Header.Get(i.RequireHeader[0]) != i.RequireHeader[1] {
 				logger.Warn(invalidAccessToken)
 				rw.WriteHeader(http.StatusForbidden)
+				//nolint: errcheck // no need to check error for abnormal case
 				rw.Write([]byte(invalidAccessToken))
 				return
 			}
@@ -163,11 +165,13 @@ func (i *InputConfig) postHandler(msgChan chan<- logevent.LogEvent, rw http.Resp
 		// event not sent to msgChan
 		rw.WriteHeader(http.StatusInternalServerError)
 		if err != nil {
+			//nolint: errcheck // no need to check error for abnormal case
 			rw.Write([]byte(err.Error()))
 		}
 	} else if err != nil {
 		// event sent to msgChan
 		rw.WriteHeader(http.StatusBadRequest)
+		//nolint: errcheck // no need to check error for abnormal case
 		rw.Write([]byte(fmt.Sprintf(invalidRequestError, err)))
 	}
 }

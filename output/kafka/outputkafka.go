@@ -61,13 +61,13 @@ func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeOutputCo
 	sarConfig := sarama.NewConfig()
 	sarConfig.Version = version
 
-	if len(conf.Topics) < 0 {
+	if len(conf.Topics) < 1 {
 		goglog.Logger.Error("topics should not be empty")
 		return nil, err
 	}
 
-	if len(conf.Brokers) == 0 {
-		goglog.Logger.Error("topics should not be empty")
+	if len(conf.Brokers) < 1 {
+		goglog.Logger.Error("brokers should not be empty")
 		return nil, err
 	}
 

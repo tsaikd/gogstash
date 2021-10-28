@@ -251,7 +251,9 @@ func (i *InputConfig) handleUDP(ctx context.Context, conn net.PacketConn, msgCha
 			}
 			n, _, err := conn.ReadFrom(b)
 			if n > 0 {
-				pw.Write(b[:n])
+				if _, errWrite := pw.Write(b[:n]); errWrite != nil {
+					return errWrite
+				}
 			}
 			if errors.Is(err, net.ErrClosed) || err == io.EOF {
 				break

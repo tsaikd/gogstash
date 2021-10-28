@@ -87,14 +87,13 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 		} else if thisFormat == "UNIXNANO" {
 			var nsec int64
 			value := event.Get(f.Source)
-			switch value.(type) {
+			switch v := value.(type) {
 			case int64:
-				nsec = value.(int64)
+				nsec = v
 			case int:
-				r := value.(int)
-				nsec = int64(r)
+				nsec = int64(v)
 			case string:
-				nsec, err = strconv.ParseInt(value.(string), 10, 64)
+				nsec, err = strconv.ParseInt(v, 10, 64)
 			default:
 				continue
 			}

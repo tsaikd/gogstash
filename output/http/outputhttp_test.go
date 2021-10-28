@@ -28,18 +28,19 @@ func Test_output_http_module(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	h := httptest.NewRecorder()
+	serverRecvMsg := make(chan []byte, 1)
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
-		h.HeaderMap = r.Header
-		_, err := io.Copy(h, r.Body)
+		data, err := io.ReadAll(r.Body)
 		require.NoError(err)
+		serverRecvMsg <- data
 	}
 
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
@@ -54,8 +55,12 @@ output:
 		Message:   "outputhttp test message",
 	})
 
-	time.Sleep(100 * time.Millisecond)
-	assert.Contains(h.Body.String(), "\"message\":\"outputhttp test message\"")
+	select {
+	case <-ctx.Done():
+		t.Fatal("timeout")
+	case msg := <-serverRecvMsg:
+		require.Contains(string(msg), `"message":"outputhttp test message"`)
+	}
 }
 
 func TestOutputConfig_checkIntInList(t1 *testing.T) {

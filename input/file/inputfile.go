@@ -159,12 +159,12 @@ func (t *InputConfig) fileReadLoop(
 
 	if since.Offset == 0 {
 		if t.StartPos == "end" {
-			whence = os.SEEK_END
+			whence = io.SeekEnd
 		} else {
-			whence = os.SEEK_SET
+			whence = io.SeekStart
 		}
 	} else {
-		whence = os.SEEK_SET
+		whence = io.SeekStart
 	}
 
 	if fp, reader, err = openfile(fpath, since.Offset, whence); err != nil {
@@ -178,7 +178,7 @@ func (t *InputConfig) fileReadLoop(
 	if truncated {
 		logger.Warnf("File truncated, seeking to beginning: %q", fpath)
 		since.Offset = 0
-		if _, err = fp.Seek(since.Offset, os.SEEK_SET); err != nil {
+		if _, err = fp.Seek(since.Offset, io.SeekStart); err != nil {
 			logger.Errorf("seek file failed: %q", fpath)
 			return
 		}
@@ -199,7 +199,7 @@ func (t *InputConfig) fileReadLoop(
 					logger.Warnf("File recreated, seeking to beginning: %q", fpath)
 					fp.Close()
 					since.Offset = 0
-					if fp, reader, err = openfile(fpath, since.Offset, os.SEEK_SET); err != nil {
+					if fp, reader, err = openfile(fpath, since.Offset, io.SeekStart); err != nil {
 						return
 					}
 				}
@@ -209,7 +209,7 @@ func (t *InputConfig) fileReadLoop(
 				if truncated {
 					logger.Warnf("File truncated, seeking to beginning: %q", fpath)
 					since.Offset = 0
-					if _, err = fp.Seek(since.Offset, os.SEEK_SET); err != nil {
+					if _, err = fp.Seek(since.Offset, io.SeekStart); err != nil {
 						logger.Errorf("seek file failed: %q", fpath)
 						return
 					}
@@ -238,7 +238,9 @@ func (t *InputConfig) fileReadLoop(
 			//msgChan <- event
 
 			//self.SaveSinceDBInfos()
-			t.CheckSaveSinceDBInfos()
+			if err = t.CheckSaveSinceDBInfos(); err != nil {
+				return err
+			}
 		} else {
 			logger.Errorf("Failed to decode %v using codec %v", line, t.Codec)
 		}
