@@ -131,7 +131,7 @@ filter:
 	assert.Equal(0, len(conf.OutputRaw))
 
 	// to have config updated
-	mapFilterHandler["whatever"] = func(ctx context.Context, raw ConfigRaw) (TypeFilterConfig, error) {
+	mapFilterHandler["whatever"] = func(ctx context.Context, raw ConfigRaw, control Control) (TypeFilterConfig, error) {
 		conf := WhateverFilterConfig{}
 		err := ReflectConfig(raw, &conf)
 		if err != nil {

@@ -48,7 +48,11 @@ func DefaultInputConfig() InputConfig {
 }
 
 // InitHandler initialize the input plugin
-func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeInputConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
@@ -132,15 +136,9 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 				logger.Fatal(err)
 				return
 			}
-			err = http.Serve(l, nil)
-			if err != nil {
-				logger.Error(err)
-			}
+			logger.Trace(http.Serve(l, nil))
 		} else {
-			err = http.ListenAndServe(i.Address, nil)
-			if err != nil {
-				logger.Error(err)
-			}
+			logger.Trace(http.ListenAndServe(i.Address, nil))
 		}
 	}()
 	return nil

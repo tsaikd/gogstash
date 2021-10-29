@@ -36,9 +36,9 @@ output:
         key: foo
         value: bar
     `)))
-	require.Nil(err)
-	_, err = InitHandler(context.TODO(), conf.OutputRaw[0])
-	require.NotNil(err)
+	require.NoError(err)
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0], nil)
+	require.Error(err)
 }
 
 func Test_output_cond_module(t *testing.T) {

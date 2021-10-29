@@ -29,7 +29,7 @@ output:
   - type: file
 	`)))
 	assert.Nil(err)
-	_, err = InitHandler(context.TODO(), conf.OutputRaw[0])
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.NotNil(err)
 
 	// write_behavior is different from 'append' and 'overwrite'
@@ -41,7 +41,7 @@ output:
     write_behavior: write_behavior
 	`)))
 	assert.Nil(err)
-	_, err = InitHandler(context.TODO(), conf.OutputRaw[0])
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.NotNil(err)
 
 	// invalid file_mode
@@ -53,7 +53,7 @@ output:
     file_mode: -1
 	`)))
 	assert.Nil(err)
-	_, err = InitHandler(context.TODO(), conf.OutputRaw[0])
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.NotNil(err)
 
 	// invalid file_mode
@@ -65,7 +65,7 @@ output:
     file_mode: -1
 	`)))
 	assert.Nil(err)
-	_, err = InitHandler(context.TODO(), conf.OutputRaw[0])
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.NotNil(err)
 
 	// invalid dir_mode
@@ -77,7 +77,7 @@ output:
     dir_mode: -1
 	`)))
 	assert.Nil(err)
-	_, err = InitHandler(context.TODO(), conf.OutputRaw[0])
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.NotNil(err)
 
 	// invalid flush_interval
@@ -89,7 +89,7 @@ output:
     flush_interval: blah
 	`)))
 	assert.Nil(err)
-	_, err = InitHandler(context.TODO(), conf.OutputRaw[0])
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.NotNil(err)
 
 	// test default values
@@ -99,7 +99,7 @@ output:
     path: ` + testPath() + `
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	assert.Equal(defaultCreateIfDeleted, config.CreateIfDeleted)
@@ -123,7 +123,7 @@ output:
     flush_interval: 1000
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(0640)
@@ -170,7 +170,7 @@ output:
     file_mode: "` + strconv.Itoa(fileMode) + `"
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(fileMode)
@@ -218,7 +218,7 @@ output:
     codec: "test"
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(fileMode)
@@ -266,7 +266,7 @@ output:
     codec: "%{log}"
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(fileMode)
@@ -314,7 +314,7 @@ output:
     file_mode: "` + strconv.Itoa(fileMode) + `"
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(fileMode)
@@ -374,7 +374,7 @@ output:
     create_if_deleted: false
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(fileMode)
@@ -430,7 +430,7 @@ output:
     dir_mode: "` + strconv.Itoa(dirMode) + `"
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	fPerm := os.FileMode(fileMode)
@@ -482,7 +482,7 @@ output:
     dir_mode: "` + strconv.Itoa(dirMode) + `"
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	fPerm := os.FileMode(fileMode)
@@ -528,7 +528,7 @@ output:
     write_behavior: append
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(0640)
@@ -574,7 +574,7 @@ output:
     write_behavior: overwrite
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(0640)
@@ -620,7 +620,7 @@ output:
     flush_interval: 0
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(0640)

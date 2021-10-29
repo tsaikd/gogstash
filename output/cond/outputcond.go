@@ -38,7 +38,11 @@ func DefaultOutputConfig() OutputConfig {
 }
 
 // InitHandler initialize the output plugin
-func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeOutputConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeOutputConfig, error) {
 	conf := DefaultOutputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
@@ -48,7 +52,7 @@ func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeOutputCo
 		goglog.Logger.Warn("output cond config condition empty, ignored")
 		return &conf, nil
 	}
-	conf.outputs, err = config.GetOutputs(ctx, conf.OutputRaw)
+	conf.outputs, err = config.GetOutputs(ctx, conf.OutputRaw, control)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +61,7 @@ func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeOutputCo
 		return &conf, nil
 	}
 	if len(conf.ElseOutputRaw) > 0 {
-		conf.elseOutputs, err = config.GetOutputs(ctx, conf.ElseOutputRaw)
+		conf.elseOutputs, err = config.GetOutputs(ctx, conf.ElseOutputRaw, control)
 		if err != nil {
 			return nil, err
 		}

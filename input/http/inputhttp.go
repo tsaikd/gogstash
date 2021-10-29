@@ -27,6 +27,7 @@ type InputConfig struct {
 	URL      string `json:"url"`
 	Interval int    `json:"interval,omitempty"`
 
+	control  config.Control
 	hostname string
 }
 
@@ -44,13 +45,18 @@ func DefaultInputConfig() InputConfig {
 }
 
 // InitHandler initialize the input plugin
-func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeInputConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
 		return nil, err
 	}
 
+	conf.control = control
 	if conf.hostname, err = os.Hostname(); err != nil {
 		return nil, err
 	}
@@ -64,7 +70,10 @@ func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeInputCon
 }
 
 // Start wraps the actual function starting the plugin
-func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error) {
+func (t *InputConfig) Start(
+	ctx context.Context,
+	msgChan chan<- logevent.LogEvent,
+) (err error) {
 	startChan := make(chan bool, 1) // startup tick
 	ticker := time.NewTicker(time.Duration(t.Interval) * time.Second)
 	defer ticker.Stop()
@@ -77,6 +86,10 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			return nil
 		case <-startChan:
 			t.Request(ctx, msgChan)
+		case <-t.control.PauseSignal():
+			// handling request pause signal
+		case <-t.control.ResumeSignal():
+			// handling request resume signal
 		case <-ticker.C:
 			t.Request(ctx, msgChan)
 		}

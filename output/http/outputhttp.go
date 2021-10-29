@@ -33,6 +33,7 @@ type OutputConfig struct {
 	IgnoreSSL          bool     `json:"ignore_ssl" yaml:"ignore_ssl"`
 
 	httpClient *http.Client
+	control    config.Control
 }
 
 // DefaultOutputConfig returns an OutputConfig struct with default values
@@ -48,7 +49,11 @@ func DefaultOutputConfig() OutputConfig {
 }
 
 // InitHandler initialize the output plugin
-func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeOutputConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeOutputConfig, error) {
 	conf := DefaultOutputConfig()
 	if err := config.ReflectConfig(raw, &conf); err != nil {
 		return nil, err
@@ -69,6 +74,7 @@ func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeOutputCo
 		ExpectContinueTimeout: 1 * time.Second,
 		TLSClientConfig:       &tls.Config{InsecureSkipVerify: conf.IgnoreSSL},
 	}}
+	conf.control = control
 
 	return &conf, nil
 }

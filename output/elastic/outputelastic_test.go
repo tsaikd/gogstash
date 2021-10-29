@@ -45,9 +45,9 @@ output:
     document_id: "%{fieldstring}"
     bulk_actions: 0
 	`)))
-	require.Nil(err)
+	require.NoError(err)
 	require.NotNil(conf)
-	_, err = InitHandler(ctx, conf.OutputRaw[0])
+	_, err = InitHandler(ctx, conf.OutputRaw[0], nil)
 	// expect error as certificate is not trusted by default
 	require.Error(err)
 	require.True(ErrorCreateClientFailed1.In(err), "%+v", err)
@@ -63,9 +63,9 @@ output:
     bulk_actions: 0
     ssl_certificate_validation: true
 	`)))
-	require.Nil(err)
+	require.NoError(err)
 	require.NotNil(conf)
-	_, err = InitHandler(ctx, conf.OutputRaw[0])
+	_, err = InitHandler(ctx, conf.OutputRaw[0], nil)
 	// again expect error as certificate is not trusted and we requested ssl_certificate_validation
 	require.Error(err)
 	require.True(ErrorCreateClientFailed1.In(err), "%+v", err)
@@ -81,9 +81,9 @@ output:
     bulk_actions: 0
     ssl_certificate_validation: false
 	`)))
-	require.Nil(err)
+	require.NoError(err)
 	require.NotNil(conf)
-	_, err = InitHandler(ctx, conf.OutputRaw[0])
+	_, err = InitHandler(ctx, conf.OutputRaw[0], nil)
 	// expect no error this time as ssl_certificate_validation is false
 	require.NoError(err)
 }
@@ -98,7 +98,7 @@ func TestResolveVars(t *testing.T) {
 	defer ts.Close()
 
 	err := os.Setenv("MYVAR", ts.URL)
-	require.Nil(err)
+	require.NoError(err)
 	ctx := context.Background()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
@@ -109,10 +109,10 @@ output:
     document_id: "%{fieldstring}"
     bulk_actions: 0
 	`)))
-	require.Nil(err)
+	require.NoError(err)
 	require.NotNil(conf)
-	resolvedConf, err := InitHandler(ctx, conf.OutputRaw[0])
-	require.Nil(err)
+	resolvedConf, err := InitHandler(ctx, conf.OutputRaw[0], nil)
+	require.NoError(err)
 	outputConf := resolvedConf.(*OutputConfig)
 	require.Equal(ts.URL, outputConf.resolvedURLs[0])
 }

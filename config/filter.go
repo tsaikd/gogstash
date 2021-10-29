@@ -22,7 +22,10 @@ type TypeFilterConfig interface {
 
 // IsConfigured returns whether common configuration has been setup
 func (f *FilterConfig) IsConfigured() bool {
-	return len(f.AddTags) != 0 || len(f.AddFields) != 0 || len(f.RemoveTags) != 0 || len(f.RemoveFields) != 0
+	return len(f.AddTags) != 0 ||
+		len(f.AddFields) != 0 ||
+		len(f.RemoveTags) != 0 ||
+		len(f.RemoveFields) != 0
 }
 
 func (f *FilterConfig) CommonFilter(
@@ -56,7 +59,7 @@ type FieldConfig struct {
 }
 
 // FilterHandler is a handler to regist filter module
-type FilterHandler func(ctx context.Context, raw ConfigRaw) (TypeFilterConfig, error)
+type FilterHandler func(ctx context.Context, raw ConfigRaw, control Control) (TypeFilterConfig, error)
 
 var (
 	mapFilterHandler = map[string]FilterHandler{}
@@ -71,6 +74,7 @@ func RegistFilterHandler(name string, handler FilterHandler) {
 func GetFilters(
 	ctx context.Context,
 	filterRaw []ConfigRaw,
+	control Control,
 ) (filters []TypeFilterConfig, err error) {
 	var filter TypeFilterConfig
 	for _, raw := range filterRaw {
@@ -86,7 +90,7 @@ func GetFilters(
 				return filters, ErrorUnknownFilterType1.New(nil, raw["type"])
 			}
 
-			if filter, err = handler(ctx, raw); err != nil {
+			if filter, err = handler(ctx, raw, control); err != nil {
 				return filters, ErrorInitFilterFailed1.New(err, raw)
 			}
 
@@ -97,7 +101,7 @@ func GetFilters(
 }
 
 func (t *Config) getFilters() (filters []TypeFilterConfig, err error) {
-	return GetFilters(t.ctx, t.FilterRaw)
+	return GetFilters(t.ctx, t.FilterRaw, t)
 }
 
 func (t *Config) startFilters() (err error) {

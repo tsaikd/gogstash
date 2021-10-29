@@ -42,7 +42,11 @@ func DefaultOutputConfig() OutputConfig {
 }
 
 // InitHandler initialize the output plugin
-func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeOutputConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeOutputConfig, error) {
 	conf := DefaultOutputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {

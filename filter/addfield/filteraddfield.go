@@ -30,7 +30,11 @@ func DefaultFilterConfig() FilterConfig {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeFilterConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
 	if err := config.ReflectConfig(raw, &conf); err != nil {
 		return nil, err
@@ -40,7 +44,10 @@ func InitHandler(ctx context.Context, raw config.ConfigRaw) (config.TypeFilterCo
 }
 
 // Event the main filter event
-func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (logevent.LogEvent, bool) {
+func (f *FilterConfig) Event(
+	ctx context.Context,
+	event logevent.LogEvent,
+) (logevent.LogEvent, bool) {
 	if _, ok := event.Extra[f.Key]; ok && !f.Overwrite {
 		return event, false
 	}

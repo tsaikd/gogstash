@@ -37,9 +37,9 @@ filter:
         key: foo
         value: bar
     `)))
-	require.Nil(err)
-	_, err = InitHandler(context.TODO(), conf.FilterRaw[0])
-	require.NotNil(err)
+	require.NoError(err)
+	_, err = InitHandler(context.TODO(), conf.FilterRaw[0], nil)
+	require.Error(err)
 }
 
 func Test_filter_cond_module(t *testing.T) {
@@ -123,7 +123,7 @@ filter:
       - type: mutate
         add_tag: ["added"]
     `)))
-	require.Nil(err)
+	require.NoError(err)
 	require.NoError(conf.Start(context.Background()))
 	conf.TestInputEvent(logevent.LogEvent{})
 	if output, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
@@ -143,7 +143,7 @@ filter:
       - type: mutate
         add_tag: ["added"]
     `)))
-	require.Nil(err)
+	require.NoError(err)
 	require.NoError(conf.Start(context.Background()))
 	conf.TestInputEvent(logevent.LogEvent{})
 	if output, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {

@@ -46,6 +46,7 @@ require (
 	github.com/spf13/viper v1.6.3 // indirect
 	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71
 	github.com/stretchr/testify v1.7.0
+	github.com/subchen/go-trylock/v2 v2.0.0
 	github.com/tengattack/jodatime v0.0.0-20180920000830-48b203d08145
 	github.com/tsaikd/KDGoLib v0.0.0-20191001134900-7f3cf518e07d
 	github.com/ua-parser/uap-go v0.0.0-20200325213135-e1c09f13e2fe
