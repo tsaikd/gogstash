@@ -3,7 +3,6 @@ package nsq
 import (
 	"context"
 	"errors"
-
 	"github.com/nsqio/go-nsq"
 	"github.com/tsaikd/KDGoLib/version"
 	"github.com/tsaikd/gogstash/config"
@@ -17,11 +16,12 @@ const ModuleName = "nsq"
 // InputConfig holds the configuration json fields and internal objects
 type InputConfig struct {
 	config.InputConfig
-	NSQ      string `json:"nsq" yaml:"nsq"`                   // NSQd to connect to
-	Lookupd  string `json:"lookupd" yaml:"lookupd"`           // lookupd to connect to, can be a NSQd or lookupd
-	Topic    string `json:"topic" yaml:"topic"`               // topic to listen from
-	Channel  string `json:"channel" yaml:"channel"`           // channel to subscribe to
-	InFlight uint   `json:"max_inflight" yaml:"max_inflight"` // max number of messages inflight
+	NSQ      string         `json:"nsq" yaml:"nsq"`                   // NSQd to connect to
+	Lookupd  string         `json:"lookupd" yaml:"lookupd"`           // lookupd to connect to, can be a NSQd or lookupd
+	Topic    string         `json:"topic" yaml:"topic"`               // topic to listen from
+	Channel  string         `json:"channel" yaml:"channel"`           // channel to subscribe to
+	InFlight uint           `json:"max_inflight" yaml:"max_inflight"` // max number of messages inflight
+	control  config.Control // backpressure control
 }
 
 // DefaultInputConfig returns an InputConfig struct with default values
@@ -43,6 +43,7 @@ func InitHandler(
 	control config.Control,
 ) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
+	conf.control = control
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
 		return nil, err
@@ -82,16 +83,33 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		return
 	}
 	consumer.AddHandler(&handler)
-	if err = consumer.ConnectToNSQD(t.NSQ); err != nil {
-		return
+	if len(t.NSQ) > 0 {
+		if err = consumer.ConnectToNSQD(t.NSQ); err != nil {
+			return
+		}
 	}
-	if err = consumer.ConnectToNSQLookupd(t.Lookupd); err != nil {
-		return
+	if len(t.Lookupd) > 0 {
+		if err = consumer.ConnectToNSQLookupd(t.Lookupd); err != nil {
+			return
+		}
 	}
 	// wait for stop signal and exit
-	<-ctx.Done()
+outer_loop:
+	for {
+		select {
+		case <-ctx.Done():
+			break outer_loop
+		case <-t.control.PauseSignal():
+			goglog.Logger.Info("nsq: received pause")
+			consumer.ChangeMaxInFlight(0)
+		case <-t.control.ResumeSignal():
+			goglog.Logger.Info("nsq: received resume")
+			consumer.ChangeMaxInFlight(int(t.InFlight))
+		}
+	}
 	consumer.Stop()
 	<-consumer.StopChan
+	goglog.Logger.Info("nsq stopped")
 	return
 }
 

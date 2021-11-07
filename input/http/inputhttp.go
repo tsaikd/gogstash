@@ -79,6 +79,7 @@ func (t *InputConfig) Start(
 	defer ticker.Stop()
 
 	startChan <- true
+	isPaused := false
 
 	for {
 		select {
@@ -87,11 +88,15 @@ func (t *InputConfig) Start(
 		case <-startChan:
 			t.Request(ctx, msgChan)
 		case <-t.control.PauseSignal():
-			// handling request pause signal
+			goglog.Logger.Info("pause received")
+			isPaused = true
 		case <-t.control.ResumeSignal():
-			// handling request resume signal
+			goglog.Logger.Info("resume received")
+			isPaused = false
 		case <-ticker.C:
-			t.Request(ctx, msgChan)
+			if !isPaused {
+				t.Request(ctx, msgChan)
+			}
 		}
 	}
 }
