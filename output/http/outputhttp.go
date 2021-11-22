@@ -5,6 +5,7 @@ import (
 	"container/list"
 	"context"
 	"crypto/tls"
+	"errors"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -44,6 +45,9 @@ type OutputConfig struct {
 	IgnoreSSL           bool     `json:"ignore_ssl" yaml:"ignore_ssl"`
 	MaxQueueSize        int      `json:"max_queue_size" yaml:"max_queue_size"` // max size of queue before deleting events (-1=no limit, 0=disable)
 
+	acceptedHttpResult  map[int]struct{} // a map containing the accepted result codes
+	permanentHttpErrors map[int]struct{} // a map containing the permanent error codes
+
 	httpClient *http.Client
 	control    config.Control
 	isInPause  uint32 // set to either statusDelivering or statusPaused
@@ -60,9 +64,9 @@ func DefaultOutputConfig() OutputConfig {
 				Type: ModuleName,
 			},
 		},
-		AcceptedHttpResult:  []int{http.StatusOK, http.StatusCreated, http.StatusAccepted},
-		PermanentHttpErrors: []int{http.StatusNotImplemented, http.StatusMethodNotAllowed, http.StatusNotFound, http.StatusAlreadyReported, http.StatusHTTPVersionNotSupported},
 		RetryInterval:       30,
+		permanentHttpErrors: MapFromInts([]int{http.StatusNotImplemented, http.StatusMethodNotAllowed, http.StatusNotFound, http.StatusAlreadyReported, http.StatusHTTPVersionNotSupported}),
+		acceptedHttpResult:  MapFromInts([]int{http.StatusOK, http.StatusCreated, http.StatusAccepted}),
 		isInPause:           statusDelivering,
 	}
 }
@@ -76,6 +80,13 @@ func InitHandler(
 	conf := DefaultOutputConfig()
 	if err := config.ReflectConfig(raw, &conf); err != nil {
 		return nil, err
+	}
+
+	if len(conf.AcceptedHttpResult) > 0 {
+		conf.acceptedHttpResult = MapFromInts(conf.AcceptedHttpResult)
+	}
+	if len(conf.PermanentHttpErrors) > 0 {
+		conf.permanentHttpErrors = MapFromInts(conf.PermanentHttpErrors)
 	}
 
 	if len(conf.URLs) <= 0 {
@@ -107,8 +118,12 @@ func InitHandler(
 func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err error) {
 	// see if output has requested pause and if so just queue the event instead of trying
 	if atomic.LoadUint32(&t.isInPause) == statusPaused {
-		t.queue <- event
-		return nil
+		select {
+		case t.queue <- event:
+			return nil
+		case <-ctx.Done():
+			return errors.New("httpoutput queue context cancelled")
+		}
 	}
 	// If we are not in pause mode then call the sender method
 	return t.OutputEvent(ctx, event)
@@ -143,10 +158,10 @@ func (t *OutputConfig) OutputEvent(ctx context.Context, event logevent.LogEvent)
 		t.failedDelivery(ctx, event)
 		return err
 	}
-	if t.checkIntInDiscardedList(resp.StatusCode) {
+	if _, isinlist := t.permanentHttpErrors[resp.StatusCode]; isinlist {
 		return ErrPermanentError.New(nil, url, resp.StatusCode)
 	}
-	if !t.checkIntInAcceptedList(resp.StatusCode) {
+	if _, ok := t.acceptedHttpResult[resp.StatusCode]; !ok {
 		t.failedDelivery(ctx, event)
 		return ErrSoftError.New(nil, url, resp.StatusCode)
 	}
@@ -159,26 +174,6 @@ func (t *OutputConfig) OutputEvent(ctx context.Context, event logevent.LogEvent)
 		}
 	}
 	return nil
-}
-
-// checkIntInAcceptedList checks if code is in configured list of accepted status codes
-func (t *OutputConfig) checkIntInAcceptedList(code int) bool {
-	for _, v := range t.AcceptedHttpResult {
-		if v == code {
-			return true
-		}
-	}
-	return false
-}
-
-// checkIntInAcceptedList checks if code is in configured list of status codes where we should discard the message
-func (t *OutputConfig) checkIntInDiscardedList(code int) bool {
-	for _, v := range t.PermanentHttpErrors {
-		if v == code {
-			return true
-		}
-	}
-	return false
 }
 
 // failedDelivery receives an event that failed delivery and triggers a pause event if we have not done so already
@@ -204,7 +199,7 @@ func (t *OutputConfig) backgroundtask() {
 	for {
 		select {
 		case event := <-t.queue:
-			if (t.MaxQueueSize > 0 && t.retryqueue.Len() < t.MaxQueueSize) || t.MaxQueueSize == -1 {
+			if (t.retryqueue.Len() < t.MaxQueueSize) || t.MaxQueueSize == -1 {
 				t.retryqueue.PushBack(event)
 			}
 		case <-ticker.C:
@@ -250,4 +245,13 @@ func (t *OutputConfig) backgroundtask() {
 			}
 		}
 	}
+}
+
+// MapFromInts returns a map containing all the ints in the array
+func MapFromInts(nums []int) map[int]struct{} {
+	result := make(map[int]struct{}, len(nums))
+	for x := range nums {
+		result[x] = struct{}{}
+	}
+	return result
 }
