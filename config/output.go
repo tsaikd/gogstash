@@ -92,7 +92,7 @@ func (t *Config) startOutputs() (err error) {
 					func(output TypeOutputConfig) {
 						eg.Go(func() error {
 							if err2 := output.Output(ctx, event); err2 != nil {
-								goglog.Logger.Errorf("output module %q failed: %v\n", output.GetType(), err2)
+								goglog.Logger.Errorf("output module %q failed: %v", output.GetType(), err2)
 							}
 							return nil
 						})
