@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/tsaikd/KDGoLib/errutil"
@@ -128,7 +129,7 @@ func initConfig(config *Config) {
 
 // Start config in goroutines
 func (t *Config) Start(ctx context.Context) (err error) {
-	ctx = contextWithOSSignal(ctx, goglog.Logger, os.Interrupt, os.Kill)
+	ctx = contextWithOSSignal(ctx, goglog.Logger, os.Interrupt, syscall.SIGTERM)
 	t.eg, t.ctx = errgroup.WithContext(ctx)
 
 	if err = t.startInputs(); err != nil {
