@@ -98,7 +98,7 @@ func TestNewSimpleQueue1(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	o := &sampleOutput{doneCh: make(chan struct{}), target: numMessages, FailMsgId: []uint32{1, 2, 100}}
-	q := NewSimpleQueue(ctx, control, o, numMessages, 1)
+	q := NewSimpleQueue(ctx, control, o, nil, numMessages, 1)
 	o.queue = q
 	// send four messages
 	go func() {

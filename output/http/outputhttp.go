@@ -97,7 +97,7 @@ func InitHandler(
 		conf.MaxQueueSize = 1
 	}
 	// create the queue
-	conf.queue = queue.NewSimpleQueue(ctx, control, &conf, conf.MaxQueueSize, conf.RetryInterval)
+	conf.queue = queue.NewSimpleQueue(ctx, control, &conf, nil, conf.MaxQueueSize, conf.RetryInterval)
 
 	return conf.queue, nil
 }

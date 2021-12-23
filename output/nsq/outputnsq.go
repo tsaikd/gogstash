@@ -3,12 +3,12 @@ package nsq
 import (
 	"context"
 	"errors"
-
 	"github.com/nsqio/go-nsq"
 	"github.com/tsaikd/KDGoLib/version"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
+	"github.com/tsaikd/gogstash/config/queue"
 )
 
 // ModuleName is the name used in config file
@@ -24,8 +24,8 @@ type OutputConfig struct {
 	producer *nsq.Producer
 	ctx      context.Context
 
-	msg   chan []byte            // channel to push message from codec to
-	codec config.TypeCodecConfig // the codec we will use
+	msg   chan []byte // channel to push message from codec to
+	queue queue.Queue // our queue for backpressure handling
 }
 
 // DefaultOutputConfig returns an OutputConfig struct with default values
@@ -73,8 +73,9 @@ func InitHandler(
 	if err != nil {
 		return nil, err
 	}
+	conf.queue = queue.NewSimpleQueue(ctx, control, &conf, conf.msg, 10, 30) // last values are queue size and retry interval in seconds
 	go conf.nsqbackgroundtask()
-	return &conf, nil
+	return conf.queue, nil
 }
 
 // nsqbackgroundtask runs in the background and handles messages and termination
@@ -90,14 +91,19 @@ func (t *OutputConfig) nsqbackgroundtask() {
 		case msg := <-t.msg:
 			err := t.producer.Publish(t.Topic, msg)
 			if err != nil {
-				goglog.Logger.Errorf("outputnsq: %s", err.Error())
+				err = t.queue.Queue(t.ctx, msg)
+				if err != nil {
+					goglog.Logger.Errorf("outputnsq: %s", err.Error())
+				}
+			} else {
+				_ = t.queue.Resume(t.ctx)
 			}
 		}
 	}
 }
 
 // Output event
-func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err error) {
-	_, err = t.codec.Encode(ctx, event, t.msg)
+func (t *OutputConfig) OutputEvent(ctx context.Context, event logevent.LogEvent) (err error) {
+	_, err = t.Codec.Encode(ctx, event, t.msg)
 	return
 }

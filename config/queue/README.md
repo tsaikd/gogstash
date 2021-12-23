@@ -43,7 +43,7 @@ func InitHandler(
 ) (config.TypeOutputConfig, error) {
 	conf := DefaultOutputConfig()
 	// all your custom init code
-  conf.queue = queue.NewSimpleQueue(ctx, control, &conf, 1, 30) // last values are queue size and retry interval in seconds
+  conf.queue = queue.NewSimpleQueue(ctx, control, &conf, nil, 1, 30) // last values are queue size and retry interval in seconds
   return conf.queue, nil
 }
 ```
@@ -56,3 +56,12 @@ At last, rewrite the OutputEvent() handler. You need to make two changes:
 
 The developer should drop any events that have fatal errors - where the receiver is actively failing the event because of errors that likely will not go away.
 Examples on such errors are page not found (404) and access denied (401).
+
+## Existing output using a codec
+
+When using codecs the Output works a bit differently as Output() only calls the codec that translates the event, and then
+sends the event back to the output using a chan []byte.
+
+The principles for queueing messages as shown above still applies, but you need to move the handling code to the codec receiver instead.
+
+Call ```return t.queue.Resume(ctx)``` when a message was delivered successfully, and call ```t.queue.Queue(ctx, eventBytes)``` when you need something queued.
