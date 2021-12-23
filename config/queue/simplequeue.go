@@ -15,13 +15,12 @@ type simpleQueue struct {
 	RetryInterval uint `json:"retry_interval" yaml:"retry_interval"` // seconds before a new retry in case on error
 	MaxQueueSize  int  `json:"max_queue_size" yaml:"max_queue_size"` // max size of queue before deleting events (-1=no limit, 0=disable)
 
-	ctx        context.Context
-	output     QueueReceiver // the output
-	control    config.Control
-	isInPause  uint32           // set to either StatusDelivering or StatusPaused
-	queue      chan interface{} // channel to send events to the internal queue
-	codecCh    chan []byte      // channel to push a coded message onto
-	retryqueue list.List        // list of queued messages; the list is not multithreading safe, and must only be accessed from backgroundtask()
+	ctx       context.Context
+	output    QueueReceiver // the output
+	control   config.Control
+	isInPause uint32           // set to either StatusDelivering or StatusPaused
+	queue     chan interface{} // channel to send events to the internal queue
+	codecCh   chan []byte      // channel to push a coded message onto
 }
 
 // Resume informs that the output is working again - can be called multiple times and is thread safe.
@@ -69,7 +68,6 @@ func NewSimpleQueue(ctx context.Context, control config.Control, receiver QueueR
 		isInPause:     StatusDelivering,
 		queue:         make(chan interface{}, chanSize),
 		codecCh:       outch,
-		retryqueue:    list.List{},
 	}
 	go s.backgroundtask()
 	return s
@@ -99,6 +97,8 @@ func (t *simpleQueue) Output(ctx context.Context, event logevent.LogEvent) (err 
 
 // backgroundtask is running in the background and adds new events to the queue, tries to send them out on the RetryInterval.
 func (t *simpleQueue) backgroundtask() {
+	var retryqueue list.List // list of queued messages; the list is not multithreading safe, and must only be accessed from backgroundtask()
+
 	goglog.Logger.Debug("backgroundtask started for ", t.GetType())
 	dur := time.Duration(t.RetryInterval) * time.Second
 	ticker := time.NewTicker(dur)
@@ -106,8 +106,8 @@ func (t *simpleQueue) backgroundtask() {
 	for {
 		select {
 		case event := <-t.queue:
-			if (t.retryqueue.Len() < t.MaxQueueSize) || t.MaxQueueSize == -1 {
-				t.retryqueue.PushBack(event)
+			if (retryqueue.Len() < t.MaxQueueSize) || t.MaxQueueSize == -1 {
+				retryqueue.PushBack(event)
 			}
 		case <-t.ctx.Done():
 			goglog.Logger.Debugf("queue %s closing", t.GetType())
@@ -115,11 +115,11 @@ func (t *simpleQueue) backgroundtask() {
 		case <-ticker.C:
 			// We have reached a RetryInterval. If there are any events in the queue, lets send one back.
 			// If we are still in pause mode we will send one, if we are in normal mode we will send all back.
-			if e := t.retryqueue.Front(); e != nil {
-				goglog.Logger.Debugf("%s simplequeue trying to deliver, has %v events in queue", t.GetType(), t.retryqueue.Len())
+			if e := retryqueue.Front(); e != nil {
+				goglog.Logger.Debugf("%s simplequeue trying to deliver, has %v events in queue", t.GetType(), retryqueue.Len())
 				if atomic.LoadUint32(&t.isInPause) == StatusPaused {
 					msg := e.Value
-					t.retryqueue.Remove(e)
+					retryqueue.Remove(e)
 					switch v := msg.(type) {
 					case logevent.LogEvent:
 						go func() {
@@ -147,18 +147,19 @@ func (t *simpleQueue) backgroundtask() {
 					// First we need to empty the queue and get all events to send.
 					myList := []interface{}{}
 					for {
-						e := t.retryqueue.Front()
+						e := retryqueue.Front()
 						if e == nil {
 							break
 						}
 						event := e.Value
 						myList = append(myList, event)
-						t.retryqueue.Remove(e)
+						retryqueue.Remove(e)
 					}
 					// Now we have to send them all out
 					go func() {
 						for x := range myList {
 							ctx, cancel := context.WithTimeout(context.Background(), dur)
+							defer cancel()
 							switch v := (myList[x]).(type) {
 							case []byte:
 								select {
@@ -174,7 +175,6 @@ func (t *simpleQueue) backgroundtask() {
 							default:
 								goglog.Logger.Errorf("Invalid type %T", v)
 							}
-							cancel()
 						}
 					}()
 				}

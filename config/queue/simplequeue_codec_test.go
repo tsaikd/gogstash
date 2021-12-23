@@ -38,7 +38,10 @@ func (c *codecOutput) background() {
 				}
 			}
 			if failed {
-				c.queue.Queue(c.ctx, msg)
+				err := c.queue.Queue(c.ctx, msg)
+				if err != nil {
+					panic(err)
+				}
 				atomic.AddUint32(&c.numQueued, 1)
 			} else {
 				atomic.AddUint32(&c.numSuccess, 1)
