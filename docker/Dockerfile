@@ -1,45 +1,9 @@
-FROM golang:1 AS version
-WORKDIR /build
-COPY .git .git
-RUN git describe --tags | tee VERSION
-RUN git describe --tags --abbrev=0 | tee TAG
-RUN git rev-parse HEAD | tee GITCOMMIT
+FROM ubuntu:18.04 as build
 
-FROM golang:1 AS build
-WORKDIR /build
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-COPY --from=version /build/VERSION /build/TAG /build/GITCOMMIT ./
-RUN CGO_ENABLED=0 go build -ldflags "\
-	-X \"github.com/tsaikd/KDGoLib/version.NAME=gogstash\" \
-	-X \"github.com/tsaikd/KDGoLib/version.BUILDTIME=$(date)\" \
-	-X \"github.com/tsaikd/KDGoLib/version.VERSION=$(cat VERSION)\" \
-	-X \"github.com/tsaikd/KDGoLib/version.GITCOMMIT=$(cat GITCOMMIT)\" \
-	"
-RUN ./gogstash version
+ENV GOGSTASH_VERSION 0.1.21
 
-FROM registry.gitlab.com/kd-org/image/github-release:0 AS release
-WORKDIR /build
-COPY --from=version /build/VERSION /build/TAG /build/GITCOMMIT ./
-COPY --from=build /build/gogstash .
-ARG GITHUB_TOKEN
-ARG GITHUB_USER=tsaikd
-ARG GITHUB_REPO=gogstash
-RUN if [ "$(cat VERSION)" != "$(cat TAG)" ]; then echo "--pre-release" > PRERELEASE ; else > PRERELEASE ; fi
-RUN if [ "${GITHUB_TOKEN}" ]; then \
-		github-release release \
-			--tag "$(cat VERSION)" \
-			--target "$(cat GITCOMMIT)" \
-			--description "curl 'https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/download/$(cat VERSION)/${GITHUB_REPO}-$(uname -s)-$(uname -m)' -SLo ${GITHUB_REPO} && chmod +x ${GITHUB_REPO}" \
-			$(cat PRERELEASE) ; \
-		github-release upload \
-			--tag "$(cat VERSION)" \
-			--name "${GITHUB_REPO}-$(uname -s)-$(uname -m)" \
-			--file "${GITHUB_REPO}" ; \
-	fi
+ADD https://github.com/tsaikd/gogstash/releases/download/${GOGSTASH_VERSION}/gogstash-Linux-x86_64 /usr/local/bin/
 
-FROM alpine:3
-COPY --from=build /build/gogstash /usr/local/bin/gogstash
-RUN gogstash version
-CMD gogstash
+RUN mv /usr/local/bin/gogstash-Linux-x86_64 /usr/local/bin/gogstash && chmod +x /usr/local/bin/gogstash
+
+ENTRYPOINT exec gogstash --config /etc/gogstash.yaml
