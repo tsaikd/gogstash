@@ -269,6 +269,7 @@ See [output modules](output) for more information
 * [cond](output/cond)
 * [elastic](output/elastic)
 * [email](output/email)
+* [GELF](output/gelf)
 * [NSQ](output/nsq)
 * [prometheus](output/prometheus)
 * [redis](output/redis)
