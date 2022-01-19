@@ -23,6 +23,7 @@ const ErrorTag = "gogstash_input_redis_error"
 type InputConfig struct {
 	config.InputConfig
 	Host        string `json:"host"`        // redis server host:port, default: "localhost:6379"
+	DB          int    `json:"db"`          // redis db, default: 0
 	Password    string `json:"password"`    // redis password, default: ""
 	Key         string `json:"key"`         // where to get data, default: "gogstash"
 	Connections int    `json:"connections"` // maximum number of socket connections, default: 10
@@ -46,7 +47,8 @@ func DefaultInputConfig() InputConfig {
 			},
 		},
 		Host:            "localhost:6379",
-		Password:	 "",
+		DB:              0,
+		Password:		 "",
 		Key:             "gogstash",
 		Connections:     10,
 		BatchCount:      125,
@@ -78,8 +80,9 @@ func InitHandler(
 
 	conf.client = redis.NewClient(&redis.Options{
 		Addr:     conf.Host,
-		PoolSize: conf.Connections,
+		DB:       conf.DB,
 		Password: conf.Password,
+		PoolSize: conf.Connections,
 	})
 	conf.client = conf.client.WithContext(ctx)
 
