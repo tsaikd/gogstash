@@ -48,7 +48,7 @@ func DefaultInputConfig() InputConfig {
 		},
 		Host:            "localhost:6379",
 		DB:              0,
-		Password:		 "",
+		Password:        "",
 		Key:             "gogstash",
 		Connections:     10,
 		BatchCount:      125,
