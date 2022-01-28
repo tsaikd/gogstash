@@ -111,6 +111,7 @@ func (t *Config) startFilters() (err error) {
 	}
 
 	t.eg.Go(func() error {
+	outerLoop:
 		for {
 			select {
 			case <-t.ctx.Done():
@@ -119,10 +120,14 @@ func (t *Config) startFilters() (err error) {
 				}
 			case event := <-t.chInFilter:
 				var ok bool
-				for _, filter := range filters {
-					event, ok = filter.Event(t.ctx, event)
+				for filterPos := event.FilterPos; filterPos < len(filters); filterPos++ {
+					event.FilterPos++
+					event, ok = filters[filterPos].Event(t.ctx, event)
+					if event.FilterPos == logevent.DiscardEvent {
+						continue outerLoop
+					}
 					if ok {
-						event = filter.CommonFilter(t.ctx, event)
+						event = filters[filterPos].CommonFilter(t.ctx, event)
 					}
 				}
 				t.chFilterOut <- event
