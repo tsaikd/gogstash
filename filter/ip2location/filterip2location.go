@@ -20,6 +20,12 @@ const ModuleName = "ip2location"
 // ErrorTag tag added to event when process ip2location failed
 const ErrorTag = "gogstash_filter_ip2location_error"
 
+// Geo describes a geo location
+type Geo struct {
+	Lat float32 `json:"lat"`
+	Lon float32 `json:"lon"`
+}
+
 // FilterConfig holds the configuration json fields and internal objects
 type FilterConfig struct {
 	config.FilterConfig
@@ -220,9 +226,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 		m["ISP"] = record.Isp
 	}
 	if record.Latitude != 0 || record.Longitude != 0 {
-		m["location"] = []float32{record.Longitude, record.Latitude}
-		m["latitude"] = record.Latitude
-		m["longitude"] = record.Longitude
+		m["location"] = Geo{Lon: record.Longitude, Lat: record.Latitude}
 	}
 
 	event.SetValue(f.Key, m)
