@@ -30,8 +30,8 @@ require (
 	github.com/mitchellh/mapstructure v1.2.2 // indirect
 	github.com/msaf1980/go-stringutils v0.0.8
 	github.com/msaf1980/statsd v0.0.0-20210625220633-8d91df059a07
-	github.com/nats-io/nats-server/v2 v2.2.0
-	github.com/nats-io/nats.go v1.10.1-0.20210228004050-ed743748acac
+	github.com/nats-io/nats-server/v2 v2.7.2
+	github.com/nats-io/nats.go v1.13.1-0.20220121202836-972a071d373d
 	github.com/nsqio/go-nsq v1.0.8
 	github.com/olivere/elastic/v7 v7.0.14
 	github.com/oschwald/geoip2-golang v1.4.0
@@ -54,7 +54,6 @@ require (
 	github.com/yuin/gopher-lua v0.0.0-20190206043414-8bfc7677f583 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20211015200801-69063c4bb744 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/ini.v1 v1.55.0 // indirect
