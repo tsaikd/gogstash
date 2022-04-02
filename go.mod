@@ -24,7 +24,7 @@ require (
 	github.com/icza/dyno v0.0.0-20200205103839-49cb13720835
 	github.com/ip2location/ip2location-go/v9 v9.1.0
 	github.com/ip2location/ip2proxy-go v3.0.0+incompatible
-	github.com/json-iterator/go v1.1.11
+	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.3.0 // indirect
 	github.com/libp2p/go-reuseport v0.0.1
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
