@@ -276,3 +276,4 @@ See [output modules](output) for more information
 * [report](output/report)
 * [socket](output/socket)
 * [stdout](output/stdout)
+* [loki](output/loki)
