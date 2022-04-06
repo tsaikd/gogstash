@@ -43,6 +43,7 @@ import (
 	outputgelf "github.com/tsaikd/gogstash/output/gelf"
 	outputhttp "github.com/tsaikd/gogstash/output/http"
 	outputkafka "github.com/tsaikd/gogstash/output/kafka"
+	outputloki "github.com/tsaikd/gogstash/output/loki"
 	outputnsq "github.com/tsaikd/gogstash/output/nsq"
 	outputprometheus "github.com/tsaikd/gogstash/output/prometheus"
 	outputredis "github.com/tsaikd/gogstash/output/redis"
@@ -102,6 +103,7 @@ func init() {
 	config.RegistOutputHandler(outputstatsd.ModuleName, outputstatsd.InitHandler)
 	config.RegistOutputHandler(outputfile.ModuleName, outputfile.InitHandler)
 	config.RegistOutputHandler(outputkafka.ModuleName, outputkafka.InitHandler)
+	config.RegistOutputHandler(outputloki.ModuleName, outputloki.InitHandler)
 
 	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
