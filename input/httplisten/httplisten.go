@@ -48,14 +48,18 @@ func DefaultInputConfig() InputConfig {
 }
 
 // InitHandler initialize the input plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
 		return nil, err
 	}
 
-	conf.Codec, err = config.GetCodecDefault(ctx, *raw, codecjson.ModuleName)
+	conf.Codec, err = config.GetCodec(ctx, raw["codec"], codecjson.ModuleName)
 	if err != nil {
 		return nil, err
 	}
@@ -71,6 +75,7 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		if req.Method != http.MethodPost {
 			logger.Warnf(invalidMethodError, req.Method)
 			rw.WriteHeader(http.StatusMethodNotAllowed)
+			//nolint: errcheck // no need to check error for abnormal case
 			rw.Write([]byte(fmt.Sprintf(invalidMethodError, req.Method)))
 			return
 		}
@@ -80,6 +85,7 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			if req.Header.Get(i.RequireHeader[0]) != i.RequireHeader[1] {
 				logger.Warn(invalidAccessToken)
 				rw.WriteHeader(http.StatusForbidden)
+				//nolint: errcheck // no need to check error for abnormal case
 				rw.Write([]byte(invalidAccessToken))
 				return
 			}
@@ -130,12 +136,9 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 				logger.Fatal(err)
 				return
 			}
-			err = http.Serve(l, nil)
+			logger.Trace(http.Serve(l, nil))
 		} else {
-			err = http.ListenAndServe(i.Address, nil)
-		}
-		if err != nil {
-			logger.Fatal(err)
+			logger.Trace(http.ListenAndServe(i.Address, nil))
 		}
 	}()
 	return nil
@@ -160,11 +163,13 @@ func (i *InputConfig) postHandler(msgChan chan<- logevent.LogEvent, rw http.Resp
 		// event not sent to msgChan
 		rw.WriteHeader(http.StatusInternalServerError)
 		if err != nil {
+			//nolint: errcheck // no need to check error for abnormal case
 			rw.Write([]byte(err.Error()))
 		}
 	} else if err != nil {
 		// event sent to msgChan
 		rw.WriteHeader(http.StatusBadRequest)
+		//nolint: errcheck // no need to check error for abnormal case
 		rw.Write([]byte(fmt.Sprintf(invalidRequestError, err)))
 	}
 }

@@ -45,7 +45,11 @@ func DefaultFilterConfig() FilterConfig {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {

@@ -81,7 +81,7 @@ func (t *InputConfig) CheckSaveSinceDBInfos() (err error) {
 			log.Errorf("Marshal sincedb failed: %s", err)
 			return
 		}
-		if bytes.Compare(raw, t.sinceDBLastInfosRaw) != 0 {
+		if !bytes.Equal(raw, t.sinceDBLastInfosRaw) {
 			err = t.SaveSinceDBInfos()
 		}
 	}

@@ -16,8 +16,8 @@ import (
 )
 
 // ReflectConfig set conf from confraw
-func ReflectConfig(confraw *ConfigRaw, conf interface{}) (err error) {
-	data, err := json.Marshal(dyno.ConvertMapI2MapS(map[string]interface{}(*confraw)))
+func ReflectConfig(confraw ConfigRaw, conf interface{}) (err error) {
+	data, err := json.Marshal(dyno.ConvertMapI2MapS(map[string]interface{}(confraw)))
 	if err != nil {
 		return
 	}
@@ -87,7 +87,7 @@ func formatReflect(rv reflect.Value) {
 func cleanComments(data []byte) (out []byte, err error) {
 	reForm1 := regexp.MustCompile(`^\s*#`)
 	reForm2 := regexp.MustCompile(`^\s*//`)
-	data = bytes.Replace(data, []byte("\r"), []byte(""), 0) // Windows
+	data = bytes.Replace(data, []byte("\r"), []byte(""), -1) // Windows
 	lines := bytes.Split(data, []byte("\n"))
 	var filtered [][]byte
 

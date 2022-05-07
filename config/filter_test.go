@@ -35,7 +35,7 @@ func TestCommonIsConfigured(t *testing.T) {
 	assert.False(filter.IsConfigured(), "should be not configured")
 	withAddTag := FilterConfig{AddTags: []string{"tag"}}
 	assert.True(withAddTag.IsConfigured(), "should be configured")
-	withAddFields := FilterConfig{AddFields: []FieldConfig{FieldConfig{Key: "name", Value: "value"}}}
+	withAddFields := FilterConfig{AddFields: []FieldConfig{{Key: "name", Value: "value"}}}
 	assert.True(withAddFields.IsConfigured(), "should be configured")
 	withRemoveTag := FilterConfig{RemoveTags: []string{"tag"}}
 	assert.True(withRemoveTag.IsConfigured(), "should be configured")
@@ -131,7 +131,7 @@ filter:
 	assert.Equal(0, len(conf.OutputRaw))
 
 	// to have config updated
-	mapFilterHandler["whatever"] = func(ctx context.Context, raw *ConfigRaw) (TypeFilterConfig, error) {
+	mapFilterHandler["whatever"] = func(ctx context.Context, raw ConfigRaw, control Control) (TypeFilterConfig, error) {
 		conf := WhateverFilterConfig{}
 		err := ReflectConfig(raw, &conf)
 		if err != nil {

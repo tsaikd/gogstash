@@ -27,6 +27,7 @@ type InputConfig struct {
 	URL      string `json:"url"`
 	Interval int    `json:"interval,omitempty"`
 
+	control  config.Control
 	hostname string
 }
 
@@ -44,29 +45,41 @@ func DefaultInputConfig() InputConfig {
 }
 
 // InitHandler initialize the input plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
 		return nil, err
 	}
 
+	conf.control = control
 	if conf.hostname, err = os.Hostname(); err != nil {
 		return nil, err
 	}
 
-	conf.Codec, err = config.GetCodecOrDefault(ctx, *raw)
+	conf.Codec, err = config.GetCodecOrDefault(ctx, raw["codec"])
+	if err != nil {
+		return nil, err
+	}
 
 	return &conf, err
 }
 
 // Start wraps the actual function starting the plugin
-func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error) {
+func (t *InputConfig) Start(
+	ctx context.Context,
+	msgChan chan<- logevent.LogEvent,
+) (err error) {
 	startChan := make(chan bool, 1) // startup tick
 	ticker := time.NewTicker(time.Duration(t.Interval) * time.Second)
 	defer ticker.Stop()
 
 	startChan <- true
+	isPaused := false
 
 	for {
 		select {
@@ -74,8 +87,16 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			return nil
 		case <-startChan:
 			t.Request(ctx, msgChan)
+		case <-t.control.PauseSignal():
+			goglog.Logger.Info("pause received")
+			isPaused = true
+		case <-t.control.ResumeSignal():
+			goglog.Logger.Info("resume received")
+			isPaused = false
 		case <-ticker.C:
-			t.Request(ctx, msgChan)
+			if !isPaused {
+				t.Request(ctx, msgChan)
+			}
 		}
 	}
 }

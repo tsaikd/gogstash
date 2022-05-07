@@ -108,7 +108,11 @@ func DefaultFilterConfig() FilterConfig {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
@@ -118,7 +122,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		goglog.Logger.Warn("filter cond config condition empty, ignored")
 		return &conf, nil
 	}
-	conf.filters, err = config.GetFilters(ctx, conf.FilterRaw)
+	conf.filters, err = config.GetFilters(ctx, conf.FilterRaw, control)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +131,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		return &conf, nil
 	}
 	if len(conf.ElseFilterRaw) > 0 {
-		conf.elseFilters, err = config.GetFilters(ctx, conf.ElseFilterRaw)
+		conf.elseFilters, err = config.GetFilters(ctx, conf.ElseFilterRaw, control)
 		if err != nil {
 			return nil, err
 		}
@@ -137,7 +141,10 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 }
 
 // Event the main filter event
-func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (logevent.LogEvent, bool) {
+func (f *FilterConfig) Event(
+	ctx context.Context,
+	event logevent.LogEvent,
+) (logevent.LogEvent, bool) {
 	if f.expression != nil {
 		ep := EventParameters{Event: &event}
 		ret, err := f.expression.Eval(&ep)

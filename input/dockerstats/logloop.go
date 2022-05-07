@@ -7,6 +7,7 @@ import (
 	"time"
 
 	docker "github.com/fsouza/go-dockerclient"
+	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"github.com/tsaikd/gogstash/input/dockerlog/dockertool"
 )
@@ -47,7 +48,8 @@ func (t *InputConfig) containerLogLoop(ctx context.Context, container interface{
 
 					*since = time.Now()
 
-					t.Codec.Decode(ctx, "", extra, []string{}, msgChan)
+					_, err := t.Codec.Decode(ctx, "", extra, []string{}, msgChan)
+					goglog.Logger.Trace(err)
 				}
 			}
 		}()

@@ -18,7 +18,6 @@ import (
 func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistInputHandler(ModuleName, InitHandler)
-	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 }
 
 func TestMain(m *testing.M) {
@@ -47,7 +46,6 @@ func Test_input_http_module_with_codec(t *testing.T) {
 	require.NotNil(require)
 
 	ctx := context.Background()
-	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 input:
@@ -74,7 +72,6 @@ func Test_input_http_module(t *testing.T) {
 	require.NotNil(require)
 
 	ctx := context.Background()
-	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 input:

@@ -3,6 +3,8 @@ package outputhttp
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"github.com/tsaikd/gogstash/config/queue"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -20,16 +22,27 @@ const ModuleName = "http"
 
 // errors
 var (
-	ErrNoValidURLs   = errutil.NewFactory("no valid URLs found")
-	ErrEndpointDown1 = errutil.NewFactory("%q endpoint down")
+	ErrNoValidURLs    = errutil.NewFactory("no valid URLs found")
+	ErrEndpointDown1  = errutil.NewFactory("%q endpoint down")
+	ErrPermanentError = errutil.NewFactory("%q permanent error %v (discarding event)")
+	ErrSoftError      = errutil.NewFactory("%q retryable error %v")
 )
 
 // OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
-	URLs []string `json:"urls"` // Array of HTTP connection strings
+	URLs                []string `json:"urls" yaml:"urls"`                           // Array of HTTP connection strings
+	AcceptedHttpResult  []int    `json:"http_status_codes" yaml:"http_status_codes"` // HTTP codes that indicate success
+	PermanentHttpErrors []int    `json:"http_error_codes" yaml:"http_error_codes"`   // HTTP codes that will not retry an event
+	RetryInterval       uint     `json:"retry_interval" yaml:"retry_interval"`       // seconds before a new retry in case on error
+	IgnoreSSL           bool     `json:"ignore_ssl" yaml:"ignore_ssl"`
+	MaxQueueSize        int      `json:"max_queue_size" yaml:"max_queue_size"` // max size of queue before deleting events (-1=no limit, 0=disable)
+
+	acceptedHttpResult  map[int]struct{} // a map containing the accepted result codes
+	permanentHttpErrors map[int]struct{} // a map containing the permanent error codes
 
 	httpClient *http.Client
+	queue      queue.Queue // our queue
 }
 
 // DefaultOutputConfig returns an OutputConfig struct with default values
@@ -40,14 +53,28 @@ func DefaultOutputConfig() OutputConfig {
 				Type: ModuleName,
 			},
 		},
+		RetryInterval:       30,
+		permanentHttpErrors: MapFromInts([]int{http.StatusNotImplemented, http.StatusMethodNotAllowed, http.StatusNotFound, http.StatusAlreadyReported, http.StatusHTTPVersionNotSupported}),
+		acceptedHttpResult:  MapFromInts([]int{http.StatusOK, http.StatusCreated, http.StatusAccepted}),
 	}
 }
 
 // InitHandler initialize the output plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeOutputConfig, error) {
 	conf := DefaultOutputConfig()
 	if err := config.ReflectConfig(raw, &conf); err != nil {
 		return nil, err
+	}
+
+	if len(conf.AcceptedHttpResult) > 0 {
+		conf.acceptedHttpResult = MapFromInts(conf.AcceptedHttpResult)
+	}
+	if len(conf.PermanentHttpErrors) > 0 {
+		conf.permanentHttpErrors = MapFromInts(conf.PermanentHttpErrors)
 	}
 
 	if len(conf.URLs) <= 0 {
@@ -58,19 +85,25 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeOutputC
 		DialContext: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
-			DualStack: true,
 		}).DialContext,
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: conf.IgnoreSSL},
 	}}
+	// we need at least one event in the queue to allow for resume
+	if conf.MaxQueueSize == 0 || conf.MaxQueueSize < -1 {
+		conf.MaxQueueSize = 1
+	}
+	// create the queue
+	conf.queue = queue.NewSimpleQueue(ctx, control, &conf, nil, conf.MaxQueueSize, conf.RetryInterval)
 
-	return &conf, nil
+	return conf.queue, nil
 }
 
-// Output event
-func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err error) {
+// OutputEvent tries to send a message, requeueing if is has a temporary error
+func (t *OutputConfig) OutputEvent(ctx context.Context, event logevent.LogEvent) (err error) {
 	i := rand.Intn(len(t.URLs))
 
 	raw, err := event.MarshalJSON()
@@ -79,7 +112,7 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 	}
 
 	url := t.URLs[i]
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(raw))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(raw))
 	if err != nil {
 		return err
 	}
@@ -88,19 +121,41 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 
 	resp, err := t.httpClient.Do(req)
 	if err != nil {
+		t.failedDelivery(ctx, event)
 		return err
 	}
 	defer resp.Body.Close()
 
 	_, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
+		t.failedDelivery(ctx, event)
 		return err
 	}
-	if resp.StatusCode != http.StatusOK {
-		err = ErrEndpointDown1.New(nil, url)
-		goglog.Logger.Errorf("output http: %v", err)
-		return err
+	if _, isinlist := t.permanentHttpErrors[resp.StatusCode]; isinlist {
+		return ErrPermanentError.New(nil, url, resp.StatusCode)
 	}
+	if _, ok := t.acceptedHttpResult[resp.StatusCode]; !ok {
+		t.failedDelivery(ctx, event)
+		return ErrSoftError.New(nil, url, resp.StatusCode)
+	}
+	// the event was sent correctly, we now have to resume inputs if we earlier has requested a pause.
+	return t.queue.Resume(ctx)
+}
 
-	return nil
+// failedDelivery receives an event that failed delivery and triggers a pause event if we have not done so already
+// and places the message in the retry-queue.
+func (t *OutputConfig) failedDelivery(ctx context.Context, event logevent.LogEvent) {
+	err := t.queue.Queue(ctx, event)
+	if err != nil {
+		goglog.Logger.Error("outputhttp ", err.Error())
+	}
+}
+
+// MapFromInts returns a map containing all the ints in the array
+func MapFromInts(nums []int) map[int]struct{} {
+	result := make(map[int]struct{}, len(nums))
+	for x := range nums {
+		result[x] = struct{}{}
+	}
+	return result
 }

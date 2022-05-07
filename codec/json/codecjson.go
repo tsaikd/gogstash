@@ -22,7 +22,7 @@ type Codec struct {
 }
 
 // InitHandler initialize the codec plugin
-func InitHandler(context.Context, *config.ConfigRaw) (config.TypeCodecConfig, error) {
+func InitHandler(context.Context, config.ConfigRaw) (config.TypeCodecConfig, error) {
 	return &Codec{
 		CodecConfig: config.CodecConfig{
 			CommonConfig: config.CommonConfig{
@@ -45,13 +45,9 @@ func (c *Codec) Decode(ctx context.Context, data interface{},
 
 	switch v := data.(type) {
 	case string:
-		if err = jsoniter.Unmarshal([]byte(v), &event.Extra); err != nil {
-			event.Message = v
-		}
+		err = c.DecodeEvent([]byte(v), &event)
 	case []byte:
-		if err = jsoniter.Unmarshal(v, &event.Extra); err != nil {
-			event.Message = string(v)
-		}
+		err = c.DecodeEvent(v, &event)
 	case map[string]interface{}:
 		if event.Extra != nil {
 			for k, val := range v {
@@ -60,39 +56,13 @@ func (c *Codec) Decode(ctx context.Context, data interface{},
 		} else {
 			event.Extra = v
 		}
+		c.populateEventExtras(&event)
 	default:
 		err = config.ErrDecodeData
 	}
 	if err != nil {
 		event.AddTag(ErrorTag)
 		goglog.Logger.Error(err)
-	}
-
-	if event.Extra != nil {
-		// try to fill basic log event by json message
-		if value, ok := event.Extra["message"]; ok {
-			switch v := value.(type) {
-			case string:
-				event.Message = v
-				delete(event.Extra, "message")
-			}
-		}
-		if value, ok := event.Extra["@timestamp"]; ok {
-			switch v := value.(type) {
-			case string:
-				if timestamp, err2 := time.Parse(time.RFC3339Nano, v); err2 == nil {
-					event.Timestamp = timestamp
-					delete(event.Extra, "@timestamp")
-				}
-			}
-		}
-		if value, ok := event.Extra[logevent.TagsField]; ok {
-			if event.ParseTags(value) {
-				delete(event.Extra, logevent.TagsField)
-			} else {
-				goglog.Logger.Warnf("malformed tags: %v", value)
-			}
-		}
 	}
 
 	msgChan <- event
@@ -102,17 +72,39 @@ func (c *Codec) Decode(ctx context.Context, data interface{},
 }
 
 // DecodeEvent decodes 'data' as JSON format to event
-func (c *Codec) DecodeEvent(data []byte, v interface{}) error {
-	event := logevent.LogEvent{
-		Timestamp: time.Now(),
+func (c *Codec) DecodeEvent(data []byte, event *logevent.LogEvent) (err error) {
+	// If the pointer is empty, raise error
+	if event == nil {
+		goglog.Logger.Errorf("Provided DecodeEvent target event pointer is nil")
+		return config.ErrDecodeNilTarget
 	}
 
-	if err := jsoniter.Unmarshal(data, &event.Extra); err != nil {
+	if event.Timestamp.IsZero() {
+		event.Timestamp = time.Now()
+	}
+
+	if err = jsoniter.Unmarshal(data, &event.Extra); err != nil {
 		event.Message = string(data)
 		event.AddTag(ErrorTag)
 		goglog.Logger.Error(err)
 	}
 
+	c.populateEventExtras(event)
+
+	return
+}
+
+// Encode encodes the event to a JSON encoded message
+func (c *Codec) Encode(_ context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
+	output, err := event.MarshalJSON()
+	if err != nil {
+		return false, err
+	}
+	dataChan <- output
+	return true, nil
+}
+
+func (c *Codec) populateEventExtras(event *logevent.LogEvent) {
 	if event.Extra != nil {
 		// try to fill basic log event by json message
 		if value, ok := event.Extra["message"]; ok {
@@ -139,19 +131,4 @@ func (c *Codec) DecodeEvent(data []byte, v interface{}) error {
 			}
 		}
 	}
-
-	switch e := v.(type) {
-	case *interface{}:
-		*e = event
-	case *logevent.LogEvent:
-		*e = event
-	default:
-		return config.ErrorUnsupportedTargetEvent
-	}
-	return nil
-}
-
-// Encode function not implement (TODO)
-func (c *Codec) Encode(ctx context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
-	return false, config.ErrorNotImplement1.New(nil)
 }

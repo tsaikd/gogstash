@@ -7,7 +7,8 @@ type TypeCommonConfig interface {
 
 // CommonConfig is basic config struct
 type CommonConfig struct {
-	Type string `json:"type"`
+	Type     string `json:"type"`
+	Disabled bool   `json:"disabled" yaml:"disabled"` // if set the input/output/filter will be disabled
 }
 
 // GetType return module type of config

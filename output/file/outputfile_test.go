@@ -2,9 +2,12 @@ package outputfile
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -26,7 +29,7 @@ output:
   - type: file
 	`)))
 	assert.Nil(err)
-	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.NotNil(err)
 
 	// write_behavior is different from 'append' and 'overwrite'
@@ -34,11 +37,11 @@ output:
 debugch: true
 output:
   - type: file
-    path: p
+    path: ` + testPath() + `
     write_behavior: write_behavior
 	`)))
 	assert.Nil(err)
-	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.NotNil(err)
 
 	// invalid file_mode
@@ -46,11 +49,11 @@ output:
 debugch: true
 output:
   - type: file
-    path: p
+    path: ` + testPath() + `
     file_mode: -1
 	`)))
 	assert.Nil(err)
-	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.NotNil(err)
 
 	// invalid file_mode
@@ -58,11 +61,11 @@ output:
 debugch: true
 output:
   - type: file
-    path: p
+    path: ` + testPath() + `
     file_mode: -1
 	`)))
 	assert.Nil(err)
-	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.NotNil(err)
 
 	// invalid dir_mode
@@ -70,11 +73,11 @@ output:
 debugch: true
 output:
   - type: file
-    path: p
+    path: ` + testPath() + `
     dir_mode: -1
 	`)))
 	assert.Nil(err)
-	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.NotNil(err)
 
 	// invalid flush_interval
@@ -82,21 +85,21 @@ output:
 debugch: true
 output:
   - type: file
-    path: p
+    path: ` + testPath() + `
     flush_interval: blah
 	`)))
 	assert.Nil(err)
-	_, err = InitHandler(context.TODO(), &conf.OutputRaw[0])
+	_, err = InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.NotNil(err)
 
 	// test default values
 	conf, err = config.LoadFromYAML([]byte(strings.TrimSpace(`
-    output:
-      - type: file
-        path: p
-        `)))
+output:
+  - type: file
+    path: ` + testPath() + `
+	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	assert.Equal(defaultCreateIfDeleted, config.CreateIfDeleted)
@@ -105,26 +108,25 @@ output:
 	assert.Equal(defaultFlushInterval, config.FlushInterval)
 	assert.Equal(defaultCodec, config.Codec)
 	assert.Equal(defaultWriteBehavior, config.WriteBehavior)
-
 }
 
 func TestDefaultOutputConfigNewFile(t *testing.T) {
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	path := "p"
+	path := testPath()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
-	perm := os.FileMode(640)
+	perm := os.FileMode(0640)
 	// simulate dir does not exist. should be created with right permissions
 	mockfs := mocks.NewMockFileSystem(ctrl)
 	config.fs = mockfs
@@ -151,25 +153,24 @@ output:
 	case <-done:
 	case <-time.Tick(2 * time.Second):
 	}
-
 }
 
 func TestDefaultOutputConfigNewFilePerm(t *testing.T) {
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	path := "p"
+	path := testPath()
 	fileMode := 777
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(fileMode)
@@ -194,31 +195,30 @@ output:
 	err = config.Output(context.TODO(), event)
 	assert.Nil(err)
 
-	// wait for done channel or 2 seconds delay, whatever happends first
+	// wait for done channel or 2 seconds delay, whatever happens first
 	select {
 	case <-done:
 	case <-time.Tick(2 * time.Second):
 	}
-
 }
 
 func TestDefaultOutputConfigCodec(t *testing.T) {
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	path := "p"
+	path := testPath()
 	fileMode := 777
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
     codec: "test"
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(fileMode)
@@ -248,26 +248,25 @@ output:
 	case <-done:
 	case <-time.Tick(2 * time.Second):
 	}
-
 }
 
 func TestDefaultOutputConfigCodecVar(t *testing.T) {
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	path := "p"
+	path := testPath()
 	fileMode := 777
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
     codec: "%{log}"
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(fileMode)
@@ -298,25 +297,24 @@ output:
 	case <-done:
 	case <-time.Tick(2 * time.Second):
 	}
-
 }
 
 func TestDefaultOutputConfigCreateIfNeeded(t *testing.T) {
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	path := "p"
+	path := testPath()
 	fileMode := 777
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(fileMode)
@@ -358,26 +356,25 @@ output:
 	case <-done:
 	case <-time.Tick(2 * time.Second):
 	}
-
 }
 
 func TestDefaultOutputConfigCreateIfNeededDisabled(t *testing.T) {
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	path := "p"
+	path := testPath()
 	fileMode := 777
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
     create_if_deleted: false
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	perm := os.FileMode(fileMode)
@@ -387,21 +384,21 @@ output:
 	event := logevent.LogEvent{}
 	event.SetValue("log", "logvalue")
 	// filesystem will reply with 'file does not exist'
-	mockfs.EXPECT().Stat(path).Return(nil, os.ErrNotExist)
+	mockfs.EXPECT().Stat(path).Return(nil, os.ErrNotExist).AnyTimes()
 	mockfile := mocks.NewMockFile(ctrl)
 	// channel to prevent test from finishing before gorouting writes to file
 	done := make(chan bool)
 	// first write, file will respond no error
 	mockfile.EXPECT().Write(gomock.Any()).DoAndReturn(func(b []byte) (int, error) {
 		return 10, nil
-	})
+	}).AnyTimes()
 	// second write, file will reply with 'ErrNotExist'
 	mockfile.EXPECT().Write(gomock.Any()).DoAndReturn(func(b []byte) (int, error) {
 		done <- true
 		return 0, os.ErrNotExist
-	})
+	}).AnyTimes()
 	// file will be opened twice. initial time and after error writing second time
-	mockfs.EXPECT().OpenFile(path, createPerm, perm).DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
+	mockfs.EXPECT().OpenFile(path, createPerm, perm).AnyTimes().DoAndReturn(func(path string, flag int, perm os.FileMode) (fs.File, error) {
 		return mockfile, nil
 	})
 	err = config.Output(context.TODO(), event)
@@ -414,27 +411,26 @@ output:
 	case <-done:
 	case <-time.Tick(2 * time.Second):
 	}
-
 }
 
 func TestDefaultOutputConfigNewFileDir(t *testing.T) {
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	path := "dir/file"
+	path := filepath.Join("dir", testPath())
 	fileMode := 666
 	dirMode := 777
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
     dir_mode: "` + strconv.Itoa(dirMode) + `"
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	fPerm := os.FileMode(fileMode)
@@ -467,27 +463,26 @@ output:
 	case <-done:
 	case <-time.Tick(2 * time.Second):
 	}
-
 }
 
 func TestDefaultOutputConfigNewFileExistingDir(t *testing.T) {
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	path := "dir/file"
+	path := filepath.Join("dir", testPath())
 	fileMode := 666
 	dirMode := 777
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     file_mode: "` + strconv.Itoa(fileMode) + `"
     dir_mode: "` + strconv.Itoa(dirMode) + `"
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
 	fPerm := os.FileMode(fileMode)
@@ -518,26 +513,25 @@ output:
 	case <-done:
 	case <-time.Tick(2 * time.Second):
 	}
-
 }
 func TestDefaultOutputConfigExistingAppendedFile(t *testing.T) {
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	path := "p"
+	path := testPath()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     write_behavior: append
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
-	perm := os.FileMode(640)
+	perm := os.FileMode(0640)
 	// simulate dir does not exist. should be created with right permissions
 	mockfs := mocks.NewMockFileSystem(ctrl)
 	config.fs = mockfs
@@ -570,20 +564,20 @@ func TestDefaultOutputConfigExistingOverwrittenFile(t *testing.T) {
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	path := "p"
+	path := testPath()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 1000
     write_behavior: overwrite
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
-	perm := os.FileMode(640)
+	perm := os.FileMode(0640)
 	// simulate dir does not exist. should be created with right permissions
 	mockfs := mocks.NewMockFileSystem(ctrl)
 	config.fs = mockfs
@@ -617,19 +611,19 @@ func TestDefaultOutputConfigSync(t *testing.T) {
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	path := "p"
+	path := testPath()
 	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
 debugch: true
 output:
   - type: file
-    path: ` + path + `    
+    path: ` + path + `
     flush_interval: 0
 	`)))
 	assert.Nil(err)
-	c, err := InitHandler(context.TODO(), &conf.OutputRaw[0])
+	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
-	perm := os.FileMode(640)
+	perm := os.FileMode(0640)
 	// simulate dir does not exist. should be created with right permissions
 	mockfs := mocks.NewMockFileSystem(ctrl)
 	config.fs = mockfs
@@ -658,5 +652,38 @@ output:
 	case <-done:
 	case <-time.Tick(2 * time.Second):
 	}
+}
 
+func Test_parseAsIntOrOctal(t *testing.T) {
+	type args struct {
+		input string
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantResult int
+		wantErr    bool
+	}{
+		{"NaN", args{"text"}, 0, true},
+		{"10", args{"10"}, 10, false},
+		{"010", args{"010"}, 8, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotResult, err := parseAsIntOrOctal(tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseAsIntOrOctal() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotResult != tt.wantResult {
+				t.Errorf("parseAsIntOrOctal() gotResult = %v, want %v", gotResult, tt.wantResult)
+			}
+		})
+	}
+}
+
+var testPathCount int32
+
+func testPath() string {
+	return fmt.Sprintf("__testpath__%d", atomic.AddInt32(&testPathCount, 1))
 }

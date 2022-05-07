@@ -2,7 +2,6 @@ package filtercond
 
 import (
 	"context"
-	filtermutate "github.com/tsaikd/gogstash/filter/mutate"
 	"strings"
 	"testing"
 	"time"
@@ -13,7 +12,8 @@ import (
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"github.com/tsaikd/gogstash/filter/addfield"
+	filteraddfield "github.com/tsaikd/gogstash/filter/addfield"
+	filtermutate "github.com/tsaikd/gogstash/filter/mutate"
 )
 
 func init() {
@@ -35,11 +35,11 @@ filter:
     filter:
       - type: add_field
         key: foo
-        value: bar    
+        value: bar
     `)))
-	require.Nil(err)
-	_, err = InitHandler(context.TODO(), &conf.FilterRaw[0])
-	require.NotNil(err)
+	require.NoError(err)
+	_, err = InitHandler(context.TODO(), conf.FilterRaw[0], nil)
+	require.Error(err)
 }
 
 func Test_filter_cond_module(t *testing.T) {
@@ -123,7 +123,7 @@ filter:
       - type: mutate
         add_tag: ["added"]
     `)))
-	require.Nil(err)
+	require.NoError(err)
 	require.NoError(conf.Start(context.Background()))
 	conf.TestInputEvent(logevent.LogEvent{})
 	if output, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
@@ -143,7 +143,7 @@ filter:
       - type: mutate
         add_tag: ["added"]
     `)))
-	require.Nil(err)
+	require.NoError(err)
 	require.NoError(conf.Start(context.Background()))
 	conf.TestInputEvent(logevent.LogEvent{})
 	if output, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {

@@ -8,9 +8,11 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/gogstash/config/ctxutil"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"golang.org/x/sync/errgroup"
@@ -23,6 +25,7 @@ var (
 	ErrorUnmarshalJSONConfig = errutil.NewFactory("Failed unmarshalling config in JSON format")
 	ErrorUnmarshalYAMLConfig = errutil.NewFactory("Failed unmarshalling config in YAML format")
 	ErrorTimeout1            = errutil.NewFactory("timeout: %v")
+	ErrorInvalidState        = errutil.NewFactory("Invalid state for pause/resume")
 )
 
 // Config contains all config
@@ -47,6 +50,10 @@ type Config struct {
 	chOutDebug  MsgChan // channel from output to debug
 	ctx         context.Context
 	eg          *errgroup.Group
+
+	state        int32
+	signalPause  *ctxutil.Broadcaster
+	signalResume *ctxutil.Broadcaster
 }
 
 var defaultConfig = Config{
@@ -115,11 +122,14 @@ func initConfig(config *Config) {
 	if config.DebugChannel {
 		config.chOutDebug = make(MsgChan, config.ChannelSize)
 	}
+	config.state = stateNormal
+	config.signalPause = ctxutil.NewBroadcaster()
+	config.signalResume = ctxutil.NewBroadcaster()
 }
 
 // Start config in goroutines
 func (t *Config) Start(ctx context.Context) (err error) {
-	ctx = contextWithOSSignal(ctx, goglog.Logger, os.Interrupt, os.Kill)
+	ctx = contextWithOSSignal(ctx, goglog.Logger, os.Interrupt, syscall.SIGTERM)
 	t.eg, t.ctx = errgroup.WithContext(ctx)
 
 	if err = t.startInputs(); err != nil {

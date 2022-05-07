@@ -23,6 +23,8 @@ const ErrorTag = "gogstash_input_redis_error"
 type InputConfig struct {
 	config.InputConfig
 	Host        string `json:"host"`        // redis server host:port, default: "localhost:6379"
+	DB          int    `json:"db"`          // redis db, default: 0
+	Password    string `json:"password"`    // redis password, default: ""
 	Key         string `json:"key"`         // where to get data, default: "gogstash"
 	Connections int    `json:"connections"` // maximum number of socket connections, default: 10
 	BatchCount  int    `json:"batch_count"` // The number of events to return from Redis using EVAL, default: 125
@@ -45,6 +47,8 @@ func DefaultInputConfig() InputConfig {
 			},
 		},
 		Host:            "localhost:6379",
+		DB:              0,
+		Password:        "",
 		Key:             "gogstash",
 		Connections:     10,
 		BatchCount:      125,
@@ -58,7 +62,11 @@ var (
 )
 
 // InitHandler initialize the input plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
@@ -72,6 +80,8 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 
 	conf.client = redis.NewClient(&redis.Options{
 		Addr:     conf.Host,
+		DB:       conf.DB,
+		Password: conf.Password,
 		PoolSize: conf.Connections,
 	})
 	conf.client = conf.client.WithContext(ctx)
@@ -87,7 +97,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 		}
 	}
 
-	conf.Codec, err = config.GetCodecDefault(ctx, *raw, codecjson.ModuleName)
+	conf.Codec, err = config.GetCodec(ctx, raw["codec"], codecjson.ModuleName)
 	if err != nil {
 		return nil, err
 	}
@@ -95,8 +105,14 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 	return &conf, nil
 }
 
-func (i *InputConfig) queueMessage(ctx context.Context, message string, msgChan chan<- logevent.LogEvent) {
-	i.Codec.Decode(ctx, []byte(message), nil, []string{}, msgChan)
+func (i *InputConfig) queueMessage(
+	ctx context.Context,
+	message string,
+	msgChan chan<- logevent.LogEvent,
+) (err error) {
+	_, err = i.Codec.Decode(ctx, []byte(message), nil, []string{}, msgChan)
+
+	return
 }
 
 func (i *InputConfig) listSingle(ctx context.Context, msgChan chan<- logevent.LogEvent) error {
@@ -112,9 +128,7 @@ func (i *InputConfig) listSingle(ctx context.Context, msgChan chan<- logevent.Lo
 
 	// we need to use msg[1] because BLPOP returns a tuple of (key, value) where key is
 	// the redis key used to retrieve the message
-	i.queueMessage(ctx, result[1], msgChan)
-
-	return nil
+	return i.queueMessage(ctx, result[1], msgChan)
 }
 
 const batchEmptySleep = time.Duration(250000000) // 250ms
@@ -138,7 +152,9 @@ retry:
 	switch results := r.(type) {
 	case []interface{}:
 		for _, result := range results {
-			i.queueMessage(ctx, result.(string), msgChan)
+			if err := i.queueMessage(ctx, result.(string), msgChan); err != nil {
+				return err
+			}
 		}
 		if len(results) <= 0 {
 			time.Sleep(time.Duration(batchEmptySleep))

@@ -67,7 +67,11 @@ var (
 )
 
 // InitHandler initialize the input plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
@@ -100,8 +104,11 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 	}
 
 	// This is really a "reference" codec instance, with each Stream getting their own copy.
-	//  copying codec instances is needed to allow codecs to do sequential processing, such as milti-line logs with proper isolation.
-	conf.Codec, err = config.GetCodecOrDefault(ctx, *raw)
+	//  copying codec instances is needed to allow codecs to do sequential processing, such as multi-line logs with proper isolation.
+	conf.Codec, err = config.GetCodecOrDefault(ctx, raw["codec"])
+	if err != nil {
+		return nil, err
+	}
 
 	return &conf, err
 }
@@ -149,7 +156,8 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 				return nil
 			case dockerEvent := <-dockerEventChan:
 				if dockerEvent.Status == "start" {
-					container, err := t.client.InspectContainer(dockerEvent.ID)
+					container, err := t.client.InspectContainerWithOptions(
+						docker.InspectContainerOptions{ID: dockerEvent.ID})
 					if err != nil {
 						return ErrorInspectContainerFailed.New(err)
 					}

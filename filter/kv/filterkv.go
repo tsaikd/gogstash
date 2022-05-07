@@ -2,10 +2,11 @@ package kv
 
 import (
 	"context"
-	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/logevent"
 	"strconv"
 	"strings"
+
+	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 // ModuleName is the name used in the config file
@@ -31,7 +32,11 @@ func DefaultFilterConfig() FilterConfig {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
 	if err := config.ReflectConfig(raw, &conf); err != nil {
 		return nil, err
@@ -68,7 +73,7 @@ func splitQuotedStringsBySpace(input string) (result []string) {
 	for x := 0; x < len(input); x++ {
 		switch r := input[x]; r {
 		case ' ':
-			if inBetween == false && x > head && quote == 0 {
+			if !inBetween && x > head && quote == 0 {
 				s := input[head:x]
 				if strings.IndexRune(s, '=') > 0 {
 					result = append(result, s)
@@ -90,7 +95,7 @@ func splitQuotedStringsBySpace(input string) (result []string) {
 	}
 	// get last element if there is one
 	if head != len(input) {
-		s := input[head:len(input)]
+		s := input[head:]
 		if strings.IndexRune(s, '=') > 0 {
 			result = append(result, s)
 		}
@@ -113,7 +118,7 @@ func splitIntoKV(input []string, keepAsString []string) map[string]interface{} {
 	result := make(map[string]interface{})
 	for _, v := range input {
 		separator := strings.IndexRune(v, '=')
-		if separator > 0 && separator < len(v) {
+		if separator > 0 && separator < len(v)-1 {
 			key := v[:separator]
 			var val string
 			if v[separator+1] == '"' {
@@ -123,7 +128,7 @@ func splitIntoKV(input []string, keepAsString []string) map[string]interface{} {
 			}
 			// check if val is an integer
 			number, err := strconv.Atoi(val)
-			if err == nil && contains(key, &keepAsString) == false {
+			if err == nil && !contains(key, &keepAsString) {
 				result[key] = number
 			} else {
 				result[key] = val

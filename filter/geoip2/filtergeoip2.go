@@ -3,7 +3,10 @@ package filtergeoip2
 import (
 	"context"
 	"net"
+	"sync"
+	"time"
 
+	"github.com/fsnotify/fsnotify"
 	lru "github.com/hashicorp/golang-lru"
 	geoip2 "github.com/oschwald/geoip2-golang"
 	"github.com/tsaikd/gogstash/config"
@@ -21,15 +24,20 @@ const ErrorTag = "gogstash_filter_geoip2_error"
 type FilterConfig struct {
 	config.FilterConfig
 
-	DBPath      string `json:"db_path"`      // geoip2 db file path, default: GeoLite2-City.mmdb
-	IPField     string `json:"ip_field"`     // IP field to get geoip info
-	Key         string `json:"key"`          // geoip destination field name, default: geoip
-	QuietFail   bool   `json:"quiet"`        // fail quietly
-	SkipPrivate bool   `json:"skip_private"` // skip private IP addresses
-	FlatFormat  bool   `json:"flat_format"`  // flat format
-	CacheSize   int    `json:"cache_size"`   // cache size
+	DBPath      string   `json:"db_path" yaml:"db_path"`           // geoip2 db file path, default: GeoLite2-City.mmdb
+	IPField     string   `json:"ip_field" yaml:"ip_field"`         // IP field to get geoip info
+	Key         string   `json:"key" yaml:"key"`                   // geoip destination field name, default: geoip
+	QuietFail   bool     `json:"quiet" yaml:"quiet"`               // fail quietly
+	SkipPrivate bool     `json:"skip_private" yaml:"skip_private"` // skip private IP addresses
+	PrivateNet  []string `json:"private_net" yaml:"private_net"`   // list of own defined private IP addresses
+	FlatFormat  bool     `json:"flat_format" yaml:"flat_format"`   // flat format
+	CacheSize   int      `json:"cache_size" yaml:"cache_size"`     // cache size
 
-	db           *geoip2.Reader
+	db      *geoip2.Reader
+	dbMtx   sync.RWMutex
+	watcher *fsnotify.Watcher
+	ctx     context.Context
+
 	cache        *lru.Cache
 	privateCIDRs []*net.IPNet
 }
@@ -52,7 +60,11 @@ func DefaultFilterConfig() FilterConfig {
 }
 
 // InitHandler initialize the filter plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeFilterConfig, error) {
 	conf := DefaultFilterConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
@@ -68,15 +80,38 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeFilterC
 		return nil, err
 	}
 
+	conf.ctx = ctx
+
+	// init fsnotify
+	goglog.Logger.Infof("%s fsnotify initialized for %s", ModuleName, conf.DBPath)
+	conf.watcher, err = fsnotify.NewWatcher()
+	if err != nil {
+		goglog.Logger.Errorf("%s failed to init watcher, %s", ModuleName, err.Error())
+	}
+	err = conf.watcher.Add(conf.DBPath)
+	if err != nil {
+		goglog.Logger.Errorf("%s failed to add file: %s", ModuleName, err.Error())
+	}
+	conf.initFsnotifyEventHandler()
+
 	cidrs := []string{
 		"10.0.0.0/8",
 		"100.64.0.0/10",
 		"127.0.0.0/8",
 		"172.16.0.0/12",
 		"192.168.0.0/16",
+		"fc00::/7",
+		"fe80::/10",
+		"169.254.0.0/16",
+	}
+	if len(conf.PrivateNet) > 0 {
+		cidrs = conf.PrivateNet
 	}
 	for _, cidr := range cidrs {
-		_, privateCIDR, _ := net.ParseCIDR(cidr)
+		_, privateCIDR, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return nil, err
+		}
 		conf.privateCIDRs = append(conf.privateCIDRs, privateCIDR)
 	}
 
@@ -91,7 +126,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 		return event, false
 	}
 	ip := net.ParseIP(ipstr)
-	if f.SkipPrivate && f.privateIP(ip) {
+	if ip == nil || (f.SkipPrivate && f.privateIP(ip)) {
 		// Passthru
 		return event, false
 	}
@@ -101,9 +136,11 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 	if c, ok := f.cache.Get(ipstr); ok {
 		record = c.(*geoip2.City)
 	} else {
+		f.dbMtx.RLock()
 		record, err = f.db.City(ip)
+		f.dbMtx.RUnlock()
 		if err != nil {
-			if f.QuietFail {
+			if !f.QuietFail {
 				goglog.Logger.Error(err)
 			}
 			event.AddTag(ErrorTag)
@@ -182,4 +219,49 @@ func (f *FilterConfig) privateIP(ip net.IP) bool {
 		}
 	}
 	return false
+}
+
+// reloadFile reloads a new file from disk and invalidates the cache
+func (fc *FilterConfig) reloadFile() {
+	newDb, err := geoip2.Open(fc.DBPath)
+	if err != nil {
+		goglog.Logger.Errorf("%s failed to update %s: %s", ModuleName, fc.DBPath, err.Error())
+		return
+	}
+	oldDb := fc.db
+	fc.dbMtx.Lock()
+	fc.db = newDb
+	fc.dbMtx.Unlock()
+	fc.cache.Purge()
+	oldDb.Close()
+	goglog.Logger.Infof("%s reloaded file %s", ModuleName, fc.DBPath)
+}
+
+// initFsnotifyEventHandler is called by InitHandler and sets up a background thread that watches for changes
+func (fc *FilterConfig) initFsnotifyEventHandler() {
+	const pauseDelay = 5 * time.Second // used to let all changes be completed before reloading the file
+	go func() {
+		timer := time.NewTimer(0)
+		defer timer.Stop()
+		firstTime := true
+		for {
+			select {
+			case <-timer.C:
+				if firstTime {
+					firstTime = false
+				} else {
+					fc.reloadFile()
+				}
+			case e := <-fc.watcher.Events:
+				// geoip2 issues a chmod on itself so we need to filter those out
+				if e.Op.String() != "CHMOD" {
+					timer.Reset(pauseDelay)
+				}
+			case err := <-fc.watcher.Errors:
+				goglog.Logger.Errorf("%s: %s", ModuleName, err.Error())
+			case <-fc.ctx.Done():
+				return
+			}
+		}
+	}()
 }

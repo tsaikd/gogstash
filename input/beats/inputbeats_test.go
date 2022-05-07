@@ -160,7 +160,6 @@ input:
 		t.Log("client: subject:", v.Subject, "pubkey:", pubkey)
 	}
 	t.Log("client: handshake:", state.HandshakeComplete)
-	t.Log("client: mutual:", state.NegotiatedProtocolIsMutual)
 
 	ts := time.Date(2019, time.January, 4, 0, 55, 36, 0, time.UTC)
 	eventData := map[string]interface{}{

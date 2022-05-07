@@ -18,7 +18,6 @@ import (
 func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistInputHandler(ModuleName, InitHandler)
-	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 }
 
 func initClient() (sarama.SyncProducer, error) {

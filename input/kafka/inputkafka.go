@@ -47,7 +47,11 @@ func DefaultInputConfig() InputConfig {
 }
 
 // InitHandler initialize the input plugin
-func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputConfig, error) {
+func InitHandler(
+	ctx context.Context,
+	raw config.ConfigRaw,
+	control config.Control,
+) (config.TypeInputConfig, error) {
 	conf := DefaultInputConfig()
 	err := config.ReflectConfig(raw, &conf)
 	if err != nil {
@@ -82,7 +86,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 		sarConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
 	}
 
-	if len(conf.Topics) < 0 {
+	if len(conf.Topics) < 1 {
 		goglog.Logger.Error("topics should not be empty")
 		return nil, err
 	}
@@ -105,7 +109,7 @@ func InitHandler(ctx context.Context, raw *config.ConfigRaw) (config.TypeInputCo
 
 	conf.saConf = sarConfig
 
-	conf.Codec, err = config.GetCodecOrDefault(ctx, *raw)
+	conf.Codec, err = config.GetCodecOrDefault(ctx, raw["codec"])
 	if err != nil {
 		return nil, err
 	}

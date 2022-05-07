@@ -24,10 +24,11 @@ type TypeOutputConfig interface {
 // OutputConfig is basic output config struct
 type OutputConfig struct {
 	CommonConfig
+	Codec TypeCodecConfig `json:"-"` // name of codec to load
 }
 
 // OutputHandler is a handler to regist output module
-type OutputHandler func(ctx context.Context, raw *ConfigRaw) (TypeOutputConfig, error)
+type OutputHandler func(ctx context.Context, raw ConfigRaw, control Control) (TypeOutputConfig, error)
 
 var (
 	mapOutputHandler = map[string]OutputHandler{}
@@ -39,25 +40,37 @@ func RegistOutputHandler(name string, handler OutputHandler) {
 }
 
 // GetOutputs get outputs from config
-func GetOutputs(ctx context.Context, outputRaw []ConfigRaw) (outputs []TypeOutputConfig, err error) {
+func GetOutputs(
+	ctx context.Context,
+	outputRaw []ConfigRaw,
+	control Control,
+) (outputs []TypeOutputConfig, err error) {
 	var output TypeOutputConfig
 	for _, raw := range outputRaw {
-		handler, ok := mapOutputHandler[raw["type"].(string)]
-		if !ok {
-			return outputs, ErrorUnknownOutputType1.New(nil, raw["type"])
+		// check if output is disabled
+		var disabled bool
+		if result, ok := raw["disabled"].(bool); ok {
+			disabled = result
 		}
+		// load input if not disabled
+		if !disabled {
+			handler, ok := mapOutputHandler[raw["type"].(string)]
+			if !ok {
+				return outputs, ErrorUnknownOutputType1.New(nil, raw["type"])
+			}
 
-		if output, err = handler(ctx, &raw); err != nil {
-			return outputs, ErrorInitOutputFailed1.New(err, raw)
+			if output, err = handler(ctx, raw, control); err != nil {
+				return outputs, ErrorInitOutputFailed1.New(err, raw)
+			}
+
+			outputs = append(outputs, output)
 		}
-
-		outputs = append(outputs, output)
 	}
 	return
 }
 
 func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
-	return GetOutputs(t.ctx, t.OutputRaw)
+	return GetOutputs(t.ctx, t.OutputRaw, t)
 }
 
 func (t *Config) startOutputs() (err error) {
@@ -79,7 +92,7 @@ func (t *Config) startOutputs() (err error) {
 					func(output TypeOutputConfig) {
 						eg.Go(func() error {
 							if err2 := output.Output(ctx, event); err2 != nil {
-								goglog.Logger.Errorf("output module %q failed: %v\n", output.GetType(), err2)
+								goglog.Logger.Errorf("output module %q failed: %v", output.GetType(), err2)
 							}
 							return nil
 						})

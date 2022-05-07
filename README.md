@@ -3,9 +3,12 @@ gogstash
 
 Logstash like, written in golang
 
-[![Build Status](https://travis-ci.org/jbuchbinder/gogstash.svg?branch=master)](https://travis-ci.org/jbuchbinder/gogstash)
+<<<<<<< HEAD
+[![Build Status](https://github.com/jbuchbinder/gogstash/actions/workflows/build.yml/badge.svg)](https://github.com/jbuchbinder/gogstash/actions/workflows/build.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jbuchbinder/gogstash)](https://goreportcard.com/report/github.com/jbuchbinder/gogstash)
 [![GoDoc](https://godoc.org/github.com/jbuchbinder/gogstash?status.png)](https://godoc.org/github.com/jbuchbinder/gogstash)
+=======
+[![Build Status](https://github.com/tsaikd/gogstash/actions/workflows/build.yml/badge.svg)](https://github.com/tsaikd/gogstash/actions/workflows/build.yml)
 
 * Download gogstash from github
 	* [check latest version](https://github.com/tsaikd/gogstash/releases)
@@ -216,6 +219,7 @@ See [input modules](input) for more information
 * [httplisten](input/httplisten)
 * [kafka](input/kafka)
 * [nats](input/nats)
+* [NSQ](input/nsq)
 * [redis](input/redis)
 * [socket](input/socket)
 
@@ -251,7 +255,10 @@ See [filter modules](filter) for more information
 * [geoip2](filter/geoip2)
 * [gonx](filter/gonx)
 * [grok](filter/grok)
+* [ip2location](filter/ip2location)
+* [ip2proxy](filter/ip2proxy)
 * [json](filter/json)
+* [key-values](filter/kv)
 * [lookuptable](filter/lookuptable)
 * [mutate](filter/mutate)
 * [rate limit](filter/ratelimit)
@@ -267,8 +274,11 @@ See [output modules](output) for more information
 * [cond](output/cond)
 * [elastic](output/elastic)
 * [email](output/email)
+* [GELF](output/gelf)
+* [NSQ](output/nsq)
 * [prometheus](output/prometheus)
 * [redis](output/redis)
 * [report](output/report)
 * [socket](output/socket)
 * [stdout](output/stdout)
+* [loki](output/loki)

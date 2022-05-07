@@ -72,4 +72,34 @@ func Test_splitIntoKV(t *testing.T) {
 	if typeof != reflect.TypeOf("string") {
 		t.Error("Float was not of type string, got", typeof)
 	}
+	// check invalid input
+	input = []string{"ID=", "val", "A=B", "AA= "}
+	result = splitIntoKV(input, []string{})
+	if len(result) != 2 {
+		t.Error("splitIntoKV failed with invalid input")
+	}
+}
+
+func Test_contains(t *testing.T) {
+	type args struct {
+		key      string
+		elements *[]string
+	}
+	myList := &[]string{"A", "AAA", "BB"}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{"Check A", args{"A", myList}, true},
+		{"Check B", args{"B", myList}, false},
+		{"Check empty list", args{"B", &[]string{}}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := contains(tt.args.key, tt.args.elements); got != tt.want {
+				t.Errorf("contains() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
