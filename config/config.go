@@ -26,6 +26,7 @@ var (
 	ErrorUnmarshalYAMLConfig = errutil.NewFactory("Failed unmarshalling config in YAML format")
 	ErrorTimeout1            = errutil.NewFactory("timeout: %v")
 	ErrorInvalidState        = errutil.NewFactory("Invalid state for pause/resume")
+	ErrorNoFilterName        = errutil.NewFactory("No name - probably invalid syntax in configuration section %s")
 )
 
 // Config contains all config

@@ -54,7 +54,11 @@ func GetOutputs(
 		}
 		// load input if not disabled
 		if !disabled {
-			handler, ok := mapOutputHandler[raw["type"].(string)]
+			outputFilter, ok := raw["type"].(string)
+			if !ok {
+				return outputs, ErrorNoFilterName.New(nil, "output")
+			}
+			handler, ok := mapOutputHandler[outputFilter]
 			if !ok {
 				return outputs, ErrorUnknownOutputType1.New(nil, raw["type"])
 			}

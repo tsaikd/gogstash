@@ -85,7 +85,11 @@ func GetFilters(
 		}
 		// load filter if not disabled
 		if !disabled {
-			handler, ok := mapFilterHandler[raw["type"].(string)]
+			filterName, ok := raw["type"].(string)
+			if !ok {
+				return filters, ErrorNoFilterName.New(nil, "filter")
+			}
+			handler, ok := mapFilterHandler[filterName]
 			if !ok {
 				return filters, ErrorUnknownFilterType1.New(nil, raw["type"])
 			}

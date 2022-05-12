@@ -47,7 +47,11 @@ func (t *Config) getInputs() (inputs []TypeInputConfig, err error) {
 		}
 		// load input if not disabled
 		if !disabled {
-			handler, ok := mapInputHandler[raw["type"].(string)]
+			inputFilter, ok := raw["type"].(string)
+			if !ok {
+				return inputs, ErrorNoFilterName.New(nil, "filter")
+			}
+			handler, ok := mapInputHandler[inputFilter]
 			if !ok {
 				return inputs, ErrorUnknownInputType1.New(nil, raw["type"])
 			}
