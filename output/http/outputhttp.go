@@ -154,7 +154,7 @@ func (t *OutputConfig) failedDelivery(ctx context.Context, event logevent.LogEve
 // MapFromInts returns a map containing all the ints in the array
 func MapFromInts(nums []int) map[int]struct{} {
 	result := make(map[int]struct{}, len(nums))
-	for x := range nums {
+	for _, x := range nums {
 		result[x] = struct{}{}
 	}
 	return result
