@@ -37,7 +37,7 @@ require (
 	github.com/olivere/elastic/v7 v7.0.14
 	github.com/oschwald/geoip2-golang v1.4.0
 	github.com/pierrec/lz4 v2.5.1+incompatible // indirect
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.11.1
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect
 	github.com/satyrius/gonx v1.3.1-0.20181123214749-d96bd26e3b2c
 	github.com/sirupsen/logrus v1.8.1
