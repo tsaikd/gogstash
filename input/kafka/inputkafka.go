@@ -26,6 +26,7 @@ type InputConfig struct {
 	OffsetOldest     bool     `json:"offset_oldest"`               // Kafka consumer consume initial offset from oldest
 	Assignor         string   `json:"assignor"`                    // Consumer group partition assignment strategy (range, roundrobin)
 	SecurityProtocol string   `json:"security_protocol,omitempty"` // use SASL authentication
+	SaslMechanism    string   `json:"sasl_mechanism,omitempty"`    // use SASL mechanism
 	User             string   `json:"sasl_username,omitempty"`     // SASL authentication username
 	Password         string   `json:"sasl_password,omitempty"`     // SASL authentication password
 
@@ -41,6 +42,7 @@ func DefaultInputConfig() InputConfig {
 			},
 		},
 		SecurityProtocol: "",
+		SaslMechanism:    "",
 		User:             "",
 		Password:         "",
 	}
@@ -105,6 +107,14 @@ func InitHandler(
 		sarConfig.Net.SASL.Enable = true
 		sarConfig.Net.SASL.User = conf.User
 		sarConfig.Net.SASL.Password = conf.Password
+
+		if conf.SaslMechanism == "SCRAM-SHA-512" {
+			sarConfig.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &SCRAMClient{HashGeneratorFcn: SHA512} }
+			sarConfig.Net.SASL.Mechanism = sarama.SASLTypeSCRAMSHA512
+		} else if conf.SaslMechanism == "SCRAM-SHA-256" {
+			sarConfig.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &SCRAMClient{HashGeneratorFcn: SHA256} }
+			sarConfig.Net.SASL.Mechanism = sarama.SASLTypeSCRAMSHA256
+		}
 	}
 
 	conf.saConf = sarConfig
