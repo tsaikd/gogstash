@@ -75,7 +75,9 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 	}
 	if f.Rename[0] != "" {
 		value := event.Get(f.Rename[0])
-		event.SetValue(f.Rename[1], value)
+		if value != nil {
+			event.SetValue(f.Rename[1], value)
+		}
 		event.Remove(f.Rename[0])
 	}
 	// always return true here for configured filter
