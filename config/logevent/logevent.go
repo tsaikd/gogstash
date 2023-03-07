@@ -16,6 +16,7 @@ type LogEvent struct {
 	Message   string                 `json:"message"`
 	Tags      []string               `json:"tags,omitempty"`
 	Extra     map[string]interface{} `json:"-"`
+	FilterPos int                    `json:"-"` // indicates what position in the filer chain to insert this event, or set to
 }
 
 type Config struct {
@@ -25,6 +26,9 @@ type Config struct {
 	jsonMarshal       func(v interface{}) ([]byte, error)
 	jsonMarshalIndent func(v interface{}, prefix, indent string) ([]byte, error)
 }
+
+// DiscardEvent is the value for LogEvent.FilterPos when the filter chain should discard the event and stop further processing.
+const DiscardEvent = -1
 
 // TagsField is the event tags field name
 const TagsField = "tags"

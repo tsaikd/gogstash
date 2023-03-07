@@ -6,6 +6,7 @@ import (
 	filteraddfield "github.com/tsaikd/gogstash/filter/addfield"
 	filtercond "github.com/tsaikd/gogstash/filter/cond"
 	filterdate "github.com/tsaikd/gogstash/filter/date"
+	filterdiscard "github.com/tsaikd/gogstash/filter/discard"
 	filtergeoip2 "github.com/tsaikd/gogstash/filter/geoip2"
 	filtergonx "github.com/tsaikd/gogstash/filter/gonx"
 	filtergrok "github.com/tsaikd/gogstash/filter/grok"
@@ -71,6 +72,7 @@ func init() {
 	config.RegistFilterHandler(filteraddfield.ModuleName, filteraddfield.InitHandler)
 	config.RegistFilterHandler(filtercond.ModuleName, filtercond.InitHandler)
 	config.RegistFilterHandler(filterdate.ModuleName, filterdate.InitHandler)
+	config.RegistFilterHandler(filterdiscard.ModuleName, filterdiscard.InitHandler)
 	config.RegistFilterHandler(filtergeoip2.ModuleName, filtergeoip2.InitHandler)
 	config.RegistFilterHandler(filtergonx.ModuleName, filtergonx.InitHandler)
 	config.RegistFilterHandler(filtergrok.ModuleName, filtergrok.InitHandler)
