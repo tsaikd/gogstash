@@ -5,12 +5,12 @@ gogstash output stdout
 
 ```json
 {
-	"output": [
-		{
-			"type": "stdout",
+  "output": [
+    {
+      "type": "stdout",
       "codec": "json"
-		}
-	]
+    }
+  ]
 }
 ```
 
@@ -22,3 +22,5 @@ Used for debug
   * Must be **"stdout"**
 * codec
   * Can be any supported codec that generates non-binary output. "default" prints the input message as it is and "json" prints the input as JSON.
+* truncate
+  * Optional field to limit the size of the output event
