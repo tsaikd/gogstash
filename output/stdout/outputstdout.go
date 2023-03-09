@@ -15,9 +15,10 @@ const ModuleName = "stdout"
 type OutputConfig struct {
 	config.OutputConfig
 
-	msg   chan []byte            // channel to push message from codec to
-	codec config.TypeCodecConfig // the codec we will use
-	ctx   context.Context
+	msg      chan []byte            // channel to push message from codec to
+	codec    config.TypeCodecConfig // the codec we will use
+	ctx      context.Context
+	Truncate int `json:"truncate"`
 }
 
 // DefaultOutputConfig returns an OutputConfig struct with default values
@@ -28,7 +29,8 @@ func DefaultOutputConfig() OutputConfig {
 				Type: ModuleName,
 			},
 		},
-		msg: make(chan []byte),
+		msg:      make(chan []byte),
+		Truncate: 0,
 	}
 }
 
@@ -62,7 +64,13 @@ func (t *OutputConfig) backgroundtask() {
 		case <-t.ctx.Done():
 			return
 		case msg := <-t.msg:
-			fmt.Println(string(msg))
+			strmsg := string(msg)
+			if t.Truncate > 0 {
+				if len(strmsg) > t.Truncate {
+					strmsg = strmsg[0:t.Truncate] + "..."
+				}
+			}
+			fmt.Println(strmsg)
 		}
 	}
 }
@@ -70,6 +78,5 @@ func (t *OutputConfig) backgroundtask() {
 // Output event
 func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err error) {
 	_, err = t.codec.Encode(ctx, event, t.msg)
-
 	return
 }
