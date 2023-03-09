@@ -1,6 +1,7 @@
 package modloader
 
 import (
+	codecazureeventhubjson "github.com/tsaikd/gogstash/codec/azureeventhubjson"
 	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	filteraddfield "github.com/tsaikd/gogstash/filter/addfield"
@@ -22,6 +23,7 @@ import (
 	filtertypeconv "github.com/tsaikd/gogstash/filter/typeconv"
 	filterurlparam "github.com/tsaikd/gogstash/filter/urlparam"
 	filteruseragent "github.com/tsaikd/gogstash/filter/useragent"
+	inputazureeventhub "github.com/tsaikd/gogstash/input/azureeventhub"
 	inputbeats "github.com/tsaikd/gogstash/input/beats"
 	inputdockerlog "github.com/tsaikd/gogstash/input/dockerlog"
 	inputdockerstats "github.com/tsaikd/gogstash/input/dockerstats"
@@ -63,6 +65,7 @@ func init() {
 	config.RegistInputHandler(inputhttp.ModuleName, inputhttp.InitHandler)
 	config.RegistInputHandler(inputhttplisten.ModuleName, inputhttplisten.InitHandler)
 	config.RegistInputHandler(inputkafka.ModuleName, inputkafka.InitHandler)
+	config.RegistInputHandler(inputazureeventhub.ModuleName, inputazureeventhub.InitHandler)
 	config.RegistInputHandler(inputlorem.ModuleName, inputlorem.InitHandler)
 	config.RegistInputHandler(inputnats.ModuleName, inputnats.InitHandler)
 	config.RegistInputHandler(inputnsq.ModuleName, inputnsq.InitHandler)
@@ -109,4 +112,5 @@ func init() {
 
 	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
+	config.RegistCodecHandler(codecazureeventhubjson.ModuleName, codecazureeventhubjson.InitHandler)
 }
