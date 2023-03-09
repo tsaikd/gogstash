@@ -16,6 +16,7 @@ type LogEvent struct {
 	Message   string                 `json:"message"`
 	Tags      []string               `json:"tags,omitempty"`
 	Extra     map[string]interface{} `json:"-"`
+	Drop      bool
 }
 
 type Config struct {
