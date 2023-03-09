@@ -128,8 +128,14 @@ func (t *Config) startFilters() (err error) {
 					if ok {
 						event = filter.CommonFilter(t.ctx, event)
 					}
+					if event.Drop {
+						break
+					}
 				}
-				t.chFilterOut <- event
+				if !event.Drop {
+					t.chFilterOut <- event
+				}
+
 			}
 		}
 	})
