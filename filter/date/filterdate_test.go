@@ -180,6 +180,111 @@ filter:
 	}
 }
 
+func Test_filter_date_module_computeTrue(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+
+	ctx := context.Background()
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+filter:
+  - type: date
+    format: ["MMdd HH:mm:ss.SSSSSS"]
+    source: time_local
+    joda: true
+    compute_year_if_missing: true
+	`)))
+	require.NoError(err)
+	require.NoError(conf.Start(ctx))
+
+	now := time.Now()
+
+	timestamp1 := time.Date(now.Year()-1, now.Month(), now.Day()+1, 0, 0, 0, 123456000, time.UTC)
+	timestampStr1 := fmt.Sprintf("%02d%02d %02d:%02d:%02d.%06d", timestamp1.Month(), timestamp1.Day(), timestamp1.Hour(), timestamp1.Minute(), timestamp1.Second(), timestamp1.Nanosecond())
+	fmt.Println(timestampStr1)
+	expectedEvent := logevent.LogEvent{
+		Timestamp: timestamp1,
+		Extra: map[string]interface{}{
+			"time_local": timestampStr1,
+		},
+	}
+
+	conf.TestInputEvent(logevent.LogEvent{
+		Extra: map[string]interface{}{
+			"time_local": timestampStr1,
+		},
+	})
+
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal(expectedEvent, event)
+	}
+
+	timestamp2 := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 123456000, time.UTC)
+	timestampStr2 := fmt.Sprintf("%02d%02d %02d:%02d:%02d.%06d", timestamp2.Month(), timestamp2.Day(), timestamp2.Hour(), timestamp2.Minute(), timestamp2.Second(), timestamp2.Nanosecond())
+	fmt.Println(timestampStr2)
+
+	expectedEvent = logevent.LogEvent{
+		Timestamp: timestamp2,
+		Extra: map[string]interface{}{
+			"time_local": timestampStr2,
+		},
+	}
+
+	conf.TestInputEvent(logevent.LogEvent{
+		Extra: map[string]interface{}{
+			"time_local": timestampStr2,
+		},
+	})
+
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal(expectedEvent, event)
+	}
+}
+
+func Test_filter_date_module_computeFalse(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+
+	ctx := context.Background()
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+filter:
+  - type: date
+    format: ["MMdd HH:mm:ss.SSSSSS"]
+    source: time_local
+    joda: true
+	`)))
+	require.NoError(err)
+	require.NoError(conf.Start(ctx))
+
+	now := time.Now()
+
+	timestamp := time.Date(now.Year()-1, now.Month(), now.Day()+2, 0, 0, 0, 123456000, time.UTC)
+	timestampStr := fmt.Sprintf("%02d%02d %02d:%02d:%02d.%06d", timestamp.Month(), timestamp.Day(), timestamp.Hour(), timestamp.Minute(), timestamp.Second(), timestamp.Nanosecond())
+
+	expectedEvent := logevent.LogEvent{
+		Timestamp: timestamp,
+		Extra: map[string]interface{}{
+			"time_local": timestampStr,
+		},
+	}
+
+	conf.TestInputEvent(logevent.LogEvent{
+		Extra: map[string]interface{}{
+			"time_local": timestampStr,
+		},
+	})
+
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.NotEqual(expectedEvent, event)
+	}
+
+}
+
 func Test_filter_date_module_float(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
