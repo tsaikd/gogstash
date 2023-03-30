@@ -2,10 +2,11 @@ package queue
 
 import (
 	"context"
-	"github.com/tsaikd/gogstash/config/logevent"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 // This test will check that we receive messages after a codec ([]byte) has processed the stream.
@@ -82,7 +83,7 @@ func TestSimpleQueueCodec(t *testing.T) {
 	err := q.Output(ctx, event)
 	if err == nil {
 		time.Sleep(time.Second)
-		if o.numSuccess != 1 {
+		if atomic.LoadUint32(&o.numSuccess) != 1 {
 			t.Error("Sent one messages, did not get through")
 		}
 	} else {
@@ -95,12 +96,12 @@ func TestSimpleQueueCodec(t *testing.T) {
 		return
 	}
 	time.Sleep(300 * time.Millisecond)
-	if o.numQueued != 1 || o.numReceived != 2 || o.numSuccess != 1 {
+	if atomic.LoadUint32(&o.numQueued) != 1 || atomic.LoadUint32(&o.numReceived) != 2 || atomic.LoadUint32(&o.numSuccess) != 1 {
 		t.Errorf("Queueing does not work, %v", *o)
 		return
 	}
 	time.Sleep(900 * time.Millisecond)
-	if o.numSuccess != 2 {
+	if atomic.LoadUint32(&o.numSuccess) != 2 {
 		t.Error("Two messages not delivered")
 	}
 }
