@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"github.com/tsaikd/gogstash/config/queue"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
+	"github.com/tsaikd/gogstash/config/queue"
 )
 
 // ModuleName is the name used in config file
@@ -126,7 +126,7 @@ func (t *OutputConfig) OutputEvent(ctx context.Context, event logevent.LogEvent)
 	}
 	defer resp.Body.Close()
 
-	_, err = ioutil.ReadAll(resp.Body)
+	_, err = io.ReadAll(resp.Body)
 	if err != nil {
 		t.failedDelivery(ctx, event)
 		return err

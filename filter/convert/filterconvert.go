@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -83,30 +82,4 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 
 	// always return true here for configured filter
 	return event, true
-}
-
-func mergeField(event logevent.LogEvent, destinationName, source string) logevent.LogEvent {
-	destinationValue := event.Get(destinationName)
-	value := event.Format(source)
-	if destinationValue == nil {
-		destinationValue = []string{value}
-		event.SetValue(destinationName, destinationValue)
-		return event
-	}
-	switch currentDestination := destinationValue.(type) {
-	case string:
-		var newDestination []string
-		if currentDestination != "" {
-			newDestination = append(newDestination, currentDestination)
-		}
-		newDestination = append(newDestination, value)
-		event.SetValue(destinationName, newDestination)
-	case []string:
-		currentDestination = append(currentDestination, value)
-		event.SetValue(destinationName, currentDestination)
-	default:
-		goglog.Logger.Warnf("convert: destination field %s is not string nor []string", destinationName)
-		event.AddTag(ErrorTag)
-	}
-	return event
 }

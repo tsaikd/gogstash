@@ -2,7 +2,6 @@ package filtergrok
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -25,7 +24,7 @@ func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistFilterHandler(ModuleName, InitHandler)
 
-	err := ioutil.WriteFile(fileName, fileData, 0644)
+	err := os.WriteFile(fileName, fileData, 0644)
 	if err != nil {
 		panic(err)
 	}

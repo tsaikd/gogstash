@@ -86,7 +86,7 @@ func (t *LogEvent) ParseTags(tags interface{}) bool {
 	switch v := tags.(type) {
 	case map[string]interface{}:
 		stringTags := make([]string, 0, len(v))
-		for k, _ := range v {
+		for k := range v {
 			stringTags = append(stringTags, k)
 		}
 		t.Tags = stringTags

@@ -72,7 +72,10 @@ func (c *Codec) Decode(ctx context.Context, data interface{},
 
 	if records, rok := event.Extra["records"]; rok && len(event.Message) == 0 {
 		for _, record := range records.([]interface{}) {
-			c.Decode(ctx, record, eventExtra, tags, msgChan)
+			if _, err = c.Decode(ctx, record, eventExtra, tags, msgChan); err != nil {
+				event.AddTag(ErrorTag)
+				goglog.Logger.Error(err)
+			}
 		}
 	} else {
 		if ctx.Err() == context.Canceled {

@@ -47,7 +47,7 @@ func getPathArrayToken(path string) []pathtoken {
 	}
 	if len(tokens) > 0 && len(path) > 0 {
 		// object key
-		tokens = append([]pathtoken{pathtoken{
+		tokens = append([]pathtoken{{
 			isSlice: false,
 			key:     path,
 		}}, tokens...)

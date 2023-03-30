@@ -32,31 +32,31 @@ func TestCompilePath(t *testing.T) {
 
 	tokens := compilePath("a.b.c")
 	assert.Equal([]pathtoken{
-		pathtoken{isSlice: false, key: "a"},
-		pathtoken{isSlice: false, key: "b"},
-		pathtoken{isSlice: false, key: "c"},
+		{isSlice: false, key: "a"},
+		{isSlice: false, key: "b"},
+		{isSlice: false, key: "c"},
 	}, tokens)
 
 	tokens = compilePath("a.b[1].c")
 	assert.Equal([]pathtoken{
-		pathtoken{isSlice: false, key: "a"},
-		pathtoken{isSlice: false, key: "b"},
-		pathtoken{isSlice: true, index: 1},
-		pathtoken{isSlice: false, key: "c"},
+		{isSlice: false, key: "a"},
+		{isSlice: false, key: "b"},
+		{isSlice: true, index: 1},
+		{isSlice: false, key: "c"},
 	}, tokens)
 
 	tokens = compilePath("a.b[0][2].c")
 	assert.Equal([]pathtoken{
-		pathtoken{isSlice: false, key: "a"},
-		pathtoken{isSlice: false, key: "b"},
-		pathtoken{isSlice: true, index: 0},
-		pathtoken{isSlice: true, index: 2},
-		pathtoken{isSlice: false, key: "c"},
+		{isSlice: false, key: "a"},
+		{isSlice: false, key: "b"},
+		{isSlice: true, index: 0},
+		{isSlice: true, index: 2},
+		{isSlice: false, key: "c"},
 	}, tokens)
 
 	tokens = compilePath("[0]")
 	assert.Equal([]pathtoken{
-		pathtoken{isSlice: true, index: 0},
+		{isSlice: true, index: 0},
 	}, tokens)
 }
 

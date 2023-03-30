@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -166,7 +166,7 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		goglog.Logger.Errorf("output loki: %v", err)
 		return err

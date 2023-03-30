@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -140,7 +140,7 @@ func (t *InputConfig) SendRequest() (data []byte, err error) {
 	}
 
 	defer res.Body.Close()
-	if raw, err = ioutil.ReadAll(res.Body); err != nil {
+	if raw, err = io.ReadAll(res.Body); err != nil {
 		return
 	}
 	data = bytes.TrimSpace(raw)

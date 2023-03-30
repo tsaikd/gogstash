@@ -5,8 +5,9 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -49,7 +50,7 @@ input:
 	defer resp.Body.Close()
 
 	assert.Equal(http.StatusOK, resp.StatusCode)
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	require.NoError(err)
 	assert.Equal([]byte{}, data)
 
@@ -80,7 +81,7 @@ input:
 
 	time.Sleep(500 * time.Millisecond)
 
-	rootPEM, err := ioutil.ReadFile("./root.pem")
+	rootPEM, err := os.ReadFile("./root.pem")
 	require.NoError(err)
 	roots := x509.NewCertPool()
 	assert.NotNil(roots)
@@ -93,7 +94,7 @@ input:
 	require.NoError(err)
 	defer resp.Body.Close()
 	assert.Equal(http.StatusOK, resp.StatusCode)
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	require.NoError(err)
 	assert.Equal([]byte{}, data)
 
@@ -124,7 +125,7 @@ input:
 	require.NoError(conf.Start(ctx))
 	time.Sleep(500 * time.Millisecond)
 
-	rootPEM, err := ioutil.ReadFile("./root.pem")
+	rootPEM, err := os.ReadFile("./root.pem")
 	require.NoError(err)
 	roots := x509.NewCertPool()
 	assert.NotNil(roots)
@@ -155,7 +156,7 @@ input:
 	defer resp.Body.Close()
 	assert.Equal(http.StatusOK, resp.StatusCode)
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	require.NoError(err)
 	assert.Equal([]byte{}, data)
 

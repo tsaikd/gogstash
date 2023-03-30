@@ -1,7 +1,6 @@
 package inputdockerlog
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -30,7 +29,7 @@ func (t *SinceDB) Open(dbdir string) (err error) {
 			return
 		}
 	}
-	fis, err := ioutil.ReadDir(t.dbdir)
+	fis, err := os.ReadDir(t.dbdir)
 	if err != nil {
 		return
 	}

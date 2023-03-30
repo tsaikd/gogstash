@@ -3,7 +3,6 @@ package outputstatsd
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"net"
 	"strings"
 	"sync/atomic"
@@ -171,7 +170,7 @@ func newServer(t testing.TB, network, addr string, f func([]byte)) *server {
 					s.closed <- true
 					return
 				}
-				p, err := ioutil.ReadAll(conn)
+				p, err := io.ReadAll(conn)
 				if err != nil {
 					t.Fatal(err)
 				}
