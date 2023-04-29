@@ -113,13 +113,17 @@ func (c *Codec) DecodeEvent(data []byte, event *logevent.LogEvent) (err error) {
 }
 
 // Encode encodes the event to a JSON encoded message
-func (c *Codec) Encode(_ context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
+func (c *Codec) Encode(ctx context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
 	output, err := event.MarshalJSON()
 	if err != nil {
 		return false, err
 	}
 
-	dataChan <- output
+	select {
+	case <-ctx.Done():
+		return false, nil
+	case dataChan <- output:
+	}
 	return true, nil
 }
 
