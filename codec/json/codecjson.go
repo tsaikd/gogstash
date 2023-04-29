@@ -102,9 +102,8 @@ func (c *Codec) Encode(ctx context.Context, event logevent.LogEvent, dataChan ch
 	}
 	select {
 	case <-ctx.Done():
-		return
-	default:
-		dataChan <- output
+		return false, nil
+	case dataChan <- output:
 	}
 	return true, nil
 }
