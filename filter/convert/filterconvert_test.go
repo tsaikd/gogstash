@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -50,13 +51,13 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": int64(99),
 		},
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": "99",
 		},
 	})
@@ -83,13 +84,13 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": int64(9900),
 		},
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": "99",
 		},
 	})
@@ -116,7 +117,7 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": "99ms",
 		},
 	})
@@ -143,12 +144,12 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": int64(99),
 		},
 	}
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": "99",
 		},
 	})
@@ -175,13 +176,13 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": 99.9,
 		},
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": "99.9",
 		},
 	})
@@ -208,13 +209,13 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": 99.9,
 		},
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": "99.9",
 		},
 	})
@@ -241,13 +242,13 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": 999.0,
 		},
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": "99.9",
 		},
 	})
@@ -274,13 +275,13 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": 9.99,
 		},
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": "99.9",
 		},
 	})
@@ -307,7 +308,7 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": "99.9ms",
 		},
 	})
@@ -334,12 +335,12 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": 99.9,
 		},
 	}
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"key": "99.9",
 		},
 	})

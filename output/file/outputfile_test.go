@@ -13,6 +13,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 	fs "github.com/tsaikd/gogstash/output/file/filesystem"
@@ -148,7 +149,7 @@ output:
 	err = config.Output(context.TODO(), event)
 	assert.Nil(err)
 
-	// wait for done channel or 2 seconds delay, whatever happends first
+	// wait for done channel or 2 seconds delay, whatever happens first
 	select {
 	case <-done:
 	case <-time.Tick(2 * time.Second):
@@ -243,7 +244,7 @@ output:
 	err = config.Output(context.TODO(), event)
 	assert.Nil(err)
 
-	// wait for done channel or 2 seconds delay, whatever happends first
+	// wait for done channel or 2 seconds delay, whatever happens first
 	select {
 	case <-done:
 	case <-time.Tick(2 * time.Second):
@@ -292,7 +293,7 @@ output:
 	err = config.Output(context.TODO(), event)
 	assert.Nil(err)
 
-	// wait for done channel or 2 seconds delay, whatever happends first
+	// wait for done channel or 2 seconds delay, whatever happens first
 	select {
 	case <-done:
 	case <-time.Tick(2 * time.Second):
@@ -351,7 +352,7 @@ output:
 	err = config.Output(context.TODO(), event)
 	assert.Nil(err)
 
-	// wait for done channel or 2 seconds delay, whatever happends first
+	// wait for done channel or 2 seconds delay, whatever happens first
 	select {
 	case <-done:
 	case <-time.Tick(2 * time.Second):
@@ -406,7 +407,7 @@ output:
 	err = config.Output(context.TODO(), event)
 	assert.Nil(err)
 
-	// wait for done channel or 2 seconds delay, whatever happends first
+	// wait for done channel or 2 seconds delay, whatever happens first
 	select {
 	case <-done:
 	case <-time.Tick(2 * time.Second):
@@ -458,7 +459,7 @@ output:
 	err = config.Output(context.TODO(), event)
 	assert.Nil(err)
 
-	// wait for done channel or 2 seconds delay, whatever happends first
+	// wait for done channel or 2 seconds delay, whatever happens first
 	select {
 	case <-done:
 	case <-time.Tick(2 * time.Second):
@@ -508,7 +509,7 @@ output:
 	err = config.Output(context.TODO(), event)
 	assert.Nil(err)
 
-	// wait for done channel or 2 seconds delay, whatever happends first
+	// wait for done channel or 2 seconds delay, whatever happens first
 	select {
 	case <-done:
 	case <-time.Tick(2 * time.Second):
@@ -553,7 +554,7 @@ output:
 	err = config.Output(context.TODO(), event)
 	assert.Nil(err)
 
-	// wait for done channel or 2 seconds delay, whatever happends first
+	// wait for done channel or 2 seconds delay, whatever happens first
 	select {
 	case <-done:
 	case <-time.Tick(2 * time.Second):
@@ -600,7 +601,7 @@ output:
 	err = config.Output(context.TODO(), event)
 	assert.Nil(err)
 
-	// wait for done channel or 2 seconds delay, whatever happends first
+	// wait for done channel or 2 seconds delay, whatever happens first
 	select {
 	case <-done:
 	case <-time.Tick(2 * time.Second):
@@ -647,7 +648,7 @@ output:
 	err = config.Output(context.TODO(), event)
 	assert.Nil(err)
 
-	// wait for done channel or 2 seconds delay, whatever happends first
+	// wait for done channel or 2 seconds delay, whatever happens first
 	select {
 	case <-done:
 	case <-time.Tick(2 * time.Second):

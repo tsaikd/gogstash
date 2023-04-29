@@ -13,6 +13,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -38,8 +39,8 @@ type OutputConfig struct {
 type LokiValue [2]string
 
 type LokiStream struct {
-	Stream map[string]interface{} `json:"stream"`
-	Values []LokiValue            `json:"values"`
+	Stream map[string]any `json:"stream"`
+	Values []LokiValue    `json:"values"`
 }
 
 type LokiRequest struct {
@@ -47,7 +48,7 @@ type LokiRequest struct {
 }
 
 // ToStringE casts an empty interface to a string.
-func ToStringE(i interface{}) (string, error) {
+func ToStringE(i any) (string, error) {
 	switch s := i.(type) {
 	case string:
 		return s, nil
@@ -82,7 +83,7 @@ func buildLokiRequest(event logevent.LogEvent) ([]byte, error) {
 	stream := LokiStream{}
 	stream.Values = []LokiValue{value}
 
-	_stream := make(map[string]interface{})
+	_stream := make(map[string]any)
 	for key, value := range event.Extra {
 		v, err := ToStringE(value)
 		if err != nil {
@@ -122,7 +123,7 @@ func InitHandler(
 		return nil, err
 	}
 
-	if len(conf.URLs) <= 0 {
+	if len(conf.URLs) == 0 {
 		return nil, ErrNoValidURLs
 	}
 

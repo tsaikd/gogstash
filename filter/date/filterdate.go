@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/tengattack/jodatime"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -75,7 +76,8 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 		err       error
 	)
 	for _, thisFormat := range f.Format {
-		if thisFormat == "UNIX" {
+		switch thisFormat {
+		case "UNIX":
 			var sec, nsec int64
 			value := event.Get(f.Source)
 			switch value := value.(type) {
@@ -88,7 +90,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 				continue
 			}
 			timestamp = time.Unix(sec, nsec)
-		} else if thisFormat == "UNIXNANO" {
+		case "UNIXNANO":
 			var nsec int64
 			value := event.Get(f.Source)
 			switch v := value.(type) {
@@ -105,7 +107,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 				continue
 			}
 			timestamp = time.Unix(0, nsec)
-		} else {
+		default:
 			timestamp, err = f.timeParser(thisFormat, event.GetString(f.Source))
 		}
 		if err == nil {

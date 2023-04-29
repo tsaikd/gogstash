@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -40,7 +41,7 @@ filter:
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"foo": "bar",
 		},
 	}

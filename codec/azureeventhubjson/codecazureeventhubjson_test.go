@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
@@ -34,7 +35,7 @@ func TestDecode(t *testing.T) {
 	assert.True(ok)
 	require.Len(msgChan, 1)
 	event := <-msgChan
-	assert.Equal(map[string]interface{}{"foo": "bar"}, event.Extra)
+	assert.Equal(map[string]any{"foo": "bar"}, event.Extra)
 	assert.Equal("", event.Message)
 
 	// string should be ok
@@ -43,16 +44,16 @@ func TestDecode(t *testing.T) {
 	assert.True(ok)
 	require.Len(msgChan, 1)
 	event = <-msgChan
-	assert.Equal(map[string]interface{}{"foo": "bar"}, event.Extra)
+	assert.Equal(map[string]any{"foo": "bar"}, event.Extra)
 	assert.Equal("", event.Message)
 
 	// map[string]interface{} should be ok
-	ok, err = codec.Decode(ctx, map[string]interface{}{"foo": "bar"}, nil, emptyTags, msgChan)
+	ok, err = codec.Decode(ctx, map[string]any{"foo": "bar"}, nil, emptyTags, msgChan)
 	require.NoError(err)
 	assert.True(ok)
 	require.Len(msgChan, 1)
 	event = <-msgChan
-	assert.Equal(map[string]interface{}{"foo": "bar"}, event.Extra)
+	assert.Equal(map[string]any{"foo": "bar"}, event.Extra)
 	assert.Equal("", event.Message)
 
 	// ok will be true, as message sent
@@ -90,7 +91,7 @@ func TestDecode(t *testing.T) {
 	assert.Equal([]string{"foo", "bar"}, event.Tags)
 
 	// merge & override extra
-	ok, err = codec.Decode(ctx, []byte(`{"foo":"bar2"}`), map[string]interface{}{
+	ok, err = codec.Decode(ctx, []byte(`{"foo":"bar2"}`), map[string]any{
 		"foo": "bar",
 		"one": "more thing",
 	}, emptyTags, msgChan)
@@ -98,7 +99,7 @@ func TestDecode(t *testing.T) {
 	assert.True(ok)
 	require.Len(msgChan, 1)
 	event = <-msgChan
-	assert.Equal(map[string]interface{}{
+	assert.Equal(map[string]any{
 		"foo": "bar2",
 		"one": "more thing",
 	}, event.Extra)
@@ -112,5 +113,4 @@ func TestDecode(t *testing.T) {
 	assert.Equal("hello1", event.Message)
 	event = <-msgChan
 	assert.Equal("hello2", event.Message)
-
 }

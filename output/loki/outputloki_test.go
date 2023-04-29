@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -17,7 +18,6 @@ import (
 func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistOutputHandler(ModuleName, InitHandler)
-
 }
 
 func Test_output_loki_module(t *testing.T) {
@@ -39,7 +39,7 @@ output:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   "outputloki test message",
-		Extra:     map[string]interface{}{"App": "app1", "int": 12, "float": 0.3},
+		Extra:     map[string]any{"App": "app1", "int": 12, "float": 0.3},
 	})
 
 	time.Sleep(1000 * time.Millisecond)

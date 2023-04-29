@@ -10,10 +10,11 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
+	"gopkg.in/olivere/elastic.v5"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"gopkg.in/olivere/elastic.v5"
 )
 
 // ModuleName is the name used in config file
@@ -94,14 +95,14 @@ type errorLogger struct {
 }
 
 // Printf log format string to error level
-func (l *errorLogger) Printf(format string, args ...interface{}) {
+func (l *errorLogger) Printf(format string, args ...any) {
 	l.logger.Errorf(format, args...)
 }
 
 type jsonDecoder struct{}
 
 // Decode decodes with jsoniter.Unmarshal
-func (u *jsonDecoder) Decode(data []byte, v interface{}) error {
+func (u *jsonDecoder) Decode(data []byte, v any) error {
 	return jsoniter.Unmarshal(data, v)
 }
 

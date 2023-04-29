@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -88,7 +89,7 @@ filter:
 				Timestamp: time.Time{},
 				Message:   "",
 				Tags:      nil,
-				Extra: map[string]interface{}{
+				Extra: map[string]any{
 					"hostname": "no-match",
 				},
 			},
@@ -96,7 +97,7 @@ filter:
 				Timestamp: time.Time{},
 				Message:   "",
 				Tags:      nil,
-				Extra: map[string]interface{}{
+				Extra: map[string]any{
 					"hostname": "no-match",
 				},
 			},
@@ -106,7 +107,7 @@ filter:
 				Timestamp: time.Time{},
 				Message:   "",
 				Tags:      nil,
-				Extra: map[string]interface{}{
+				Extra: map[string]any{
 					"hostname": "192.168.1.1",
 				},
 			},
@@ -114,7 +115,7 @@ filter:
 				Timestamp: time.Time{},
 				Message:   "",
 				Tags:      nil,
-				Extra: map[string]interface{}{
+				Extra: map[string]any{
 					"hostname": "192.168.1.1",
 					"server":   "router",
 				},
@@ -132,7 +133,6 @@ filter:
 			if !reflect.DeepEqual(output, tt.want) {
 				t.Errorf("filter lookuptable got = %v, want %v", output, tt.want)
 			}
-
 		})
 	}
 }

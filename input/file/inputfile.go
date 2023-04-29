@@ -13,10 +13,11 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/futil"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"golang.org/x/sync/errgroup"
 )
 
 // ModuleName is the name used in config file
@@ -227,7 +228,7 @@ func (t *InputConfig) fileReadLoop(
 		}
 
 		_, err := t.Codec.Decode(ctx, []byte(line),
-			map[string]interface{}{
+			map[string]any{
 				"host":   t.hostname,
 				"path":   fpath,
 				"offset": since.Offset,
@@ -238,10 +239,10 @@ func (t *InputConfig) fileReadLoop(
 		if err == nil {
 			since.Offset += int64(size)
 
-			//loggfer.Debugf("%q %v", event.Message, event)
-			//msgChan <- event
+			// loggfer.Debugf("%q %v", event.Message, event)
+			// msgChan <- event
 
-			//self.SaveSinceDBInfos()
+			// self.SaveSinceDBInfos()
 			if err = t.CheckSaveSinceDBInfos(); err != nil {
 				return err
 			}

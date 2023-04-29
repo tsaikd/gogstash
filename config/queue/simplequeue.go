@@ -3,11 +3,12 @@ package queue
 import (
 	"container/list"
 	"context"
+	"sync/atomic"
+	"time"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"sync/atomic"
-	"time"
 )
 
 // simpleQueue is an implementation of QueueReceiver with an easy retry-logic
@@ -18,9 +19,9 @@ type simpleQueue struct {
 	ctx       context.Context
 	output    QueueReceiver // the output
 	control   config.Control
-	isInPause uint32           // set to either StatusDelivering or StatusPaused
-	queue     chan interface{} // channel to send events to the internal queue
-	codecCh   chan []byte      // channel to push a coded message onto
+	isInPause uint32      // set to either StatusDelivering or StatusPaused
+	queue     chan any    // channel to send events to the internal queue
+	codecCh   chan []byte // channel to push a coded message onto
 }
 
 // Resume informs that the output is working again - can be called multiple times and is thread safe.
@@ -33,9 +34,9 @@ func (t *simpleQueue) Resume(ctx context.Context) error {
 	return nil
 }
 
-// Queue queues an event into the queue, blocking if necessary until cancelled. Queue is used from the output to put something into the queue.
+// Queue queues an event into the queue, blocking if necessary until canceled. Queue is used from the output to put something into the queue.
 // A call to add an event onto the queue will also pause the input.
-func (t *simpleQueue) Queue(ctx context.Context, event interface{}) error {
+func (t *simpleQueue) Queue(ctx context.Context, event any) error {
 	if atomic.CompareAndSwapUint32(&t.isInPause, StatusDelivering, StatusPaused) {
 		goglog.Logger.Debugf("queue %s is requesting pause", t.GetType())
 		err := t.control.RequestPause(ctx)
@@ -66,7 +67,7 @@ func NewSimpleQueue(ctx context.Context, control config.Control, receiver QueueR
 		output:        receiver,
 		control:       control,
 		isInPause:     StatusDelivering,
-		queue:         make(chan interface{}, chanSize),
+		queue:         make(chan any, chanSize),
 		codecCh:       outch,
 	}
 	go s.backgroundtask()
@@ -145,7 +146,7 @@ func (t *simpleQueue) backgroundtask() {
 				} else {
 					// we are not in pause mode and will queue all the events in the queue for sending.
 					// First we need to empty the queue and get all events to send.
-					myList := []interface{}{}
+					myList := []any{}
 					for {
 						e := retryqueue.Front()
 						if e == nil {

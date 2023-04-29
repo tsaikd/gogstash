@@ -3,12 +3,13 @@ package hash
 import (
 	"errors"
 	"fmt"
-	"github.com/tsaikd/gogstash/config/logevent"
 	"reflect"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 // TestInitHash checks that
@@ -38,7 +39,6 @@ func TestInitHash(t *testing.T) {
 	if err == nil {
 		t.Errorf("Unknown hash should have failed init")
 	}
-
 }
 
 // TestHashDuplicateNames check for duplicate names
@@ -49,11 +49,9 @@ func TestHashDuplicateNames(t *testing.T) {
 	for _, v := range getAllHashes() {
 		if _, inList := list[v]; !inList {
 			list[v] = false
-		} else {
-			if list[v] == false {
-				dupes = append(dupes, v)
-				list[v] = true
-			}
+		} else if list[v] == false {
+			dupes = append(dupes, v)
+			list[v] = true
 		}
 	}
 	// done
@@ -154,7 +152,7 @@ func generateTestEvent() logevent.LogEvent {
 		Timestamp: time.Time{},
 		Message:   "THIS IS A TEST MESSAGE, HELLO EARTH!",
 		Tags:      []string{"tag1", "tag2"},
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"FIELD1": "text string for field 1",
 			"FIELD2": 100,
 			"FIELD3": 9.1,

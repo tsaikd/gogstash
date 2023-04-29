@@ -12,10 +12,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/olivere/elastic.v5"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"gopkg.in/olivere/elastic.v5"
 )
 
 const testIndexName = "gogstash-index-test"
@@ -148,7 +149,7 @@ output:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Date(2017, 4, 18, 19, 53, 1, 2, time.UTC),
 		Message:   "output elastic test message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"fieldstring": "ABC",
 			"fieldnumber": 123,
 		},

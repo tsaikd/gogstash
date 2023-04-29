@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -62,7 +63,7 @@ output:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   "outputstdout test message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"level": "ERROR",
 			"foo":   "bar",
 		},
@@ -75,7 +76,7 @@ output:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   "outputstdout test message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"level": "WARN",
 		},
 	})

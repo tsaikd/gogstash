@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
@@ -35,7 +36,7 @@ func TestGetCodec(t *testing.T) {
 	require.EqualValues(DefaultCodecName, codec.GetType())
 
 	// undefined codec, should not exists
-	codec, err = GetCodecOrDefault(ctx, ConfigRaw{"codec": map[string]interface{}{"type": "undefined"}})
+	codec, err = GetCodecOrDefault(ctx, ConfigRaw{"codec": map[string]any{"type": "undefined"}})
 	require.Error(err)
 	require.Nil(codec)
 }

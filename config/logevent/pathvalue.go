@@ -84,15 +84,15 @@ func compilePathWithCache(path string) []pathtoken {
 	return tokens
 }
 
-func getPathValue(obj interface{}, path string) (interface{}, bool) {
+func getPathValue(obj any, path string) (any, bool) {
 	tokens := compilePathWithCache(path)
 	return getPathValueFromTokens(obj, tokens)
 }
 
-func getPathValueFromTokens(obj interface{}, tokens []pathtoken) (interface{}, bool) {
+func getPathValueFromTokens(obj any, tokens []pathtoken) (any, bool) {
 	for _, t := range tokens {
 		switch v := obj.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			if t.isSlice {
 				// invalid path
 				return nil, false
@@ -102,7 +102,7 @@ func getPathValueFromTokens(obj interface{}, tokens []pathtoken) (interface{}, b
 			if !ok {
 				return nil, false
 			}
-		case []interface{}:
+		case []any:
 			if !t.isSlice {
 				// invalid path
 				return nil, false
@@ -147,7 +147,7 @@ func getPathValueFromTokens(obj interface{}, tokens []pathtoken) (interface{}, b
 	return obj, true
 }
 
-func setPathValue(obj map[string]interface{}, path string, v interface{}) bool {
+func setPathValue(obj map[string]any, path string, v any) bool {
 	fieldSplits := strings.Split(path, ".")
 	for i, key := range fieldSplits {
 		if i >= len(fieldSplits)-1 {
@@ -155,23 +155,23 @@ func setPathValue(obj map[string]interface{}, path string, v interface{}) bool {
 			return true
 		} else if node, ok := obj[key]; ok {
 			switch v := node.(type) {
-			case map[string]interface{}:
+			case map[string]any:
 				obj = v
 			case nil:
-				obj[key] = map[string]interface{}{}
-				obj = obj[key].(map[string]interface{})
+				obj[key] = map[string]any{}
+				obj = obj[key].(map[string]any)
 			default:
 				return false
 			}
 		} else {
-			obj[key] = map[string]interface{}{}
-			obj = obj[key].(map[string]interface{})
+			obj[key] = map[string]any{}
+			obj = obj[key].(map[string]any)
 		}
 	}
 	return false
 }
 
-func removePathValue(obj map[string]interface{}, field string) bool {
+func removePathValue(obj map[string]any, field string) bool {
 	fieldSplits := strings.Split(field, ".")
 	for i, key := range fieldSplits {
 		if i >= len(fieldSplits)-1 {
@@ -179,7 +179,7 @@ func removePathValue(obj map[string]interface{}, field string) bool {
 			return true
 		} else if node, ok := obj[key]; ok {
 			switch v := node.(type) {
-			case map[string]interface{}:
+			case map[string]any:
 				obj = v
 			default:
 				return false

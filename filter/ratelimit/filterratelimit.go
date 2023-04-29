@@ -76,7 +76,7 @@ func InitHandler(
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (logevent.LogEvent, bool) {
 	if event.Extra == nil {
-		event.Extra = map[string]interface{}{}
+		event.Extra = map[string]any{}
 	}
 
 	if f.throttle == nil {

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	lru "github.com/hashicorp/golang-lru"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -102,7 +103,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 }
 
 // findFromFile translates key to value.
-func (f *FilterConfig) findFromFile(key string) (interface{}, error) {
+func (f *FilterConfig) findFromFile(key string) (any, error) {
 	cached, ok := f.cache.Get(key)
 	if ok {
 		return cached, nil
@@ -111,7 +112,7 @@ func (f *FilterConfig) findFromFile(key string) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("seek cleanup file: %v", err)
 	}
-	var value interface{}
+	var value any
 	scanner := bufio.NewScanner(f.file)
 
 	line := 0

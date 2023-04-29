@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 )
@@ -94,6 +95,6 @@ input:
 		require.WithinDuration(start, event.Timestamp, 300*time.Millisecond)
 		require.EqualValues(123, event.Extra["num"])
 		require.Equal("this is a test text", event.Extra["text"])
-		require.Equal(map[string]interface{}{"data": "text in child"}, event.Extra["child"])
+		require.Equal(map[string]any{"data": "text in child"}, event.Extra["child"])
 	}
 }

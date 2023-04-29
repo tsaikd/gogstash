@@ -6,6 +6,7 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -57,7 +58,7 @@ func InitHandler(
 
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (logevent.LogEvent, bool) {
-	var parsedMessage map[string]interface{}
+	var parsedMessage map[string]any
 	if err := jsoniter.Unmarshal([]byte(event.GetString(f.Source)), &parsedMessage); err != nil {
 		event.AddTag(ErrorTag)
 		if strings.HasPrefix(err.Error(), "Unmarshal: there are bytes left after unmarshal") && f.IgnoreExtraBytes {
@@ -72,7 +73,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 		event.SetValue(f.Appendkey, parsedMessage)
 	} else {
 		if event.Extra == nil {
-			event.Extra = make(map[string]interface{})
+			event.Extra = make(map[string]any)
 		}
 		for key, value := range parsedMessage {
 			switch key {

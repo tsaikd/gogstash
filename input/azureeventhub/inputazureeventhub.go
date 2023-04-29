@@ -21,13 +21,13 @@ const ModuleName = "azureeventhub"
 // InputConfig holds the configuration json fields and internal objects
 type InputConfig struct {
 	config.InputConfig
-	EventHubNamespaceConnectionString string                 `json:"eventhub_namespace_connection_string"`
-	EventHub                          string                 `json:"eventhub"`
-	StorageConnectionString           string                 `json:"storage_connection_string"`
-	StorageContainer                  string                 `json:"storage_container"`
-	ConsumerGroup                     string                 `json:"group"`
-	OffsetEarliest                    bool                   `json:"offset_earliest"`
-	Extras                            map[string]interface{} `json:"extras"`
+	EventHubNamespaceConnectionString string         `json:"eventhub_namespace_connection_string"`
+	EventHub                          string         `json:"eventhub"`
+	StorageConnectionString           string         `json:"storage_connection_string"`
+	StorageContainer                  string         `json:"storage_container"`
+	ConsumerGroup                     string         `json:"group"`
+	OffsetEarliest                    bool           `json:"offset_earliest"`
+	Extras                            map[string]any `json:"extras"`
 }
 
 // DefaultInputConfig returns an InputConfig struct with default values
@@ -62,7 +62,6 @@ func InitHandler(
 }
 
 func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error) {
-
 	containerClient, err := container.NewClientFromConnectionString(t.StorageConnectionString, t.StorageContainer, nil)
 	if err != nil {
 		goglog.Logger.Errorf("Error instanciating storage client from connection string: %v", err)
@@ -177,7 +176,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 
 	<-ctx.Done()
 
-	goglog.Logger.Debugln("Terminating: context cancelled")
+	goglog.Logger.Debugln("Terminating: context canceled")
 	wg.Wait()
 	goglog.Logger.Debugln("Terminating: all processors stopped")
 

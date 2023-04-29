@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+	"gopkg.in/redis.v5"
+
 	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"gopkg.in/redis.v5"
 )
 
 // ModuleName is the name used in config file
@@ -150,13 +151,13 @@ retry:
 	}
 
 	switch results := r.(type) {
-	case []interface{}:
+	case []any:
 		for _, result := range results {
 			if err := i.queueMessage(ctx, result.(string), msgChan); err != nil {
 				return err
 			}
 		}
-		if len(results) <= 0 {
+		if len(results) == 0 {
 			time.Sleep(time.Duration(batchEmptySleep))
 		}
 	}

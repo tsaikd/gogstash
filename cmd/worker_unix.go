@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package cmd
@@ -7,8 +8,9 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/tsaikd/gogstash/config/goglog"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/tsaikd/gogstash/config/goglog"
 )
 
 func startWorker(args []string, attr *syscall.ProcAttr) (pid int, err error) {

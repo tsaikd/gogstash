@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"golang.org/x/sync/errgroup"
 )
 
 // errors

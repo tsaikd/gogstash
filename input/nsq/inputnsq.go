@@ -3,8 +3,10 @@ package nsq
 import (
 	"context"
 	"errors"
+
 	"github.com/nsqio/go-nsq"
 	"github.com/tsaikd/KDGoLib/version"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"

@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -40,7 +41,7 @@ filter:
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"fieldA": "foo",
 			"fieldB": "bar",
 		},
@@ -49,7 +50,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"fieldA": "foo",
 			"fieldB": "bar",
 		},
@@ -83,7 +84,7 @@ filter:
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"fieldB": "bar",
 		},
 	}
@@ -91,7 +92,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"fieldA": "foo",
 			"fieldB": "bar",
 		},
@@ -126,13 +127,13 @@ filter:
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message",
-		Extra:     map[string]interface{}{},
+		Extra:     map[string]any{},
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"fieldA": "foo",
 			"fieldB": "bar",
 		},
@@ -166,8 +167,8 @@ filter:
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message",
-		Extra: map[string]interface{}{
-			"fieldA": map[string]interface{}{
+		Extra: map[string]any{
+			"fieldA": map[string]any{
 				"childB": "child test B",
 			},
 			"fieldB": "bar",
@@ -177,8 +178,8 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message",
-		Extra: map[string]interface{}{
-			"fieldA": map[string]interface{}{
+		Extra: map[string]any{
+			"fieldA": map[string]any{
 				"childA": "child test A",
 				"childB": "child test B",
 			},
@@ -213,7 +214,7 @@ filter:
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"fieldA": "foo",
 			"fieldB": "bar",
 		},
@@ -222,7 +223,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"fieldA": "foo",
 			"fieldB": "bar",
 		},

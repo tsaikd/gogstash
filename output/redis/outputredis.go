@@ -6,10 +6,11 @@ import (
 
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/timeutil"
+	"gopkg.in/redis.v5"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"gopkg.in/redis.v5"
 )
 
 // ModuleName is the name used in config file

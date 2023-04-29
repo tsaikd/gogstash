@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -77,7 +78,7 @@ func InitHandler(
 		conf.permanentHttpErrors = MapFromInts(conf.PermanentHttpErrors)
 	}
 
-	if len(conf.URLs) <= 0 {
+	if len(conf.URLs) == 0 {
 		return nil, ErrNoValidURLs
 	}
 	conf.httpClient = &http.Client{Transport: &http.Transport{

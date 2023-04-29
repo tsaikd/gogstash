@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -60,7 +61,7 @@ func InitHandler(
 		return nil, err
 	}
 
-	if len(conf.Hosts) <= 0 {
+	if len(conf.Hosts) == 0 {
 		return nil, ErrNoValidHosts
 	}
 
@@ -96,7 +97,6 @@ func (t *OutputConfig) OutputEvent(ctx context.Context, event logevent.LogEvent)
 	var host string
 	var level int32
 	for k, v := range event.Extra {
-
 		lk := strings.ToLower(k)
 
 		if lk == "host" || lk == "hostname" {

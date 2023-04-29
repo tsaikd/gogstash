@@ -4,11 +4,12 @@ import (
 	"context"
 
 	"github.com/Knetic/govaluate"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	filtercond "github.com/tsaikd/gogstash/filter/cond"
-	"golang.org/x/sync/errgroup"
 )
 
 // ModuleName is the name used in config file
@@ -56,7 +57,7 @@ func InitHandler(
 	if err != nil {
 		return nil, err
 	}
-	if len(conf.outputs) <= 0 {
+	if len(conf.outputs) == 0 {
 		goglog.Logger.Warn("output cond config outputs empty, ignored")
 		return &conf, nil
 	}

@@ -3,14 +3,16 @@ package filterdate
 import (
 	"context"
 	"fmt"
-	filterjson "github.com/tsaikd/gogstash/filter/json"
 	"strings"
 	"testing"
 	"time"
 
+	filterjson "github.com/tsaikd/gogstash/filter/json"
+
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -44,13 +46,13 @@ filter:
 
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"time_local": "20/Mar/2017:00:42:51 +0000",
 		},
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"time_local": "20/Mar/2017:00:42:51 +0000",
 		},
 	})
@@ -82,13 +84,13 @@ filter:
 
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"time_local": "1548237471.471",
 		},
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"time_local": "1548237471.471",
 		},
 	})
@@ -119,14 +121,14 @@ filter:
 	timestamp, err := time.Parse("2006-01-02T15:04:05Z", "2019-01-23T09:57:51.471Z")
 	require.NoError(err)
 	eventIn := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"time_local": "1548237471.471",
 		},
 	}
 
 	expectedEvent := logevent.LogEvent{
 		Timestamp: eventIn.Timestamp,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"time_local":  "1548237471.471",
 			"mytimestamp": timestamp.UTC(),
 		},
@@ -162,13 +164,13 @@ filter:
 
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"time_local": "2018-09-19 19:50:26,208",
 		},
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"time_local": "2018-09-19 19:50:26,208",
 		},
 	})
@@ -198,7 +200,7 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"json": `{"time_local": 1558348989869}`,
 		},
 	})
@@ -215,7 +217,7 @@ func Test_filter_date_convert(t *testing.T) {
 
 	type inputOutput struct {
 		name  string
-		input interface{}
+		input any
 		sec   int64
 		nsec  int64
 	}

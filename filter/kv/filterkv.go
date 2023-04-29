@@ -114,8 +114,8 @@ func contains(key string, elements *[]string) bool {
 }
 
 // splitIntoKV splits an array of input strings into a map with the keys/values where value is either string or integer
-func splitIntoKV(input []string, keepAsString []string) map[string]interface{} {
-	result := make(map[string]interface{})
+func splitIntoKV(input []string, keepAsString []string) map[string]any {
+	result := make(map[string]any)
 	for _, v := range input {
 		separator := strings.IndexRune(v, '=')
 		if separator > 0 && separator < len(v)-1 {

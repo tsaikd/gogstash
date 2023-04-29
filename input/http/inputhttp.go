@@ -103,7 +103,7 @@ func (t *InputConfig) Start(
 
 func (t *InputConfig) Request(ctx context.Context, msgChan chan<- logevent.LogEvent) {
 	data, err := t.SendRequest()
-	extra := map[string]interface{}{
+	extra := map[string]any{
 		"host": t.hostname,
 		"url":  t.URL,
 	}

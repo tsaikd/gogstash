@@ -10,9 +10,10 @@ import (
 	"github.com/tsaikd/gogstash/config/goglog"
 
 	lorem "github.com/drhodes/golorem"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"golang.org/x/sync/errgroup"
 )
 
 // ModuleName is the name used in config file
@@ -25,7 +26,7 @@ type InputConfig struct {
 	Duration string `json:"duration,omitempty"` // duration to generate lorem, set 0 to generate forever, default: 30s
 	duration time.Duration
 
-	// format event message using go text/template, defualt: {{.Sentence 1 5}}
+	// format event message using go text/template, default: {{.Sentence 1 5}}
 	// support functions:
 	//   `TimeFormat(layout string) string`
 	//   `Word(min, max int) string`
@@ -34,9 +35,9 @@ type InputConfig struct {
 	//   `Email() string`
 	//   `Host() string`
 	//   `Url() string`
-	Format string                 `json:"format,omitempty"`
-	Fields map[string]interface{} `json:"fields,omitempty"` // event extra fields
-	Empty  bool                   `json:"empty,omitempty"`  // send empty messages without any lorem text, default: false
+	Format string         `json:"format,omitempty"`
+	Fields map[string]any `json:"fields,omitempty"` // event extra fields
+	Empty  bool           `json:"empty,omitempty"`  // send empty messages without any lorem text, default: false
 
 	template *template.Template
 }
@@ -172,7 +173,7 @@ func (t *InputConfig) exec(ctx context.Context, msgChan chan<- logevent.LogEvent
 				}
 				if t.Fields != nil {
 					// copy map values
-					event.Extra = make(map[string]interface{})
+					event.Extra = make(map[string]any)
 					for k, v := range t.Fields {
 						event.Extra[k] = v
 						if err != nil {

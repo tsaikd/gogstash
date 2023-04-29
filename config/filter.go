@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -135,7 +136,6 @@ func (t *Config) startFilters() (err error) {
 				if !event.Drop {
 					t.chFilterOut <- event
 				}
-
 			}
 		}
 	})
