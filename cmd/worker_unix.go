@@ -74,5 +74,16 @@ func startWorkers(ctx context.Context, workerNum int) error {
 	eg.Go(func() error {
 		return waitWorkers(ctx, pids, args, attr)
 	})
-	return waitSignals(ctx)
+
+	signal := waitSignals(ctx)
+	if signal != nil {
+		for _, pid := range pids {
+			p, err := os.FindProcess(pid)
+			if err == nil {
+				_ = p.Signal(signal)
+			}
+		}
+	}
+
+	return nil
 }
