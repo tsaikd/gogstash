@@ -11,11 +11,12 @@ import (
 	"time"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+	"golang.org/x/sync/errgroup"
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/tsaikd/gogstash/config/ctxutil"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"golang.org/x/sync/errgroup"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // errors

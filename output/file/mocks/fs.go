@@ -5,10 +5,11 @@
 package mock_filesystem
 
 import (
-	gomock "github.com/golang/mock/gomock"
-	filesystem "github.com/tsaikd/gogstash/output/file/filesystem"
 	os "os"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
+	filesystem "github.com/tsaikd/gogstash/output/file/filesystem"
 )
 
 // MockFileInfo is a mock of FileInfo interface

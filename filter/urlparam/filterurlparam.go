@@ -81,7 +81,7 @@ func InitHandler(
 
 	if conf.Prefix != "" {
 		if strings.Contains(conf.Prefix, ".") {
-			return nil, fmt.Errorf("prefix can not includ dot(\".\")")
+			return nil, fmt.Errorf("prefix can not include dot(\".\")")
 		}
 	}
 
@@ -108,7 +108,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 		return event, false
 	}
 
-	//url decode
+	// url decode
 	if f.decodeAll {
 		for k, v := range params {
 			if nv, err := url.PathUnescape(v[0]); err != nil {

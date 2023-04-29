@@ -10,6 +10,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
@@ -98,7 +99,7 @@ func (t *InputConfig) exec(msgChan chan<- logevent.LogEvent) {
 	if err != nil {
 		errs = append(errs, err)
 	}
-	extra := map[string]interface{}{
+	extra := map[string]any{
 		"host": t.hostname,
 	}
 

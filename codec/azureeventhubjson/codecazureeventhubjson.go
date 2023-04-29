@@ -5,6 +5,7 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -33,11 +34,10 @@ func InitHandler(context.Context, config.ConfigRaw) (config.TypeCodecConfig, err
 }
 
 // Decode returns an event from 'data' as JSON format, adding provided 'eventExtra'
-func (c *Codec) Decode(ctx context.Context, data interface{},
-	eventExtra map[string]interface{}, tags []string,
+func (c *Codec) Decode(ctx context.Context, data any,
+	eventExtra map[string]any, tags []string,
 	msgChan chan<- logevent.LogEvent) (ok bool, err error) {
-
-	clonedEventExtras := make(map[string]interface{}, len(eventExtra))
+	clonedEventExtras := make(map[string]any, len(eventExtra))
 	for k, v := range eventExtra {
 		clonedEventExtras[k] = v
 	}
@@ -53,7 +53,7 @@ func (c *Codec) Decode(ctx context.Context, data interface{},
 		err = c.DecodeEvent([]byte(v), &event)
 	case []byte:
 		err = c.DecodeEvent(v, &event)
-	case map[string]interface{}:
+	case map[string]any:
 		if event.Extra != nil {
 			for k, val := range v {
 				event.Extra[k] = val
@@ -71,7 +71,7 @@ func (c *Codec) Decode(ctx context.Context, data interface{},
 	}
 
 	if records, rok := event.Extra["records"]; rok && len(event.Message) == 0 {
-		for _, record := range records.([]interface{}) {
+		for _, record := range records.([]any) {
 			if _, err = c.Decode(ctx, record, eventExtra, tags, msgChan); err != nil {
 				event.AddTag(ErrorTag)
 				goglog.Logger.Error(err)
@@ -114,7 +114,6 @@ func (c *Codec) DecodeEvent(data []byte, event *logevent.LogEvent) (err error) {
 
 // Encode encodes the event to a JSON encoded message
 func (c *Codec) Encode(_ context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
-
 	output, err := event.MarshalJSON()
 	if err != nil {
 		return false, err

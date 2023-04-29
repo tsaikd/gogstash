@@ -12,6 +12,7 @@ import (
 	stringutils "github.com/msaf1980/go-stringutils"
 	statsd "github.com/msaf1980/statsd"
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -48,7 +49,6 @@ func (sp *statsdPool) Client(
 	host, proto string, prefix string,
 	timeout time.Duration, flushInterval time.Duration,
 ) (*statsd.Client, error) {
-
 	var (
 		s   *statsd.Client
 		err error

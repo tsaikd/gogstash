@@ -51,6 +51,6 @@ func (ctx disconnectedContext) Err() error {
 
 // Value behaves as normal, continuing up the chain to find a matching
 // key-value pair.
-func (ctx disconnectedContext) Value(key interface{}) interface{} {
+func (ctx disconnectedContext) Value(key any) any {
 	return ctx.parent.Value(key)
 }

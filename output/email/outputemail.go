@@ -5,9 +5,10 @@ import (
 	"crypto/tls"
 	"strings"
 
+	"gopkg.in/gomail.v2"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"gopkg.in/gomail.v2"
 )
 
 // ModuleName is the name used in config file

@@ -4,9 +4,10 @@ import (
 	"context"
 
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/ua-parser/uap-go/uaparser"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"github.com/ua-parser/uap-go/uaparser"
 )
 
 // ModuleName is the name used in config file
@@ -28,7 +29,7 @@ type uaFields struct {
 // Init user agent fields
 func (f *uaFields) Init(target string) {
 	if target != "" {
-		target = target + "."
+		target += "."
 	}
 	f.Name = target + "name"
 	f.OS = target + "os"

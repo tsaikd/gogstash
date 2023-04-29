@@ -10,11 +10,12 @@ import (
 
 	reuse "github.com/libp2p/go-reuseport"
 	"github.com/tsaikd/KDGoLib/errutil"
+	"golang.org/x/sync/errgroup"
+
 	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"golang.org/x/sync/errgroup"
 )
 
 // ModuleName is the name used in config file
@@ -206,7 +207,7 @@ func (i *InputConfig) handleUDPpacketMode(ctx context.Context, conn net.PacketCo
 					i.BufferSize += bufIncSize
 					b = make([]byte, i.BufferSize)
 				} else {
-					extras := map[string]interface{}{
+					extras := map[string]any{
 						"host_ip": addr.String(),
 					}
 					_, codecErr := i.Codec.Decode(ctx, b[:n], extras, []string{}, msgChan)

@@ -9,6 +9,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/ip2location/ip2location-go/v9"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -208,7 +209,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 		return event, false
 	}
 
-	m := map[string]interface{}{
+	m := map[string]any{
 		"country_code": record.Country_short,
 		"country_name": record.Country_long,
 	}
@@ -220,7 +221,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 		m["ISP"] = record.Isp
 	}
 	if record.Latitude != 0 || record.Longitude != 0 {
-		location := make(map[string]interface{})
+		location := make(map[string]any)
 		location["lon"] = record.Longitude
 		location["lat"] = record.Latitude
 		m["location"] = location

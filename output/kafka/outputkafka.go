@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Shopify/sarama"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -17,7 +18,7 @@ type OutputConfig struct {
 	config.OutputConfig
 	Version          string   `json:"version"`                     // Kafka cluster version, eg: 0.10.2.0
 	Brokers          []string `json:"brokers"`                     // Kafka bootstrap brokers to connect to, as a comma separated list
-	Topics           []string `json:"topics"`                      // Kafka topics to be consumed, as a comma seperated list
+	Topics           []string `json:"topics"`                      // Kafka topics to be consumed, as a comma separated list
 	SecurityProtocol string   `json:"security_protocol,omitempty"` // use SASL authentication
 	User             string   `json:"sasl_username,omitempty"`     // SASL authentication username
 	Password         string   `json:"sasl_password,omitempty"`     // SASL authentication password
@@ -92,7 +93,6 @@ func InitHandler(
 
 // Output event
 func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err error) {
-
 	raw, err := event.MarshalJSON()
 	if err != nil {
 		return err

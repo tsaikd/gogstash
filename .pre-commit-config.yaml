@@ -1,0 +1,9 @@
+repos:
+- repo: https://github.com/dnephin/pre-commit-golang
+  rev: v0.5.1
+  hooks:
+    - id: validate-toml
+    - id: golangci-lint
+      args: ["--fix"]
+    - id: go-build
+    - id: go-mod-tidy

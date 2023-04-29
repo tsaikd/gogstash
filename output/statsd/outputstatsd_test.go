@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -100,8 +101,8 @@ output:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   "outputstatsd test message",
-		Extra: map[string]interface{}{
-			"logmsg": map[string]interface{}{
+		Extra: map[string]any{
+			"logmsg": map[string]any{
 				"status": int32(200),
 				"time":   float64(0.12),
 				"count":  int32(4),

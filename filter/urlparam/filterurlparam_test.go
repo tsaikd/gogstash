@@ -2,15 +2,17 @@ package filterurlparam
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/goglog"
-	"github.com/tsaikd/gogstash/config/logevent"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/tsaikd/gogstash/config"
+	"github.com/tsaikd/gogstash/config/goglog"
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 func init() {
@@ -39,7 +41,7 @@ filter:
 
 	// test "http://domain/path?params"
 	expectedEvent := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"request_url":                "http://www.example.com/path?foo=my_foo&bar=my_bar&date_time=2019-04-17%2010:12&empty_key=&discard_key=discard_value",
 			"request_url_args_foo":       "my_foo",
 			"request_url_args_bar":       "my_bar",
@@ -48,7 +50,7 @@ filter:
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"request_url": "http://www.example.com/path?foo=my_foo&bar=my_bar&date_time=2019-04-17%2010:12&empty_key=&discard_key=discard_value",
 		},
 	})
@@ -59,7 +61,7 @@ filter:
 
 	// test "/path?params"
 	expectedEvent = logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"request_url":                "/path?foo=my_foo&bar=my_bar&date_time=2019-04-17%2010:12&empty_key=&discard_key=discard_value",
 			"request_url_args_foo":       "my_foo",
 			"request_url_args_bar":       "my_bar",
@@ -68,7 +70,7 @@ filter:
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"request_url": "/path?foo=my_foo&bar=my_bar&date_time=2019-04-17%2010:12&empty_key=&discard_key=discard_value",
 		},
 	})
@@ -79,7 +81,7 @@ filter:
 
 	// test "?params"
 	expectedEvent = logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"request_url":                "?foo=my_foo&bar=my_bar&date_time=2019-04-17%2010:12&empty_key=&discard_key=discard_value",
 			"request_url_args_foo":       "my_foo",
 			"request_url_args_bar":       "my_bar",
@@ -88,7 +90,7 @@ filter:
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"request_url": "?foo=my_foo&bar=my_bar&date_time=2019-04-17%2010:12&empty_key=&discard_key=discard_value",
 		},
 	})
@@ -99,7 +101,7 @@ filter:
 
 	// test "params"
 	expectedEvent = logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"request_url":                "foo=my_foo&bar=my_bar&date_time=2019-04-17%2010:12&empty_key=&discard_key=discard_value",
 			"request_url_args_foo":       "my_foo",
 			"request_url_args_bar":       "my_bar",
@@ -108,7 +110,7 @@ filter:
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"request_url": "foo=my_foo&bar=my_bar&date_time=2019-04-17%2010:12&empty_key=&discard_key=discard_value",
 		},
 	})
@@ -119,13 +121,13 @@ filter:
 
 	// test "http://domain/path"
 	expectedEvent = logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"request_url": "http://example.com/path",
 		},
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"request_url": "http://example.com/path",
 		},
 	})
@@ -136,13 +138,13 @@ filter:
 
 	// test "string"
 	expectedEvent = logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"request_url": "nothing",
 		},
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"request_url": "nothing",
 		},
 	})

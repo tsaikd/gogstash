@@ -2,12 +2,13 @@ package queue
 
 import (
 	"context"
-	"github.com/tsaikd/gogstash/config/logevent"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 // controlCounter is used to count control messages, so we can check it is as expected

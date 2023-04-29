@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -52,7 +53,7 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"foo":   "123",
 			"bar":   "3.14",
 			"extra": "foo bar",
@@ -60,7 +61,7 @@ filter:
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"foo":   123,
 			"bar":   3.14,
 			"extra": "foo bar",
@@ -90,7 +91,7 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"foo":    int64(123),
 			"bar":    int64(3),
 			"foostr": int64(123),
@@ -100,7 +101,7 @@ filter:
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"foo":    123,
 			"bar":    3.14,
 			"foostr": "123",
@@ -132,7 +133,7 @@ filter:
 	require.NoError(conf.Start(ctx))
 
 	expectedEvent := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"foo":    float64(123),
 			"bar":    float64(3.14),
 			"foostr": float64(123),
@@ -142,7 +143,7 @@ filter:
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"foo":    123,
 			"bar":    3.14,
 			"foostr": "123",

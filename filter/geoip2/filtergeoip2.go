@@ -9,6 +9,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	lru "github.com/hashicorp/golang-lru"
 	geoip2 "github.com/oschwald/geoip2-golang"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -158,7 +159,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 	}
 
 	if f.FlatFormat {
-		m := map[string]interface{}{
+		m := map[string]any{
 			"continent_code": record.Continent.Code,
 			"country_code":   record.Country.IsoCode,
 			"country_name":   record.Country.Names["en"],
@@ -182,15 +183,15 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 		}
 		event.SetValue(f.Key, m)
 	} else {
-		m := map[string]interface{}{
-			"city": map[string]interface{}{
+		m := map[string]any{
+			"city": map[string]any{
 				"name": record.City.Names["en"],
 			},
-			"continent": map[string]interface{}{
+			"continent": map[string]any{
 				"code": record.Continent.Code,
 				"name": record.Continent.Names["en"],
 			},
-			"country": map[string]interface{}{
+			"country": map[string]any{
 				"code": record.Country.IsoCode,
 				"name": record.Country.Names["en"],
 			},
@@ -201,7 +202,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 			"timezone":  record.Location.TimeZone,
 		}
 		if len(record.Subdivisions) > 0 {
-			m["region"] = map[string]interface{}{
+			m["region"] = map[string]any{
 				"code": record.Subdivisions[0].IsoCode,
 				"name": record.Subdivisions[0].Names["en"],
 			}

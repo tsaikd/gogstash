@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/nats-io/nats.go"
+
 	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"

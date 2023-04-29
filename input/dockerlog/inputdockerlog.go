@@ -8,10 +8,11 @@ import (
 
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/tsaikd/KDGoLib/errutil"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"github.com/tsaikd/gogstash/input/dockerlog/dockertool"
-	"golang.org/x/sync/errgroup"
 )
 
 // ModuleName is the name used in config file
@@ -132,7 +133,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			if err2 != nil {
 				return err2
 			}
-			func(container interface{}, since *time.Time) {
+			func(container any, since *time.Time) {
 				eg.Go(func() error {
 					return t.containerLogLoop(ctx, container, since, msgChan)
 				})
@@ -168,7 +169,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 					if err != nil {
 						return err
 					}
-					func(container interface{}, since *time.Time) {
+					func(container any, since *time.Time) {
 						eg.Go(func() error {
 							return t.containerLogLoop(ctx, container, since, msgChan)
 						})

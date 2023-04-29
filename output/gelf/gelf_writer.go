@@ -70,24 +70,24 @@ const (
 // Message represents the contents of the GELF message.  It is gzipped
 // before sending. https://docs.graylog.org/docs/gelf
 type Message struct {
-	Extra     map[string]interface{} `json:"-"`
-	Full      string                 `json:"full_message"`
-	Host      string                 `json:"host"`
-	Level     int32                  `json:"level"`
-	Short     string                 `json:"short_message"`
-	Timestamp int64                  `json:"timestamp"`
-	Version   string                 `json:"version"`
+	Extra     map[string]any `json:"-"`
+	Full      string         `json:"full_message"`
+	Host      string         `json:"host"`
+	Level     int32          `json:"level"`
+	Short     string         `json:"short_message"`
+	Timestamp int64          `json:"timestamp"`
+	Version   string         `json:"version"`
 }
 
 type SimpleMessage struct {
-	Extra     map[string]interface{}
+	Extra     map[string]any
 	Host      string
 	Level     int32
 	Message   string
 	Timestamp time.Time
 }
 
-type innerMessage Message //against circular (Un)MarshalJSON
+type innerMessage Message // against circular (Un)MarshalJSON
 
 // Used to control GELF chunking.  Should be less than (MTU - len(UDP
 // header)).
@@ -117,7 +117,6 @@ func numChunks(b []byte, chunkSize int) int {
 // output of the standard Go log functions to a central GELF server by
 // passing it to log.SetOutput()
 func NewWriter(config GELFConfig) (GELFWriter, error) {
-
 	// handle config
 	if config.Host == "" {
 		return nil, fmt.Errorf("missing host")
@@ -171,7 +170,6 @@ func newUDPWriter(config *GELFConfig) (GELFWriter, error) {
 }
 
 func constructMessage(sm *SimpleMessage) *Message {
-
 	message := Message{
 		Extra:     sm.Extra,
 		Level:     6, // Default: Info
@@ -206,12 +204,10 @@ func constructMessage(sm *SimpleMessage) *Message {
 	return &message
 }
 
-func prepareExtra(e map[string]interface{}) (map[string]interface{}, error) {
-
-	cleanExtra := make(map[string]interface{})
+func prepareExtra(e map[string]any) (map[string]any, error) {
+	cleanExtra := make(map[string]any)
 
 	for k, v := range e {
-
 		newKey := k
 
 		if !strings.HasPrefix(newKey, "_") {
@@ -238,8 +234,8 @@ func prepareExtra(e map[string]interface{}) (map[string]interface{}, error) {
 // of GELF chunked messages.  The header format is documented at
 // https://github.com/Graylog2/graylog2-docs/wiki/GELF as:
 //
-//     2-byte magic (0x1e 0x0f), 8 byte id, 1 byte sequence id, 1 byte
-//     total, chunk-data
+//	2-byte magic (0x1e 0x0f), 8 byte id, 1 byte sequence id, 1 byte
+//	total, chunk-data
 func (w *UDPWriter) writeChunked(zBytes []byte) (err error) {
 	b := make([]byte, 0, w.config.ChunkSize)
 	buf := bytes.NewBuffer(b)
@@ -261,7 +257,7 @@ func (w *UDPWriter) writeChunked(zBytes []byte) (err error) {
 		// manually write header.  Don't care about
 		// host/network byte order, because the spec only
 		// deals in individual bytes.
-		buf.Write(magicChunked) //magic
+		buf.Write(magicChunked) // magic
 		buf.Write(msgId)
 		buf.WriteByte(i)
 		buf.WriteByte(nChunks)
@@ -381,7 +377,6 @@ func (w *UDPWriter) WriteCustomMessage(m *Message) error {
 // WriteMessage allow to send messsage to gelf Server
 // It only request basic fields and will handle conversion & co
 func (w *UDPWriter) WriteMessage(sm *SimpleMessage) error {
-
 	cleanExtra, err := prepareExtra(sm.Extra)
 	if err != nil {
 		return err
@@ -428,7 +423,6 @@ type HTTPWriter struct {
 }
 
 func (h HTTPWriter) WriteCustomMessage(m *Message) error {
-
 	mBytes, err := json.Marshal(m)
 	if err != nil {
 		return err
@@ -450,7 +444,6 @@ func (h HTTPWriter) WriteCustomMessage(m *Message) error {
 // WriteMessage allow to send messsage to gelf Server
 // It only request basic fields and will handle conversion & co
 func (h HTTPWriter) WriteMessage(sm *SimpleMessage) error {
-
 	cleanExtra, err := prepareExtra(sm.Extra)
 	if err != nil {
 		return err

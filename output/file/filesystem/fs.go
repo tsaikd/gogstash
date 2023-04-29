@@ -5,7 +5,7 @@ import (
 )
 
 // FileInfo interface used so we can mock during tests
-type FileInfo interface{}
+type FileInfo any
 
 // FileSystem interface used so we can mock during tests
 type FileSystem interface {

@@ -15,6 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
@@ -55,7 +56,7 @@ input:
 	assert.Equal([]byte{}, data)
 
 	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {
-		assert.Equal(map[string]interface{}{"foo": "bar"}, event.Extra)
+		assert.Equal(map[string]any{"foo": "bar"}, event.Extra)
 	}
 }
 
@@ -99,7 +100,7 @@ input:
 	assert.Equal([]byte{}, data)
 
 	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {
-		assert.Equal(map[string]interface{}{"foo": "bar"}, event.Extra)
+		assert.Equal(map[string]any{"foo": "bar"}, event.Extra)
 	}
 }
 
@@ -161,6 +162,6 @@ input:
 	assert.Equal([]byte{}, data)
 
 	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {
-		assert.Equal(map[string]interface{}{"foo2": "bar2"}, event.Extra)
+		assert.Equal(map[string]any{"foo2": "bar2"}, event.Extra)
 	}
 }

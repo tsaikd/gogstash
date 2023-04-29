@@ -7,12 +7,13 @@ import (
 	"time"
 
 	docker "github.com/fsouza/go-dockerclient"
+
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 	"github.com/tsaikd/gogstash/input/dockerlog/dockertool"
 )
 
-func (t *InputConfig) containerLogLoop(ctx context.Context, container interface{}, since *time.Time, msgChan chan<- logevent.LogEvent) (err error) {
+func (t *InputConfig) containerLogLoop(ctx context.Context, container any, since *time.Time, msgChan chan<- logevent.LogEvent) (err error) {
 	id, name, err := dockertool.GetContainerInfo(container)
 	if err != nil {
 		return ErrorGetContainerInfoFailed.New(err)
@@ -39,7 +40,7 @@ func (t *InputConfig) containerLogLoop(ctx context.Context, container interface{
 
 					filterStatsByMode(stats, t.LogMode)
 
-					extra := map[string]interface{}{
+					extra := map[string]any{
 						"host":          t.hostname,
 						"containerid":   id,
 						"containername": name,
@@ -99,7 +100,7 @@ func clearNetworkStats(network *docker.NetworkStats) {
 	}
 }
 
-func clear(v interface{}) {
+func clear(v any) {
 	p := reflect.ValueOf(v).Elem()
 	p.Set(reflect.Zero(p.Type()))
 }

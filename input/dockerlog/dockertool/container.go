@@ -18,7 +18,7 @@ var (
 )
 
 // GetContainerInfo return container info from docker object
-func GetContainerInfo(container interface{}) (id string, name string, err error) {
+func GetContainerInfo(container any) (id string, name string, err error) {
 	switch info := container.(type) {
 	case docker.APIContainers:
 		return info.ID, regNameTrim.ReplaceAllString(info.Names[0], ""), nil

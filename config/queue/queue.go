@@ -2,7 +2,9 @@ package queue
 
 import (
 	"context"
+
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
@@ -21,7 +23,7 @@ type QueueReceiver interface {
 type Queue interface {
 	config.TypeCommonConfig                                    // has to be here to be a supported TypeOutputConfig.
 	Output(ctx context.Context, event logevent.LogEvent) error // has to be here to be a supported TypeOutputConfig.
-	Queue(ctx context.Context, event interface{}) error        // allows the output to queue an event, also pausing the input if needed. Thread safe.
+	Queue(ctx context.Context, event any) error                // allows the output to queue an event, also pausing the input if needed. Thread safe.
 	Resume(ctx context.Context) error                          // informs that the output is working again - can be called multiple times and is thread safe.
 }
 
@@ -31,5 +33,5 @@ const (
 )
 
 var (
-	ErrContextCancelled = errutil.NewFactory("context cancelled")
+	ErrContextCancelled = errutil.NewFactory("context canceled")
 )

@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 func NewContainerLogStream(msgChan chan<- logevent.LogEvent, id string,
-	eventExtra map[string]interface{}, since *time.Time, logger *logrus.Logger,
+	eventExtra map[string]any, since *time.Time, logger *logrus.Logger,
 	codec config.TypeCodecConfig) ContainerLogStream {
 	return ContainerLogStream{
 		ID:         id,
@@ -30,7 +31,7 @@ type ContainerLogStream struct {
 	io.Writer
 	ID         string
 	eventChan  chan<- logevent.LogEvent
-	eventExtra map[string]interface{}
+	eventExtra map[string]any
 	logger     *logrus.Logger
 	buffer     *bytes.Buffer
 	since      *time.Time

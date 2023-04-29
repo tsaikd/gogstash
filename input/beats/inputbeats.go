@@ -8,6 +8,7 @@ import (
 
 	"github.com/elastic/go-lumber/server"
 	reuse "github.com/libp2p/go-reuseport"
+
 	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
@@ -108,14 +109,14 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			l = tls.NewListener(l, t.tlsConfig)
 		}
 		return l, err
-	}, addr, server.JSONDecoder(func(bytes []byte, v interface{}) error {
+	}, addr, server.JSONDecoder(func(bytes []byte, v any) error {
 		var event logevent.LogEvent
 		err1 := t.Codec.DecodeEvent(bytes, &event)
 		if err1 != nil {
 			return err1
 		}
 		switch e := v.(type) {
-		case *interface{}:
+		case *any:
 			*e = event
 		case *logevent.LogEvent:
 			*e = event
