@@ -1,0 +1,12 @@
+chsize: 1000
+worker: 4
+event:
+  sort_map_keys: false
+  remove_field: ['@metadata']
+
+input:
+  - type: lorem
+
+output:
+  - type: stdout
+    codec: json
