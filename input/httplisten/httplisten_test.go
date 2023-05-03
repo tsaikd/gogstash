@@ -147,14 +147,23 @@ input:
 
 	client := &http.Client{Transport: &transport}
 
-	_, err = client.Post("https://127.0.0.1:8999/tls2/", "application/json", bytes.NewReader([]byte("{\"foo2\":\"bar2\"}")))
+	resp1, err := client.Post("https://127.0.0.1:8999/tls2/", "application/json", bytes.NewReader([]byte("{\"foo2\":\"bar2\"}")))
+	defer func(r *http.Response) {
+		if r != nil && r.Body != nil {
+			_ = r.Body.Close()
+		}
+	}(resp1)
 	assert.NotNil(err)
 
 	// case 2: with correct client cert
 	tlsConfig.Certificates = []tls.Certificate{clientCert}
 	resp, err := client.Post("https://127.0.0.1:8999/tls2/", "application/json", bytes.NewReader([]byte("{\"foo2\":\"bar2\"}")))
 	require.NoError(err)
-	defer resp.Body.Close()
+	defer func(r *http.Response) {
+		if r != nil && r.Body != nil {
+			_ = r.Body.Close()
+		}
+	}(resp)
 	assert.Equal(http.StatusOK, resp.StatusCode)
 
 	data, err := io.ReadAll(resp.Body)

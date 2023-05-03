@@ -122,24 +122,26 @@ func (t *InputConfig) Request(ctx context.Context, msgChan chan<- logevent.LogEv
 }
 
 func (t *InputConfig) SendRequest() (data []byte, err error) {
-	var (
-		res *http.Response
-		raw []byte
-	)
-	switch t.Method {
-	case "HEAD":
-		res, err = http.Head(t.URL)
-	case "GET":
-		res, err = http.Get(t.URL)
-	default:
-		err = errors.New("Unknown method")
+	var raw []byte
+	if t.Method != "HEAD" && t.Method != "GET" {
+		return nil, errors.New("unknown method")
 	}
 
+	req, err := http.NewRequest(t.Method, t.URL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return
 	}
 
-	defer res.Body.Close()
+	defer func(r *http.Response) {
+		if r != nil && r.Body != nil {
+			_ = r.Body.Close()
+		}
+	}(res)
 	if raw, err = io.ReadAll(res.Body); err != nil {
 		return
 	}
