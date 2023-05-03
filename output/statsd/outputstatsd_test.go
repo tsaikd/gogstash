@@ -42,7 +42,7 @@ func Test_output_statsd_module(t *testing.T) {
 	server := newServer(t, "udp", testAddr, func(p []byte) {
 		s := strings.Split(string(p), "\n")
 		l := len(s)
-		if l > 0 && len(s[l-1]) == 0 {
+		if l > 0 && s[l-1] == "" {
 			l--
 		}
 		for j := 0; j < l; j++ {

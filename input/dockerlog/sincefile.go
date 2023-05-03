@@ -26,7 +26,7 @@ func (t *SinceFile) Open(filepath string) (err error) {
 	}
 
 	if !futil.IsExist(filepath) {
-		if err = os.WriteFile(filepath, make([]byte, 32), 0644); err != nil {
+		if err = os.WriteFile(filepath, make([]byte, 32), 0o644); err != nil {
 			return
 		}
 	}

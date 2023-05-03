@@ -238,12 +238,7 @@ func (t *InputConfig) fileReadLoop(
 
 		if err == nil {
 			since.Offset += int64(size)
-
-			// loggfer.Debugf("%q %v", event.Message, event)
-			// msgChan <- event
-
-			// self.SaveSinceDBInfos()
-			if err = t.CheckSaveSinceDBInfos(); err != nil {
+			if err := t.CheckSaveSinceDBInfos(); err != nil {
 				return err
 			}
 		} else {
@@ -366,7 +361,6 @@ func waitWatchEvent(ctx context.Context, fpath string, op fsnotify.Op) (event fs
 	fdir = filepath.Dir(fpath)
 
 	if watcher, ok = mapWatcher[fdir]; !ok {
-		//		logger.Debugf("create new watcher for %q", fdir)
 		if watcher, err = fsnotify.NewWatcher(); err != nil {
 			err = errutil.New("create new watcher failed: "+fdir, err)
 			return

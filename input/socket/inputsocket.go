@@ -96,7 +96,7 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		}
 		defer l.Close()
 		// Set socket permissions.
-		if err = os.Chmod(i.Address, 0777); err != nil {
+		if err := os.Chmod(i.Address, 0o777); err != nil {
 			return err
 		}
 	case "tcp":
@@ -219,7 +219,7 @@ func (i *InputConfig) handleUDPpacketMode(ctx context.Context, conn net.PacketCo
 			// handle error
 			switch err {
 			case nil:
-			// continue processing
+				// no err, continue processing
 			case io.EOF:
 				return nil
 			default:

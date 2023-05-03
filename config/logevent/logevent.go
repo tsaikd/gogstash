@@ -200,7 +200,7 @@ func (t *LogEvent) Remove(field string) bool {
 var (
 	reCurrentTime = regexp.MustCompile(`%{\+([^}]+)}`)
 	reEventTime   = regexp.MustCompile(`%{\+@([^}]+)}`)
-	revar         = regexp.MustCompile(`%{([\w@\.]+)}`)
+	revar         = regexp.MustCompile(`%{([\w@.]+)}`)
 )
 
 // FormatWithEnv format string with environment value, ex: %{HOSTNAME}

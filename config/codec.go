@@ -182,7 +182,7 @@ func (c *DefaultCodec) DecodeEvent(data []byte, event *logevent.LogEvent) error 
 // Encode sends the message field, ignoring any extra fields
 func (c *DefaultCodec) Encode(ctx context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
 	// return if there is no message field
-	if len(event.Message) == 0 {
+	if event.Message == "" {
 		return false, nil
 	}
 	// send message
