@@ -11,7 +11,7 @@ import (
 	"github.com/tsaikd/gogstash/input/dockerlog/dockertool"
 )
 
-func (t *InputConfig) containerLogLoop(ctx context.Context, container any, since *time.Time, msgChan chan<- logevent.LogEvent) (err error) {
+func (t *InputConfig) containerLogLoop(ctx context.Context, container any, since *time.Time, msgChan chan<- logevent.LogEvent) error {
 	id, name, err := dockertool.GetContainerInfo(container)
 	if err != nil {
 		return ErrorGetContainerInfoFailed.New(err)
@@ -51,5 +51,5 @@ func (t *InputConfig) containerLogLoop(ctx context.Context, container any, since
 		break
 	}
 
-	return
+	return err
 }

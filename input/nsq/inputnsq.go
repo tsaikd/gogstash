@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/nsqio/go-nsq"
 	"github.com/tsaikd/KDGoLib/version"
+
+	"github.com/nsqio/go-nsq"
 
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
@@ -68,7 +69,7 @@ func InitHandler(
 }
 
 // Start wraps the actual function starting the plugin
-func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error) {
+func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) error {
 	// setup the handler
 	handler := nsqhandler{
 		msgChan: msgChan,
@@ -82,17 +83,17 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 	consumer, err := nsq.NewConsumer(t.Topic, t.Channel, conf)
 	if err != nil {
 		goglog.Logger.Errorf("nsq: %s", err.Error())
-		return
+		return err
 	}
 	consumer.AddHandler(&handler)
 	if len(t.NSQ) > 0 {
 		if err = consumer.ConnectToNSQD(t.NSQ); err != nil {
-			return
+			return err
 		}
 	}
 	if len(t.Lookupd) > 0 {
 		if err = consumer.ConnectToNSQLookupd(t.Lookupd); err != nil {
-			return
+			return err
 		}
 	}
 	// wait for stop signal and exit
@@ -112,7 +113,7 @@ outer_loop:
 	consumer.Stop()
 	<-consumer.StopChan
 	goglog.Logger.Info("nsq stopped")
-	return
+	return err
 }
 
 // nsqhandler implements a handler to receive messages

@@ -100,7 +100,7 @@ func splitQuotedStringsBySpace(input string) (result []string) {
 			result = append(result, s)
 		}
 	}
-	return
+	return result
 }
 
 // contains checks if a key is in the list of elements

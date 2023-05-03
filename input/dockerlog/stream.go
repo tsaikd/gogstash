@@ -108,5 +108,5 @@ func (t *ContainerLogStream) sendEvent(data []byte) (err error) {
 
 	t.eventChan <- event
 
-	return
+	return err
 }
