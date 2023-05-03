@@ -66,7 +66,7 @@ func InitHandler(
 	}
 
 	// host validation regex
-	r := regexp.MustCompile(`[^\:]+:[0-9]{1,5}`)
+	r := regexp.MustCompile(`[^:]+:\d{1,5}`)
 
 	for _, host := range conf.Hosts {
 		if !r.MatchString(host) {

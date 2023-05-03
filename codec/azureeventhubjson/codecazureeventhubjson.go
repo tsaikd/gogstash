@@ -70,7 +70,7 @@ func (c *Codec) Decode(ctx context.Context, data any,
 		goglog.Logger.Error(err)
 	}
 
-	if records, rok := event.Extra["records"]; rok && len(event.Message) == 0 {
+	if records, rok := event.Extra["records"]; rok && event.Message == "" {
 		for _, record := range records.([]any) {
 			if _, err = c.Decode(ctx, record, eventExtra, tags, msgChan); err != nil {
 				event.AddTag(ErrorTag)

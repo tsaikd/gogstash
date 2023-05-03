@@ -14,6 +14,15 @@ linters-settings:
     disabled-checks:
       - dupImport # https://github.com/go-critic/go-critic/issues/845
       - ifElseChain
+      - paramTypeCombine
+      - importShadow
+      - sprintfQuotedString
+      - singleCaseSwitch
+      - exitAfterDefer # Remove in the future
+      - whyNoLint # Remove in the future
+      - rangeValCopy # Remove in the future
+      - defaultCaseOrder # Remove in the future
+      - deferInLoop # Remove in the future
   gocyclo:
     min-complexity: 30 # Recommended between 10-20
   gofmt:
@@ -60,7 +69,7 @@ linters:
     - exportloopref
       #- gochecknoinits
       #- goconst
-      #- gocritic
+    - gocritic
     - gocyclo
     - gofmt
     - goimports

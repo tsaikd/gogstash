@@ -129,16 +129,14 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 	return event, true
 }
 
-func convertFloat(value float64) (int64, int64) {
-	sec := int64(value)
+func convertFloat(value float64) (sec int64, nsec int64) {
+	sec = int64(value)
 	rounded := value - float64(sec)
-	nsec := int64(rounded * 1000000000)
+	nsec = int64(rounded * 1000000000)
 	return sec, nsec
 }
 
-func convert(s string) (int64, int64, error) {
-	var sec, nsec int64
-	var err error
+func convert(s string) (sec int64, nsec int64, err error) {
 	dot := strings.Index(s, ".")
 
 	if indexOfe := strings.Index(s, "e"); dot == 1 && indexOfe != -1 {

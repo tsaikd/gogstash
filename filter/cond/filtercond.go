@@ -39,7 +39,7 @@ var (
 				return float64(0), nil
 			}
 			length := len(args[0].(string))
-			return (float64)(length), nil
+			return float64(length), nil
 		},
 		"map": func(args ...any) (any, error) {
 			if len(args) > 1 {

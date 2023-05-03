@@ -55,10 +55,10 @@ func InitHandler(
 		return nil, err
 	}
 
-	if len(conf.NSQ) == 0 {
+	if conf.NSQ == "" {
 		return nil, errors.New("Missing NSQ server")
 	}
-	if len(conf.Topic) == 0 {
+	if conf.Topic == "" {
 		return nil, errors.New("Missing topic")
 	}
 

@@ -47,7 +47,7 @@ func gogstash(
 		return startWorkers(ctx, conf.Worker)
 	}
 
-	if err = conf.Start(ctx); err != nil {
+	if err := conf.Start(ctx); err != nil {
 		return err
 	}
 

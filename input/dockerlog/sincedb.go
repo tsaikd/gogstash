@@ -25,7 +25,7 @@ func (t *SinceDB) Open(dbdir string) (err error) {
 	}
 	t.dbdir = dbdir
 	if !futil.IsExist(t.dbdir) {
-		if err = os.MkdirAll(t.dbdir, 0755); err != nil {
+		if err = os.MkdirAll(t.dbdir, 0o755); err != nil {
 			return
 		}
 	}

@@ -71,7 +71,7 @@ input:
 	require.NoError(err)
 	defer conn.Close()
 
-	testWriteData(t, conf, conn)
+	testWriteData(t, &conf, conn)
 }
 
 func Test_input_socket_module_udp(t *testing.T) {
@@ -97,10 +97,10 @@ input:
 	require.NoError(err)
 	defer conn.Close()
 
-	testWriteData(t, conf, conn)
+	testWriteData(t, &conf, conn)
 }
 
-func testWriteData(t *testing.T, conf config.Config, conn net.Conn) {
+func testWriteData(t *testing.T, conf *config.Config, conn net.Conn) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
 	require := require.New(t)

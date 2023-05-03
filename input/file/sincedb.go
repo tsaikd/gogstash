@@ -64,7 +64,7 @@ func (self *InputConfig) SaveSinceDBInfos() (err error) {
 	}
 	self.sinceDBLastInfosRaw = raw
 
-	if err = os.WriteFile(self.SinceDBPath, raw, 0664); err != nil {
+	if err = os.WriteFile(self.SinceDBPath, raw, 0o664); err != nil {
 		log.Errorf("Write sincedb failed: %q\n%s", self.SinceDBPath, err)
 		return
 	}

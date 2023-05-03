@@ -304,8 +304,7 @@ func Benchmark_Marshal_StdJSON(b *testing.B) {
 	}
 	b.SetBytes(int64(len(d)))
 	for n := 0; n < b.N; n++ {
-		//nolint: errcheck
-		json.Marshal(jsonMap)
+		_, _ = json.Marshal(jsonMap)
 	}
 }
 

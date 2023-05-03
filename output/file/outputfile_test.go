@@ -127,7 +127,7 @@ output:
 	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
-	perm := os.FileMode(0640)
+	perm := os.FileMode(0o640)
 	// simulate dir does not exist. should be created with right permissions
 	mockfs := mocks.NewMockFileSystem(ctrl)
 	config.fs = mockfs
@@ -532,7 +532,7 @@ output:
 	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
-	perm := os.FileMode(0640)
+	perm := os.FileMode(0o640)
 	// simulate dir does not exist. should be created with right permissions
 	mockfs := mocks.NewMockFileSystem(ctrl)
 	config.fs = mockfs
@@ -578,7 +578,7 @@ output:
 	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
-	perm := os.FileMode(0640)
+	perm := os.FileMode(0o640)
 	// simulate dir does not exist. should be created with right permissions
 	mockfs := mocks.NewMockFileSystem(ctrl)
 	config.fs = mockfs
@@ -624,7 +624,7 @@ output:
 	c, err := InitHandler(context.TODO(), conf.OutputRaw[0], nil)
 	assert.Nil(err)
 	config := c.(*OutputConfig)
-	perm := os.FileMode(0640)
+	perm := os.FileMode(0o640)
 	// simulate dir does not exist. should be created with right permissions
 	mockfs := mocks.NewMockFileSystem(ctrl)
 	config.fs = mockfs

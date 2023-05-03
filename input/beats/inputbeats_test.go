@@ -123,7 +123,7 @@ func Test_input_beats_module_tls(t *testing.T) {
 	require.NoError(err)
 	defer os.Remove("cert.pem")
 
-	keyOut, err := os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	keyOut, err := os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	require.NoError(err)
 	err = pem.Encode(keyOut, pemBlockForKey(priv))
 	require.NoError(err)

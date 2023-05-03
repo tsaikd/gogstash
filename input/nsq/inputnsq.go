@@ -50,13 +50,13 @@ func InitHandler(
 	if err != nil {
 		return nil, err
 	}
-	if len(conf.Lookupd) == 0 && len(conf.NSQ) == 0 {
+	if conf.Lookupd == "" && conf.NSQ == "" {
 		return nil, errors.New("nsq: you need to specify nsq or lookupd")
 	}
-	if len(conf.Topic) == 0 {
+	if conf.Topic == "" {
 		return nil, errors.New("nsq: missing topic")
 	}
-	if len(conf.Channel) == 0 {
+	if conf.Channel == "" {
 		return nil, errors.New("nsq: missing channel")
 	}
 	conf.Codec, err = config.GetCodecOrDefault(ctx, raw["codec"])

@@ -21,6 +21,15 @@ type TypeFilterConfig interface {
 	CommonFilter(context.Context, logevent.LogEvent) logevent.LogEvent
 }
 
+// FilterConfig is basic filter config struct
+type FilterConfig struct {
+	CommonConfig
+	AddTags      []string      `yaml:"add_tag" json:"add_tag"`
+	RemoveTags   []string      `yaml:"remove_tag" json:"remove_tag"`
+	AddFields    []FieldConfig `yaml:"add_field" json:"add_field"`
+	RemoveFields []string      `yaml:"remove_field" json:"remove_field"`
+}
+
 // IsConfigured returns whether common configuration has been setup
 func (f *FilterConfig) IsConfigured() bool {
 	return len(f.AddTags) != 0 ||
@@ -42,15 +51,6 @@ func (f *FilterConfig) CommonFilter(
 		event.SetValue(f.Key, event.Format(f.Value))
 	}
 	return event
-}
-
-// FilterConfig is basic filter config struct
-type FilterConfig struct {
-	CommonConfig
-	AddTags      []string      `yaml:"add_tag" json:"add_tag"`
-	RemoveTags   []string      `yaml:"remove_tag" json:"remove_tag"`
-	AddFields    []FieldConfig `yaml:"add_field" json:"add_field"`
-	RemoveFields []string      `yaml:"remove_field" json:"remove_field"`
 }
 
 // FieldConfig is a name/value field config

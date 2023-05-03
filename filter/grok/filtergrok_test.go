@@ -25,7 +25,7 @@ func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistFilterHandler(ModuleName, InitHandler)
 
-	err := os.WriteFile(fileName, fileData, 0644)
+	err := os.WriteFile(fileName, fileData, 0o644)
 	if err != nil {
 		panic(err)
 	}
