@@ -69,7 +69,7 @@ func (t *InputConfig) containerLogLoop(ctx context.Context, container any, since
 		break
 	}
 
-	return
+	return err
 }
 
 func filterStatsByMode(stats *docker.Stats, mode Mode) {

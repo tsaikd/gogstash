@@ -86,7 +86,7 @@ func (c *Codec) Decode(ctx context.Context, data any,
 	}
 
 	ok = true
-	return
+	return ok, err
 }
 
 // DecodeEvent decodes 'data' as JSON format to event

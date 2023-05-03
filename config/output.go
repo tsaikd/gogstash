@@ -71,7 +71,7 @@ func GetOutputs(
 			outputs = append(outputs, output)
 		}
 	}
-	return
+	return outputs, err
 }
 
 func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
@@ -113,5 +113,5 @@ func (t *Config) startOutputs() (err error) {
 		}
 	})
 
-	return
+	return err
 }

@@ -102,7 +102,7 @@ func GetFilters(
 			filters = append(filters, filter)
 		}
 	}
-	return
+	return filters, err
 }
 
 func (t *Config) getFilters() (filters []TypeFilterConfig, err error) {
@@ -140,5 +140,5 @@ func (t *Config) startFilters() (err error) {
 		}
 	})
 
-	return
+	return err
 }
