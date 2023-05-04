@@ -87,12 +87,12 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 	}
 	consumer.AddHandler(&handler)
 	if len(t.NSQ) > 0 {
-		if err = consumer.ConnectToNSQD(t.NSQ); err != nil {
+		if err := consumer.ConnectToNSQD(t.NSQ); err != nil {
 			return err
 		}
 	}
 	if len(t.Lookupd) > 0 {
-		if err = consumer.ConnectToNSQLookupd(t.Lookupd); err != nil {
+		if err := consumer.ConnectToNSQLookupd(t.Lookupd); err != nil {
 			return err
 		}
 	}
