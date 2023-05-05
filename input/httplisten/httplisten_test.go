@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tsaikd/gogstash/internal/httpctx"
+
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,7 +48,7 @@ input:
 
 	time.Sleep(500 * time.Millisecond)
 
-	resp, err := http.Post("http://127.0.0.1:8089/", "application/json", bytes.NewReader([]byte("{\"foo\":\"bar\"}")))
+	resp, err := httpctx.Post(ctx, "http://127.0.0.1:8089/", "application/json", bytes.NewReader([]byte("{\"foo\":\"bar\"}")))
 	require.NoError(err)
 	defer resp.Body.Close()
 
@@ -91,7 +93,7 @@ input:
 
 	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: roots}}}
 
-	resp, err := client.Post("https://127.0.0.1:8989/tls/", "application/json", bytes.NewReader([]byte("{\"foo\":\"bar\"}")))
+	resp, err := httpctx.ClientPost(ctx, client, "https://127.0.0.1:8989/tls/", "application/json", bytes.NewReader([]byte("{\"foo\":\"bar\"}")))
 	require.NoError(err)
 	defer resp.Body.Close()
 	assert.Equal(http.StatusOK, resp.StatusCode)
@@ -147,7 +149,7 @@ input:
 
 	client := &http.Client{Transport: &transport}
 
-	resp1, err := client.Post("https://127.0.0.1:8999/tls2/", "application/json", bytes.NewReader([]byte("{\"foo2\":\"bar2\"}")))
+	resp1, err := httpctx.ClientPost(ctx, client, "https://127.0.0.1:8999/tls2/", "application/json", bytes.NewReader([]byte("{\"foo2\":\"bar2\"}")))
 	defer func(r *http.Response) {
 		if r != nil && r.Body != nil {
 			_ = r.Body.Close()
@@ -157,7 +159,7 @@ input:
 
 	// case 2: with correct client cert
 	tlsConfig.Certificates = []tls.Certificate{clientCert}
-	resp, err := client.Post("https://127.0.0.1:8999/tls2/", "application/json", bytes.NewReader([]byte("{\"foo2\":\"bar2\"}")))
+	resp, err := httpctx.ClientPost(ctx, client, "https://127.0.0.1:8999/tls2/", "application/json", bytes.NewReader([]byte("{\"foo2\":\"bar2\"}")))
 	require.NoError(err)
 	defer func(r *http.Response) {
 		if r != nil && r.Body != nil {

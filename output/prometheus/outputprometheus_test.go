@@ -3,10 +3,11 @@ package outputprometheus
 import (
 	"context"
 	"io"
-	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/tsaikd/gogstash/internal/httpctx"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -61,7 +62,7 @@ output:
 }
 
 func getMetric() (string, error) {
-	resp, err := http.Get("http://127.0.0.1:8080/metrics")
+	resp, err := httpctx.Get(context.Background(), "http://127.0.0.1:8080/metrics")
 	if err != nil {
 		return "", err
 	}

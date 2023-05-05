@@ -148,7 +148,7 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 	}
 
 	url := t.URLs[i]
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(raw))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(raw))
 	if err != nil {
 		goglog.Logger.Errorf("output loki: %v", err)
 		return err
