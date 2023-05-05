@@ -119,15 +119,13 @@ func (t *OutputConfig) OutputEvent(ctx context.Context, event logevent.LogEvent)
 	}
 
 	for _, w := range t.gelfWriters {
-		err := w.WriteMessage(
-			&SimpleMessage{
-				Extra:     event.Extra,
-				Host:      host,
-				Level:     level,
-				Message:   event.Message,
-				Timestamp: event.Timestamp,
-			},
-		)
+		err := w.WriteMessage(ctx, &SimpleMessage{
+			Extra:     event.Extra,
+			Host:      host,
+			Level:     level,
+			Message:   event.Message,
+			Timestamp: event.Timestamp,
+		})
 		if err != nil {
 			goglog.Logger.Errorf("outputgelf: %s", err.Error())
 			err = t.queue.Queue(ctx, event)

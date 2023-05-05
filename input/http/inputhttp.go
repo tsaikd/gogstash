@@ -102,7 +102,7 @@ func (t *InputConfig) Start(
 }
 
 func (t *InputConfig) Request(ctx context.Context, msgChan chan<- logevent.LogEvent) {
-	data, err := t.SendRequest()
+	data, err := t.SendRequest(ctx)
 	extra := map[string]any{
 		"host": t.hostname,
 		"url":  t.URL,
@@ -121,13 +121,13 @@ func (t *InputConfig) Request(ctx context.Context, msgChan chan<- logevent.LogEv
 	}
 }
 
-func (t *InputConfig) SendRequest() (data []byte, err error) {
+func (t *InputConfig) SendRequest(ctx context.Context) (data []byte, err error) {
 	var raw []byte
 	if t.Method != "HEAD" && t.Method != "GET" {
 		return nil, errors.New("unknown method")
 	}
 
-	req, err := http.NewRequest(t.Method, t.URL, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, t.Method, t.URL, http.NoBody)
 	if err != nil {
 		return nil, err
 	}

@@ -81,7 +81,7 @@ linters:
       #- lll
     - misspell
     - nakedret
-      #- noctx
+    - noctx
     - nolintlint
       #- revive
     - staticcheck

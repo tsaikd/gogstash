@@ -9,6 +9,7 @@ import (
 	"compress/flate"
 	"compress/gzip"
 	"compress/zlib"
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -19,6 +20,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/tsaikd/gogstash/internal/httpctx"
 )
 
 // regex used later
@@ -39,8 +42,8 @@ type GELFConfig struct {
 }
 
 type GELFWriter interface {
-	WriteCustomMessage(m *Message) error
-	WriteMessage(sm *SimpleMessage) error
+	WriteCustomMessage(ctx context.Context, m *Message) error
+	WriteMessage(ctx context.Context, sm *SimpleMessage) error
 }
 
 // UDPWriter implements io.Writer and is used to send both discrete
@@ -315,7 +318,7 @@ type writerCloserResetter interface {
 // specified in the call to NewWriter(). It assumes all the fields are
 // filled out appropriately. In general, clients will want to use
 // Write, rather than WriteMessage.
-func (w *UDPWriter) WriteCustomMessage(m *Message) error {
+func (w *UDPWriter) WriteCustomMessage(ctx context.Context, m *Message) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -376,7 +379,7 @@ func (w *UDPWriter) WriteCustomMessage(m *Message) error {
 
 // WriteMessage allow to send messsage to gelf Server
 // It only request basic fields and will handle conversion & co
-func (w *UDPWriter) WriteMessage(sm *SimpleMessage) error {
+func (w *UDPWriter) WriteMessage(ctx context.Context, sm *SimpleMessage) error {
 	cleanExtra, err := prepareExtra(sm.Extra)
 	if err != nil {
 		return err
@@ -384,7 +387,7 @@ func (w *UDPWriter) WriteMessage(sm *SimpleMessage) error {
 
 	sm.Extra = cleanExtra
 
-	return w.WriteCustomMessage(constructMessage(sm))
+	return w.WriteCustomMessage(ctx, constructMessage(sm))
 }
 
 func (m *Message) MarshalJSON() ([]byte, error) {
@@ -422,17 +425,19 @@ type HTTPWriter struct {
 	httpClient *http.Client
 }
 
-func (h HTTPWriter) WriteCustomMessage(m *Message) error {
+func (h HTTPWriter) WriteCustomMessage(ctx context.Context, m *Message) error {
 	mBytes, err := json.Marshal(m)
 	if err != nil {
 		return err
 	}
 
-	resp, err := h.httpClient.Post(h.config.Host, "application/json", bytes.NewBuffer(mBytes))
+	resp, err := httpctx.ClientPost(ctx, h.httpClient, h.config.Host, "application/json", bytes.NewBuffer(mBytes))
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
 
 	if resp.StatusCode != 204 {
 		return fmt.Errorf("got code %s, expected 204", resp.Status)
@@ -443,7 +448,7 @@ func (h HTTPWriter) WriteCustomMessage(m *Message) error {
 
 // WriteMessage allow to send messsage to gelf Server
 // It only request basic fields and will handle conversion & co
-func (h HTTPWriter) WriteMessage(sm *SimpleMessage) error {
+func (h HTTPWriter) WriteMessage(ctx context.Context, sm *SimpleMessage) error {
 	cleanExtra, err := prepareExtra(sm.Extra)
 	if err != nil {
 		return err
@@ -451,5 +456,5 @@ func (h HTTPWriter) WriteMessage(sm *SimpleMessage) error {
 
 	sm.Extra = cleanExtra
 
-	return h.WriteCustomMessage(constructMessage(sm))
+	return h.WriteCustomMessage(ctx, constructMessage(sm))
 }
