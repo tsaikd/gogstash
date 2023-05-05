@@ -80,7 +80,7 @@ func (c *Codec) Decode(ctx context.Context, data any,
 	} else {
 		if ctx.Err() == context.Canceled {
 			ok = false
-			return
+			return ok, err
 		}
 		msgChan <- event
 	}

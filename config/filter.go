@@ -112,7 +112,7 @@ func (t *Config) getFilters() (filters []TypeFilterConfig, err error) {
 func (t *Config) startFilters() (err error) {
 	filters, err := t.getFilters()
 	if err != nil {
-		return
+		return err
 	}
 
 	t.eg.Go(func() error {

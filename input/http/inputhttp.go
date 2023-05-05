@@ -127,7 +127,7 @@ func (t *InputConfig) SendRequest() (data []byte, err error) {
 		return nil, errors.New("unknown method")
 	}
 
-	req, err := http.NewRequest(t.Method, t.URL, nil)
+	req, err := http.NewRequest(t.Method, t.URL, http.NoBody)
 	if err != nil {
 		return nil, err
 	}

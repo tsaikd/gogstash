@@ -82,7 +82,7 @@ func (t *ContainerLogStream) sendEvent(data []byte) (err error) {
 		eventTime, err = time.Parse(time.RFC3339Nano, timestr)
 		if err == nil {
 			if eventTime.Before(*t.since) {
-				return
+				return err
 			}
 			event.Timestamp = eventTime
 			data = data[loc[1]+1:]
@@ -98,7 +98,7 @@ func (t *ContainerLogStream) sendEvent(data []byte) (err error) {
 	if t.since.Before(event.Timestamp) {
 		*t.since = event.Timestamp
 	} else {
-		return
+		return err
 	}
 
 	if err != nil {

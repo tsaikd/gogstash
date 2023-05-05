@@ -81,7 +81,7 @@ func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
 func (t *Config) startOutputs() (err error) {
 	outputs, err := t.getOutputs()
 	if err != nil {
-		return
+		return err
 	}
 
 	t.eg.Go(func() error {

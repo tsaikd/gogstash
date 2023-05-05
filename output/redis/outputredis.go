@@ -104,11 +104,11 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 		switch t.DataType {
 		case "list":
 			if _, err = t.client.RPush(key, raw).Result(); err == nil {
-				return
+				return nil
 			}
 		case "channel":
 			if _, err = t.client.Publish(key, string(raw)).Result(); err == nil {
-				return
+				return nil
 			}
 		default:
 			return ErrorUnsupportedDataType1.New(nil, t.DataType)
