@@ -28,6 +28,8 @@ type Config struct {
 }
 
 // TagsField is the event tags field name
+const TimestampField = "@timestamp"
+const MessageField = "message"
 const TagsField = "tags"
 
 const timeFormat = `2006-01-02T15:04:05.999999999Z`
@@ -146,9 +148,9 @@ func (t LogEvent) MarshalIndent() (data []byte, err error) {
 
 func (t LogEvent) Get(field string) (v any) {
 	switch field {
-	case "@timestamp":
+	case TimestampField:
 		v = t.Timestamp
-	case "message":
+	case MessageField:
 		v = t.Message
 	case TagsField:
 		v = t.Tags
@@ -160,9 +162,9 @@ func (t LogEvent) Get(field string) (v any) {
 
 func (t LogEvent) GetString(field string) string {
 	switch field {
-	case "@timestamp":
+	case TimestampField:
 		return t.Timestamp.UTC().Format(timeFormat)
-	case "message":
+	case MessageField:
 		return t.Message
 	default:
 		v, ok := getPathValue(t.Extra, field)

@@ -12,6 +12,8 @@ import (
 	"github.com/tsaikd/KDGoLib/futil"
 )
 
+const devNull = "/dev/null"
+
 type SinceDBInfo struct {
 	Offset int64 `json:"offset,omitempty"`
 }
@@ -23,7 +25,7 @@ func (self *InputConfig) LoadSinceDBInfos() (err error) {
 	log.Debug("LoadSinceDBInfos")
 	self.SinceDBInfos = map[string]*SinceDBInfo{}
 
-	if self.SinceDBPath == "" || self.SinceDBPath == "/dev/null" {
+	if self.SinceDBPath == "" || self.SinceDBPath == devNull {
 		log.Warnf("No valid sincedb path")
 		return
 	}
@@ -53,7 +55,7 @@ func (self *InputConfig) SaveSinceDBInfos() (err error) {
 	log.Debug("SaveSinceDBInfos")
 	self.SinceDBLastSaveTime = time.Now()
 
-	if self.SinceDBPath == "" || self.SinceDBPath == "/dev/null" {
+	if self.SinceDBPath == "" || self.SinceDBPath == devNull {
 		log.Warnf("No valid sincedb path")
 		return
 	}
