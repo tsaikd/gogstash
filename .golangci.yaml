@@ -2,8 +2,8 @@ linters-settings:
   dupl:
     threshold: 100
   goconst:
-    min-len: 2
-    min-occurrences: 1
+    min-len: 4
+    min-occurrences: 2
   gocritic:
     enabled-tags:
       - diagnostic
@@ -67,8 +67,7 @@ linters:
       #- dupl
     - errcheck
     - exportloopref
-      #- gochecknoinits
-      #- goconst
+    - goconst
     - gocritic
     - gocyclo
     - gofmt
