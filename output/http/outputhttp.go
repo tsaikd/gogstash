@@ -4,17 +4,18 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"github.com/tsaikd/gogstash/config/queue"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
+	"github.com/tsaikd/gogstash/config/queue"
 )
 
 // ModuleName is the name used in config file
@@ -77,7 +78,7 @@ func InitHandler(
 		conf.permanentHttpErrors = MapFromInts(conf.PermanentHttpErrors)
 	}
 
-	if len(conf.URLs) <= 0 {
+	if len(conf.URLs) == 0 {
 		return nil, ErrNoValidURLs
 	}
 	conf.httpClient = &http.Client{Transport: &http.Transport{
@@ -126,7 +127,7 @@ func (t *OutputConfig) OutputEvent(ctx context.Context, event logevent.LogEvent)
 	}
 	defer resp.Body.Close()
 
-	_, err = ioutil.ReadAll(resp.Body)
+	_, err = io.ReadAll(resp.Body)
 	if err != nil {
 		t.failedDelivery(ctx, event)
 		return err
@@ -154,7 +155,7 @@ func (t *OutputConfig) failedDelivery(ctx context.Context, event logevent.LogEve
 // MapFromInts returns a map containing all the ints in the array
 func MapFromInts(nums []int) map[int]struct{} {
 	result := make(map[int]struct{}, len(nums))
-	for x := range nums {
+	for _, x := range nums {
 		result[x] = struct{}{}
 	}
 	return result

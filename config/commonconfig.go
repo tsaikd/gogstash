@@ -17,4 +17,4 @@ func (t CommonConfig) GetType() string {
 }
 
 // ConfigRaw is general config struct
-type ConfigRaw map[string]interface{}
+type ConfigRaw map[string]any

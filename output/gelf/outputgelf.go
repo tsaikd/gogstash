@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -60,12 +61,12 @@ func InitHandler(
 		return nil, err
 	}
 
-	if len(conf.Hosts) <= 0 {
+	if len(conf.Hosts) == 0 {
 		return nil, ErrNoValidHosts
 	}
 
 	// host validation regex
-	r := regexp.MustCompile(`[^\:]+:[0-9]{1,5}`)
+	r := regexp.MustCompile(`[^:]+:\d{1,5}`)
 
 	for _, host := range conf.Hosts {
 		if !r.MatchString(host) {
@@ -96,7 +97,6 @@ func (t *OutputConfig) OutputEvent(ctx context.Context, event logevent.LogEvent)
 	var host string
 	var level int32
 	for k, v := range event.Extra {
-
 		lk := strings.ToLower(k)
 
 		if lk == "host" || lk == "hostname" {
@@ -119,15 +119,13 @@ func (t *OutputConfig) OutputEvent(ctx context.Context, event logevent.LogEvent)
 	}
 
 	for _, w := range t.gelfWriters {
-		err := w.WriteMessage(
-			&SimpleMessage{
-				Extra:     event.Extra,
-				Host:      host,
-				Level:     level,
-				Message:   event.Message,
-				Timestamp: event.Timestamp,
-			},
-		)
+		err := w.WriteMessage(ctx, &SimpleMessage{
+			Extra:     event.Extra,
+			Host:      host,
+			Level:     level,
+			Message:   event.Message,
+			Timestamp: event.Timestamp,
+		})
 		if err != nil {
 			goglog.Logger.Errorf("outputgelf: %s", err.Error())
 			err = t.queue.Queue(ctx, event)

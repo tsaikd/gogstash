@@ -6,8 +6,10 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/Shopify/sarama"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -21,11 +23,12 @@ type InputConfig struct {
 	config.InputConfig
 	Version          string   `json:"version"`                     // Kafka cluster version, eg: 0.10.2.0
 	Brokers          []string `json:"brokers"`                     // Kafka bootstrap brokers to connect to, as a comma separated list
-	Topics           []string `json:"topics"`                      // Kafka topics to be consumed, as a comma seperated list
+	Topics           []string `json:"topics"`                      // Kafka topics to be consumed, as a comma separated list
 	Group            string   `json:"group"`                       // Kafka consumer group definition
 	OffsetOldest     bool     `json:"offset_oldest"`               // Kafka consumer consume initial offset from oldest
 	Assignor         string   `json:"assignor"`                    // Consumer group partition assignment strategy (range, roundrobin)
 	SecurityProtocol string   `json:"security_protocol,omitempty"` // use SASL authentication
+	SaslMechanism    string   `json:"sasl_mechanism,omitempty"`    // use SASL mechanism
 	User             string   `json:"sasl_username,omitempty"`     // SASL authentication username
 	Password         string   `json:"sasl_password,omitempty"`     // SASL authentication password
 
@@ -41,6 +44,7 @@ func DefaultInputConfig() InputConfig {
 			},
 		},
 		SecurityProtocol: "",
+		SaslMechanism:    "",
 		User:             "",
 		Password:         "",
 	}
@@ -72,6 +76,9 @@ func InitHandler(
 	 */
 	sarConfig := sarama.NewConfig()
 	sarConfig.Version = version
+	sarConfig.Consumer.MaxProcessingTime = 500 * time.Millisecond
+	sarConfig.Consumer.Group.Session.Timeout = 20 * time.Second
+	sarConfig.Consumer.Group.Heartbeat.Interval = 6 * time.Second
 
 	switch conf.Assignor {
 	case "roundrobin":
@@ -105,6 +112,14 @@ func InitHandler(
 		sarConfig.Net.SASL.Enable = true
 		sarConfig.Net.SASL.User = conf.User
 		sarConfig.Net.SASL.Password = conf.Password
+
+		if conf.SaslMechanism == "SCRAM-SHA-512" {
+			sarConfig.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &SCRAMClient{HashGeneratorFcn: SHA512} }
+			sarConfig.Net.SASL.Mechanism = sarama.SASLTypeSCRAMSHA512
+		} else if conf.SaslMechanism == "SCRAM-SHA-256" {
+			sarConfig.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &SCRAMClient{HashGeneratorFcn: SHA256} }
+			sarConfig.Net.SASL.Mechanism = sarama.SASLTypeSCRAMSHA256
+		}
 	}
 
 	conf.saConf = sarConfig
@@ -148,7 +163,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 			if err := client.Consume(ct, t.Topics, &cum); err != nil {
 				goglog.Logger.Errorf("Error from consumer: %v", err)
 			}
-			// check if context was cancelled, signaling that the consumer should stop
+			// check if context was canceled, signaling that the consumer should stop
 			if ct.Err() != nil {
 				return
 			}
@@ -164,7 +179,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
 	select {
 	case <-ct.Done():
-		goglog.Logger.Println("terminating: context cancelled")
+		goglog.Logger.Println("terminating: context canceled")
 	case <-sigterm:
 		goglog.Logger.Println("terminating: via signal")
 	}
@@ -199,14 +214,12 @@ func (c *consumerHandle) Cleanup(sarama.ConsumerGroupSession) error {
 
 // ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
 func (c *consumerHandle) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-
 	// NOTE:
 	// Do not move the code below to a goroutine.
 	// The `ConsumeClaim` itself is called within a goroutine, see:
 	// https://github.com/Shopify/sarama/blob/master/consumer_group.go#L27-L29
 	for message := range claim.Messages() {
-		//goglog.Logger.Printf("Message claimed: value = %s, timestamp = %v, topic = %s", string(message.Value), message.Timestamp, message.Topic)
-		var extra = map[string]interface{}{
+		var extra = map[string]any{
 			"topic":     message.Topic,
 			"timestamp": message.Timestamp,
 		}

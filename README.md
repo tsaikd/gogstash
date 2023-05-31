@@ -279,3 +279,10 @@ See [output modules](output) for more information
 * [socket](output/socket)
 * [stdout](output/stdout)
 * [loki](output/loki)
+
+## Development
+
+To setup the local machine, run `make setup` to install all tools for pre-commit.
+
+If any of the installations fail or the pre-commit cannot find the go tools, ensure they are accessable though adding their's `bin` folder to your path.
+

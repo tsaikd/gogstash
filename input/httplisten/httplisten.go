@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 
@@ -75,8 +75,8 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		if req.Method != http.MethodPost {
 			logger.Warnf(invalidMethodError, req.Method)
 			rw.WriteHeader(http.StatusMethodNotAllowed)
-			//nolint: errcheck // no need to check error for abnormal case
-			rw.Write([]byte(fmt.Sprintf(invalidMethodError, req.Method)))
+
+			fmt.Fprintf(rw, invalidMethodError, req.Method)
 			return
 		}
 		// Check for header
@@ -109,7 +109,7 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 					logger.Fatal(err)
 					return
 				}
-				content, err := ioutil.ReadAll(f)
+				content, err := io.ReadAll(f)
 				ferr := f.Close()
 				if ferr != nil {
 					logger.Warning(ferr)
@@ -149,7 +149,7 @@ func (i *InputConfig) postHandler(msgChan chan<- logevent.LogEvent, rw http.Resp
 	logger := goglog.Logger
 	logger.Debugf("Received request")
 
-	data, err := ioutil.ReadAll(req.Body)
+	data, err := io.ReadAll(req.Body)
 	if err != nil {
 		logger.Errorf("read request body error: %v", err)
 		return
@@ -169,7 +169,7 @@ func (i *InputConfig) postHandler(msgChan chan<- logevent.LogEvent, rw http.Resp
 	} else if err != nil {
 		// event sent to msgChan
 		rw.WriteHeader(http.StatusBadRequest)
-		//nolint: errcheck // no need to check error for abnormal case
-		rw.Write([]byte(fmt.Sprintf(invalidRequestError, err)))
+
+		fmt.Fprintf(rw, invalidRequestError, err)
 	}
 }

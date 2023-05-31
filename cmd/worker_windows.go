@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package cmd
@@ -27,7 +28,9 @@ func waitWorkers(ctx context.Context, pids []int, handles []uintptr, args []stri
 	// so that we find proc `WaitForMultipleObjects` from kernel32.dll.
 	// doc: https://docs.microsoft.com/en-us/windows/desktop/api/synchapi/nf-synchapi-waitformultipleobjects
 	dll := syscall.MustLoadDLL("kernel32.dll")
+	defer dll.Release()
 	wfmo := dll.MustFindProc("WaitForMultipleObjects")
+
 	for {
 		r1, _, err := wfmo.Call(uintptr(len(handles)), uintptr(unsafe.Pointer(&handles[0])), 0, syscall.INFINITE)
 		ret := int(r1)
@@ -78,5 +81,16 @@ func startWorkers(ctx context.Context, workerNum int) error {
 	eg.Go(func() error {
 		return waitWorkers(ctx, pids, handles, args, attr)
 	})
-	return waitSignals(ctx)
+
+	signal := waitSignals(ctx)
+	if signal != nil {
+		for _, pid := range pids {
+			p, err := os.FindProcess(pid)
+			if err == nil {
+				// Sending Interrupt on Windows is not implemented. Look at https://github.com/golang/go/issues/6720 for more info
+				_ = p.Signal(os.Kill)
+			}
+		}
+	}
+	return nil
 }

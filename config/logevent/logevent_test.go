@@ -56,12 +56,12 @@ func Test_Format(t *testing.T) {
 	logevent := LogEvent{
 		Timestamp: eventTime,
 		Message:   "Test Message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"int":    123,
 			"float":  1.23,
 			"string": "Test String",
 			"time":   time.Now(),
-			"child": map[string]interface{}{
+			"child": map[string]any{
 				"childA": "foo",
 			},
 		},
@@ -102,12 +102,12 @@ func Test_Tags(t *testing.T) {
 	assert.NotNil(assert)
 
 	logevent := LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"int": 123,
 		},
 	}
 
-	logevent.ParseTags(interface{}([]interface{}{"foo", "bar"}))
+	logevent.ParseTags(any([]any{"foo", "bar"}))
 	assert.Len(logevent.Tags, 2)
 	assert.Equal([]string{"foo", "bar"}, logevent.Tags)
 
@@ -134,9 +134,9 @@ func Test_GetValue(t *testing.T) {
 	event := LogEvent{
 		Timestamp: eventTime,
 		Message:   "Test Message",
-		Extra: map[string]interface{}{
-			"nginx": map[string]interface{}{
-				"access": map[string]interface{}{
+		Extra: map[string]any{
+			"nginx": map[string]any{
+				"access": map[string]any{
 					"response_code":  200,
 					"remote_ip_list": []string{"1.1.1.1"},
 				},
@@ -170,9 +170,9 @@ func Test_SetValue(t *testing.T) {
 	require.Equal(LogEvent{
 		Timestamp: eventTime,
 		Message:   "Test Message",
-		Extra: map[string]interface{}{
-			"nginx": map[string]interface{}{
-				"access": map[string]interface{}{
+		Extra: map[string]any{
+			"nginx": map[string]any{
+				"access": map[string]any{
 					"remote_ip": "1.1.1.1",
 				},
 			},
@@ -190,9 +190,9 @@ func Test_Remove(t *testing.T) {
 	event := LogEvent{
 		Timestamp: eventTime,
 		Message:   "Test Message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"foo": "bar",
-			"map": map[string]interface{}{
+			"map": map[string]any{
 				"foo2": "bar2",
 			},
 		},
@@ -202,8 +202,8 @@ func Test_Remove(t *testing.T) {
 	require.Equal(LogEvent{
 		Timestamp: eventTime,
 		Message:   "Test Message",
-		Extra: map[string]interface{}{
-			"map": map[string]interface{}{
+		Extra: map[string]any{
+			"map": map[string]any{
 				"foo2": "bar2",
 			},
 		},
@@ -212,9 +212,9 @@ func Test_Remove(t *testing.T) {
 	event = LogEvent{
 		Timestamp: eventTime,
 		Message:   "Test Message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"foo": "bar",
-			"map": map[string]interface{}{
+			"map": map[string]any{
 				"foo2": "bar2",
 			},
 		},
@@ -224,9 +224,9 @@ func Test_Remove(t *testing.T) {
 	require.Equal(LogEvent{
 		Timestamp: eventTime,
 		Message:   "Test Message",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"foo": "bar",
-			"map": map[string]interface{}{},
+			"map": map[string]any{},
 		},
 	}, event)
 }
@@ -259,12 +259,12 @@ func Test_MarshalJSON(t *testing.T) {
 var benchEvent = LogEvent{
 	Timestamp: time.Now(),
 	Message:   "Test Message",
-	Extra: map[string]interface{}{
+	Extra: map[string]any{
 		"int":    123,
 		"float":  1.23,
 		"string": "Test String",
 		"time":   time.Now(),
-		"child": map[string]interface{}{
+		"child": map[string]any{
 			"childA": "foo",
 		},
 	},
@@ -304,8 +304,7 @@ func Benchmark_Marshal_StdJSON(b *testing.B) {
 	}
 	b.SetBytes(int64(len(d)))
 	for n := 0; n < b.N; n++ {
-		//nolint: errcheck
-		json.Marshal(jsonMap)
+		_, _ = json.Marshal(jsonMap)
 	}
 }
 
@@ -324,5 +323,4 @@ func TestChangeMessage(t *testing.T) {
 	assert.Equal(newMessage, event.Message)
 	assert.Equal(newMessage, event.Get("message"))
 	assert.Equal(newMessage, event.GetString("message"))
-
 }

@@ -2,7 +2,6 @@ package filtergrok
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -11,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -25,7 +25,7 @@ func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistFilterHandler(ModuleName, InitHandler)
 
-	err := ioutil.WriteFile(fileName, fileData, 0644)
+	err := os.WriteFile(fileName, fileData, 0o644)
 	if err != nil {
 		panic(err)
 	}
@@ -57,7 +57,7 @@ filter:
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   `8.8.8.8 - - [18/Jul/2017:16:10:16 +0300] "GET /index.html HTTP/1.1" 200 756 "https://google.com/" "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36" 0.1 192.168.0.1:8080`,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"host":          hostname,
 			"path":          "/test/file/path",
 			"offset":        0,
@@ -79,7 +79,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   `8.8.8.8 - - [18/Jul/2017:16:10:16 +0300] "GET /index.html HTTP/1.1" 200 756 "https://google.com/" "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36" 0.1 192.168.0.1:8080`,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"host":   hostname,
 			"path":   "/test/file/path",
 			"offset": 0,
@@ -93,7 +93,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   `8.8.8.8 - - [18/Jul/2017:16:10:16 +0300] "GET /index.html HTTP/1.1" 200 756 "https://google.com/" "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36"`,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"host":   hostname,
 			"path":   "/test/file/path",
 			"offset": 0,
@@ -134,7 +134,7 @@ filter:
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   message,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"host":      hostname,
 			"path":      "/test/file/path",
 			"offset":    0,
@@ -146,7 +146,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   message,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"host":   hostname,
 			"path":   "/test/file/path",
 			"offset": 0,

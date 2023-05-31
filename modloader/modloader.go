@@ -1,11 +1,14 @@
 package modloader
 
 import (
+	codecazureeventhubjson "github.com/tsaikd/gogstash/codec/azureeventhubjson"
 	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	filteraddfield "github.com/tsaikd/gogstash/filter/addfield"
 	filtercond "github.com/tsaikd/gogstash/filter/cond"
+	filterconvert "github.com/tsaikd/gogstash/filter/convert"
 	filterdate "github.com/tsaikd/gogstash/filter/date"
+	filterdrop "github.com/tsaikd/gogstash/filter/drop"
 	filtergeoip2 "github.com/tsaikd/gogstash/filter/geoip2"
 	filtergonx "github.com/tsaikd/gogstash/filter/gonx"
 	filtergrok "github.com/tsaikd/gogstash/filter/grok"
@@ -21,6 +24,7 @@ import (
 	filtertypeconv "github.com/tsaikd/gogstash/filter/typeconv"
 	filterurlparam "github.com/tsaikd/gogstash/filter/urlparam"
 	filteruseragent "github.com/tsaikd/gogstash/filter/useragent"
+	inputazureeventhub "github.com/tsaikd/gogstash/input/azureeventhub"
 	inputbeats "github.com/tsaikd/gogstash/input/beats"
 	inputdockerlog "github.com/tsaikd/gogstash/input/dockerlog"
 	inputdockerstats "github.com/tsaikd/gogstash/input/dockerstats"
@@ -62,6 +66,7 @@ func init() {
 	config.RegistInputHandler(inputhttp.ModuleName, inputhttp.InitHandler)
 	config.RegistInputHandler(inputhttplisten.ModuleName, inputhttplisten.InitHandler)
 	config.RegistInputHandler(inputkafka.ModuleName, inputkafka.InitHandler)
+	config.RegistInputHandler(inputazureeventhub.ModuleName, inputazureeventhub.InitHandler)
 	config.RegistInputHandler(inputlorem.ModuleName, inputlorem.InitHandler)
 	config.RegistInputHandler(inputnats.ModuleName, inputnats.InitHandler)
 	config.RegistInputHandler(inputnsq.ModuleName, inputnsq.InitHandler)
@@ -70,7 +75,9 @@ func init() {
 
 	config.RegistFilterHandler(filteraddfield.ModuleName, filteraddfield.InitHandler)
 	config.RegistFilterHandler(filtercond.ModuleName, filtercond.InitHandler)
+	config.RegistFilterHandler(filterconvert.ModuleName, filterconvert.InitHandler)
 	config.RegistFilterHandler(filterdate.ModuleName, filterdate.InitHandler)
+	config.RegistFilterHandler(filterdrop.ModuleName, filterdrop.InitHandler)
 	config.RegistFilterHandler(filtergeoip2.ModuleName, filtergeoip2.InitHandler)
 	config.RegistFilterHandler(filtergonx.ModuleName, filtergonx.InitHandler)
 	config.RegistFilterHandler(filtergrok.ModuleName, filtergrok.InitHandler)
@@ -107,4 +114,5 @@ func init() {
 
 	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
+	config.RegistCodecHandler(codecazureeventhubjson.ModuleName, codecazureeventhubjson.InitHandler)
 }

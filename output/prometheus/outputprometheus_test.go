@@ -2,15 +2,17 @@ package outputprometheus
 
 import (
 	"context"
-	"io/ioutil"
-	"net/http"
+	"io"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/tsaikd/gogstash/internal/httpctx"
+
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -60,12 +62,12 @@ output:
 }
 
 func getMetric() (string, error) {
-	resp, err := http.Get("http://127.0.0.1:8080/metrics")
+	resp, err := httpctx.Get(context.Background(), "http://127.0.0.1:8080/metrics")
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}

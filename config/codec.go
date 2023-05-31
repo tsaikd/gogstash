@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
@@ -24,7 +25,7 @@ type TypeCodecConfig interface {
 	// Decode - The codec’s decode method is where data coming in from an input is transformed into an event.
 	//  'ok' returns a boolean indicating if an event was created and sent to a provided 'msgChan' channel
 	//  'error' is returned in case of any failure handling input 'data', but 'ok' == false DOES NOT indicate an error
-	Decode(ctx context.Context, data interface{}, extra map[string]interface{}, tags []string, msgChan chan<- logevent.LogEvent) (ok bool, err error)
+	Decode(ctx context.Context, data any, extra map[string]any, tags []string, msgChan chan<- logevent.LogEvent) (ok bool, err error)
 	// DecodeEvent decodes 'data' to 'event' pointer, creating new current timestamp if IsZero
 	//  'error' is returned in case of any failure handling input 'data'
 	DecodeEvent(data []byte, event *logevent.LogEvent) error
@@ -53,7 +54,7 @@ func RegistCodecHandler(name string, handler CodecHandler) {
 	mapCodecHandler[name] = handler
 }
 
-func GetCodecOrDefault(ctx context.Context, raw interface{}) (TypeCodecConfig, error) {
+func GetCodecOrDefault(ctx context.Context, raw any) (TypeCodecConfig, error) {
 	return GetCodec(ctx, raw, DefaultCodecName)
 }
 
@@ -61,7 +62,7 @@ func GetCodecOrDefault(ctx context.Context, raw interface{}) (TypeCodecConfig, e
 // defaults to 'defaultType'
 func GetCodec(
 	ctx context.Context,
-	raw interface{},
+	raw any,
 	defaultType string,
 ) (codec TypeCodecConfig, err error) {
 	switch cfg := raw.(type) {
@@ -69,7 +70,7 @@ func GetCodec(
 		if codecConfig, ok := cfg["codec"]; ok {
 			return GetCodec(ctx, codecConfig, defaultType)
 		}
-	case map[string]interface{}:
+	case map[string]any:
 		if codecConfig, ok := cfg["codec"]; ok {
 			return GetCodec(ctx, codecConfig, defaultType)
 		}
@@ -136,11 +137,10 @@ func DefaultCodecInitHandler(context.Context, ConfigRaw) (TypeCodecConfig, error
 }
 
 // Decode returns an event based on current timestamp and converting 'data' to 'string', adding provided 'eventExtra'
-func (c *DefaultCodec) Decode(ctx context.Context, data interface{},
-	eventExtra map[string]interface{},
+func (c *DefaultCodec) Decode(ctx context.Context, data any,
+	eventExtra map[string]any,
 	tags []string,
 	msgChan chan<- logevent.LogEvent) (ok bool, err error) {
-
 	event := logevent.LogEvent{
 		Timestamp: time.Now(),
 		Extra:     eventExtra,
@@ -182,7 +182,7 @@ func (c *DefaultCodec) DecodeEvent(data []byte, event *logevent.LogEvent) error 
 // Encode sends the message field, ignoring any extra fields
 func (c *DefaultCodec) Encode(ctx context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
 	// return if there is no message field
-	if len(event.Message) == 0 {
+	if event.Message == "" {
 		return false, nil
 	}
 	// send message

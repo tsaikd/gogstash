@@ -12,6 +12,7 @@ import (
 	stringutils "github.com/msaf1980/go-stringutils"
 	statsd "github.com/msaf1980/statsd"
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -48,7 +49,6 @@ func (sp *statsdPool) Client(
 	host, proto string, prefix string,
 	timeout time.Duration, flushInterval time.Duration,
 ) (*statsd.Client, error) {
-
 	var (
 		s   *statsd.Client
 		err error
@@ -317,10 +317,10 @@ func (o *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) erro
 			value string
 			err   error
 		)
-		if name, err = tpl.name.Execute(event.Extra); err != nil || len(name) == 0 {
+		if name, err = tpl.name.Execute(event.Extra); err != nil || name == "" {
 			continue
 		}
-		if value, err = tpl.value.Execute(event.Extra); err != nil || len(value) == 0 {
+		if value, err = tpl.value.Execute(event.Extra); err != nil || value == "" {
 			continue
 		}
 		if f, err := strconv.ParseFloat(value, 64); err == nil {

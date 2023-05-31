@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"golang.org/x/sync/errgroup"
 )
 
 // errors
@@ -70,7 +71,7 @@ func GetOutputs(
 			outputs = append(outputs, output)
 		}
 	}
-	return
+	return outputs, err
 }
 
 func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
@@ -80,7 +81,7 @@ func (t *Config) getOutputs() (outputs []TypeOutputConfig, err error) {
 func (t *Config) startOutputs() (err error) {
 	outputs, err := t.getOutputs()
 	if err != nil {
-		return
+		return err
 	}
 
 	t.eg.Go(func() error {
@@ -112,5 +113,5 @@ func (t *Config) startOutputs() (err error) {
 		}
 	})
 
-	return
+	return err
 }

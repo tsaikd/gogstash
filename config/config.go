@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -12,11 +11,12 @@ import (
 	"time"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+	"golang.org/x/sync/errgroup"
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/tsaikd/gogstash/config/ctxutil"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"golang.org/x/sync/errgroup"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // errors
@@ -67,7 +67,7 @@ type MsgChan chan logevent.LogEvent
 
 // LoadFromFile load config from filepath
 func LoadFromFile(path string) (config Config, err error) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return config, ErrorReadConfigFile1.New(err, path)
 	}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/Knetic/govaluate"
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -23,7 +24,7 @@ const ErrorTag = "gogstash_filter_cond_error"
 var (
 	ErrorBuiltInFunctionParameters1 = errutil.NewFactory("Built-in function '%s' parameters error")
 	BuiltInFunctions                = map[string]govaluate.ExpressionFunction{
-		"empty": func(args ...interface{}) (interface{}, error) {
+		"empty": func(args ...any) (any, error) {
 			if len(args) > 1 {
 				return nil, ErrorBuiltInFunctionParameters1.New(nil, "empty")
 			} else if len(args) == 0 {
@@ -31,20 +32,20 @@ var (
 			}
 			return args[0] == nil, nil
 		},
-		"strlen": func(args ...interface{}) (interface{}, error) {
+		"strlen": func(args ...any) (any, error) {
 			if len(args) > 1 {
 				return nil, ErrorBuiltInFunctionParameters1.New(nil, "strlen")
 			} else if len(args) == 0 {
 				return float64(0), nil
 			}
 			length := len(args[0].(string))
-			return (float64)(length), nil
+			return float64(length), nil
 		},
-		"map": func(args ...interface{}) (interface{}, error) {
+		"map": func(args ...any) (any, error) {
 			if len(args) > 1 {
 				return nil, ErrorBuiltInFunctionParameters1.New(nil, "map")
 			} else if len(args) == 0 {
-				return []interface{}{}, nil
+				return []any{}, nil
 			}
 
 			s := reflect.ValueOf(args[0])
@@ -52,7 +53,7 @@ var (
 				return nil, ErrorBuiltInFunctionParameters1.New(nil, "map")
 			}
 
-			ret := make([]interface{}, s.Len())
+			ret := make([]any, s.Len())
 
 			for i := 0; i < s.Len(); i++ {
 				ret[i] = s.Index(i).Interface()
@@ -60,7 +61,7 @@ var (
 
 			return ret, nil
 		},
-		"rand": func(args ...interface{}) (interface{}, error) {
+		"rand": func(args ...any) (any, error) {
 			if len(args) > 0 {
 				return nil, ErrorBuiltInFunctionParameters1.New(nil, "rand")
 			}
@@ -87,7 +88,7 @@ type EventParameters struct {
 }
 
 // Get obtaining value from event's specified field recursively
-func (ep *EventParameters) Get(field string) (interface{}, error) {
+func (ep *EventParameters) Get(field string) (any, error) {
 	if !strings.ContainsRune(field, '.') {
 		// no nest fields
 		return ep.Event.Get(field), nil
@@ -126,7 +127,7 @@ func InitHandler(
 	if err != nil {
 		return nil, err
 	}
-	if len(conf.filters) <= 0 {
+	if len(conf.filters) == 0 {
 		goglog.Logger.Warn("filter cond config filters empty, ignored")
 		return &conf, nil
 	}

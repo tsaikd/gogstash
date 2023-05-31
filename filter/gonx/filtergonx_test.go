@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -43,7 +44,7 @@ filter:
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   `223.137.229.27 - - [20/Mar/2017:00:42:51 +0000] "GET /explore HTTP/1.1" 200 1320 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"`,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"body_bytes_sent": "1320",
 			"host":            hostname,
 			"http_referer":    "-",
@@ -61,7 +62,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   `223.137.229.27 - - [20/Mar/2017:00:42:51 +0000] "GET /explore HTTP/1.1" 200 1320 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"`,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"host":   hostname,
 			"path":   "/test/file/path",
 			"offset": 0,

@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -70,7 +71,7 @@ filter:
 	expectedEvent1 := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message 1",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"level": "ERROR",
 			"foo":   "bar",
 		},
@@ -78,7 +79,7 @@ filter:
 	expectedEvent2 := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message 2",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"level": "WARN",
 			"foo":   "bar2",
 		},
@@ -87,7 +88,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message 1",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"level": "ERROR",
 		},
 	})
@@ -98,7 +99,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "filter test message 2",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"level": "WARN",
 		},
 	})

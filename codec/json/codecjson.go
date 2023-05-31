@@ -5,6 +5,7 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -33,10 +34,9 @@ func InitHandler(context.Context, config.ConfigRaw) (config.TypeCodecConfig, err
 }
 
 // Decode returns an event from 'data' as JSON format, adding provided 'eventExtra'
-func (c *Codec) Decode(ctx context.Context, data interface{},
-	eventExtra map[string]interface{}, tags []string,
+func (c *Codec) Decode(ctx context.Context, data any,
+	eventExtra map[string]any, tags []string,
 	msgChan chan<- logevent.LogEvent) (ok bool, err error) {
-
 	event := logevent.LogEvent{
 		Timestamp: time.Now(),
 		Extra:     eventExtra,
@@ -48,7 +48,7 @@ func (c *Codec) Decode(ctx context.Context, data interface{},
 		err = c.DecodeEvent([]byte(v), &event)
 	case []byte:
 		err = c.DecodeEvent(v, &event)
-	case map[string]interface{}:
+	case map[string]any:
 		if event.Extra != nil {
 			for k, val := range v {
 				event.Extra[k] = val
@@ -68,7 +68,7 @@ func (c *Codec) Decode(ctx context.Context, data interface{},
 	msgChan <- event
 	ok = true
 
-	return
+	return ok, err
 }
 
 // DecodeEvent decodes 'data' as JSON format to event
@@ -95,12 +95,16 @@ func (c *Codec) DecodeEvent(data []byte, event *logevent.LogEvent) (err error) {
 }
 
 // Encode encodes the event to a JSON encoded message
-func (c *Codec) Encode(_ context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
+func (c *Codec) Encode(ctx context.Context, event logevent.LogEvent, dataChan chan<- []byte) (ok bool, err error) {
 	output, err := event.MarshalJSON()
 	if err != nil {
 		return false, err
 	}
-	dataChan <- output
+	select {
+	case <-ctx.Done():
+		return false, nil
+	case dataChan <- output:
+	}
 	return true, nil
 }
 

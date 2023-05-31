@@ -3,8 +3,11 @@ package nsq
 import (
 	"context"
 	"errors"
-	"github.com/nsqio/go-nsq"
+
 	"github.com/tsaikd/KDGoLib/version"
+
+	"github.com/nsqio/go-nsq"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -48,13 +51,13 @@ func InitHandler(
 	if err != nil {
 		return nil, err
 	}
-	if len(conf.Lookupd) == 0 && len(conf.NSQ) == 0 {
+	if conf.Lookupd == "" && conf.NSQ == "" {
 		return nil, errors.New("nsq: you need to specify nsq or lookupd")
 	}
-	if len(conf.Topic) == 0 {
+	if conf.Topic == "" {
 		return nil, errors.New("nsq: missing topic")
 	}
-	if len(conf.Channel) == 0 {
+	if conf.Channel == "" {
 		return nil, errors.New("nsq: missing channel")
 	}
 	conf.Codec, err = config.GetCodecOrDefault(ctx, raw["codec"])
@@ -66,7 +69,7 @@ func InitHandler(
 }
 
 // Start wraps the actual function starting the plugin
-func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error) {
+func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) error {
 	// setup the handler
 	handler := nsqhandler{
 		msgChan: msgChan,
@@ -80,17 +83,17 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 	consumer, err := nsq.NewConsumer(t.Topic, t.Channel, conf)
 	if err != nil {
 		goglog.Logger.Errorf("nsq: %s", err.Error())
-		return
+		return err
 	}
 	consumer.AddHandler(&handler)
 	if len(t.NSQ) > 0 {
-		if err = consumer.ConnectToNSQD(t.NSQ); err != nil {
-			return
+		if err := consumer.ConnectToNSQD(t.NSQ); err != nil {
+			return err
 		}
 	}
 	if len(t.Lookupd) > 0 {
-		if err = consumer.ConnectToNSQLookupd(t.Lookupd); err != nil {
-			return
+		if err := consumer.ConnectToNSQLookupd(t.Lookupd); err != nil {
+			return err
 		}
 	}
 	// wait for stop signal and exit
@@ -110,7 +113,7 @@ outer_loop:
 	consumer.Stop()
 	<-consumer.StopChan
 	goglog.Logger.Info("nsq stopped")
-	return
+	return err
 }
 
 // nsqhandler implements a handler to receive messages

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
@@ -18,6 +19,15 @@ type TypeFilterConfig interface {
 	TypeCommonConfig
 	Event(context.Context, logevent.LogEvent) (logevent.LogEvent, bool)
 	CommonFilter(context.Context, logevent.LogEvent) logevent.LogEvent
+}
+
+// FilterConfig is basic filter config struct
+type FilterConfig struct {
+	CommonConfig
+	AddTags      []string      `yaml:"add_tag" json:"add_tag"`
+	RemoveTags   []string      `yaml:"remove_tag" json:"remove_tag"`
+	AddFields    []FieldConfig `yaml:"add_field" json:"add_field"`
+	RemoveFields []string      `yaml:"remove_field" json:"remove_field"`
 }
 
 // IsConfigured returns whether common configuration has been setup
@@ -41,15 +51,6 @@ func (f *FilterConfig) CommonFilter(
 		event.SetValue(f.Key, event.Format(f.Value))
 	}
 	return event
-}
-
-// FilterConfig is basic filter config struct
-type FilterConfig struct {
-	CommonConfig
-	AddTags      []string      `yaml:"add_tag" json:"add_tag"`
-	RemoveTags   []string      `yaml:"remove_tag" json:"remove_tag"`
-	AddFields    []FieldConfig `yaml:"add_field" json:"add_field"`
-	RemoveFields []string      `yaml:"remove_field" json:"remove_field"`
 }
 
 // FieldConfig is a name/value field config
@@ -101,7 +102,7 @@ func GetFilters(
 			filters = append(filters, filter)
 		}
 	}
-	return
+	return filters, err
 }
 
 func (t *Config) getFilters() (filters []TypeFilterConfig, err error) {
@@ -111,7 +112,7 @@ func (t *Config) getFilters() (filters []TypeFilterConfig, err error) {
 func (t *Config) startFilters() (err error) {
 	filters, err := t.getFilters()
 	if err != nil {
-		return
+		return err
 	}
 
 	t.eg.Go(func() error {
@@ -128,11 +129,16 @@ func (t *Config) startFilters() (err error) {
 					if ok {
 						event = filter.CommonFilter(t.ctx, event)
 					}
+					if event.Drop {
+						break
+					}
 				}
-				t.chFilterOut <- event
+				if !event.Drop {
+					t.chFilterOut <- event
+				}
 			}
 		}
 	})
 
-	return
+	return err
 }

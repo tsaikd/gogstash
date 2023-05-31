@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -249,7 +250,7 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 						if messageCount > 0 {
 							idleCounter = 0
 						} else {
-							idleCounter = idleCounter + idleTickerInterval
+							idleCounter += idleTickerInterval
 						}
 						if idleCounter >= t.IdleTimeout {
 							t.writersMtx.Lock()
@@ -320,7 +321,7 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 
 	log := event.Format(t.Codec)
 	channel <- log
-	return
+	return err
 }
 
 func (t *OutputConfig) exists(filepath string) bool {
@@ -331,7 +332,7 @@ func (t *OutputConfig) exists(filepath string) bool {
 }
 
 // closeFile closes fs.File object by casting it to os.File. If it is not os.File an error is raised, if it is it returns the error code from Close()
-func closeFile(file interface{}) (err error) {
+func closeFile(file any) (err error) {
 	if myFile, isFile := file.(*os.File); isFile {
 		err = myFile.Close()
 	} else {

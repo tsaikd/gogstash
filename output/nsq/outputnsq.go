@@ -3,8 +3,10 @@ package nsq
 import (
 	"context"
 	"errors"
+
 	"github.com/nsqio/go-nsq"
 	"github.com/tsaikd/KDGoLib/version"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -53,10 +55,10 @@ func InitHandler(
 		return nil, err
 	}
 
-	if len(conf.NSQ) == 0 {
+	if conf.NSQ == "" {
 		return nil, errors.New("Missing NSQ server")
 	}
-	if len(conf.Topic) == 0 {
+	if conf.Topic == "" {
 		return nil, errors.New("Missing topic")
 	}
 

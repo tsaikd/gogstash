@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
@@ -70,7 +71,7 @@ input:
 	require.NoError(err)
 	defer conn.Close()
 
-	testWriteData(t, conf, conn)
+	testWriteData(t, &conf, conn)
 }
 
 func Test_input_socket_module_udp(t *testing.T) {
@@ -96,10 +97,10 @@ input:
 	require.NoError(err)
 	defer conn.Close()
 
-	testWriteData(t, conf, conn)
+	testWriteData(t, &conf, conn)
 }
 
-func testWriteData(t *testing.T, conf config.Config, conn net.Conn) {
+func testWriteData(t *testing.T, conf *config.Config, conn net.Conn) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
 	require := require.New(t)
@@ -110,7 +111,7 @@ func testWriteData(t *testing.T, conf config.Config, conn net.Conn) {
 
 	time.Sleep(200 * time.Millisecond)
 	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {
-		assert.Equal(map[string]interface{}{"foo": "bar"}, event.Extra)
+		assert.Equal(map[string]any{"foo": "bar"}, event.Extra)
 	}
 
 	// malformed data
@@ -136,6 +137,6 @@ func testWriteData(t *testing.T, conf config.Config, conn net.Conn) {
 
 	time.Sleep(200 * time.Millisecond)
 	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {
-		assert.Equal(map[string]interface{}{"bar": "foo"}, event.Extra)
+		assert.Equal(map[string]any{"bar": "foo"}, event.Extra)
 	}
 }

@@ -19,6 +19,8 @@ filter:
     timeformat: 2006-01-02T15:04:05.999999999Z
     # (optional) key to use as source of the json data. Default is 'message'
     source: myfield
+    # (optional) if your producer add extra bytes after the json object 
+    ignoreextrabytes: false
 ```
 
 ## Example for JSON append

@@ -12,21 +12,24 @@ import (
 )
 
 type LogEvent struct {
-	Timestamp time.Time              `json:"timestamp"`
-	Message   string                 `json:"message"`
-	Tags      []string               `json:"tags,omitempty"`
-	Extra     map[string]interface{} `json:"-"`
+	Timestamp time.Time      `json:"timestamp"`
+	Message   string         `json:"message"`
+	Tags      []string       `json:"tags,omitempty"`
+	Extra     map[string]any `json:"-"`
+	Drop      bool
 }
 
 type Config struct {
 	SortMapKeys bool     `yaml:"sort_map_keys"`
 	RemoveField []string `yaml:"remove_field"`
 
-	jsonMarshal       func(v interface{}) ([]byte, error)
-	jsonMarshalIndent func(v interface{}, prefix, indent string) ([]byte, error)
+	jsonMarshal       func(v any) ([]byte, error)
+	jsonMarshalIndent func(v any, prefix, indent string) ([]byte, error)
 }
 
 // TagsField is the event tags field name
+const TimestampField = "@timestamp"
+const MessageField = "message"
 const TagsField = "tags"
 
 const timeFormat = `2006-01-02T15:04:05.999999999Z`
@@ -81,9 +84,16 @@ func (t *LogEvent) RemoveTag(tags ...string) {
 }
 
 // ParseTags parse tags into event.Tags
-func (t *LogEvent) ParseTags(tags interface{}) bool {
+func (t *LogEvent) ParseTags(tags any) bool {
 	switch v := tags.(type) {
-	case []interface{}:
+	case map[string]any:
+		stringTags := make([]string, 0, len(v))
+		for k := range v {
+			stringTags = append(stringTags, k)
+		}
+		t.Tags = stringTags
+		return true
+	case []any:
 		ok := true
 		stringTags := make([]string, 0, len(v))
 	tagsLoop:
@@ -107,8 +117,8 @@ func (t *LogEvent) ParseTags(tags interface{}) bool {
 	return false
 }
 
-func (t LogEvent) getJSONMap() map[string]interface{} {
-	event := map[string]interface{}{
+func (t LogEvent) getJSONMap() map[string]any {
+	event := map[string]any{
 		"@timestamp": t.Timestamp.UTC().Format(timeFormat),
 	}
 	if t.Message != "" {
@@ -136,25 +146,25 @@ func (t LogEvent) MarshalIndent() (data []byte, err error) {
 	return config.jsonMarshalIndent(event, "", "\t")
 }
 
-func (t LogEvent) Get(field string) (v interface{}) {
+func (t LogEvent) Get(field string) (v any) {
 	switch field {
-	case "@timestamp":
+	case TimestampField:
 		v = t.Timestamp
-	case "message":
+	case MessageField:
 		v = t.Message
 	case TagsField:
 		v = t.Tags
 	default:
-		v = t.Extra[field]
+		v, _ = getPathValue(t.Extra, field)
 	}
 	return
 }
 
 func (t LogEvent) GetString(field string) string {
 	switch field {
-	case "@timestamp":
+	case TimestampField:
 		return t.Timestamp.UTC().Format(timeFormat)
-	case "message":
+	case MessageField:
 		return t.Message
 	default:
 		v, ok := getPathValue(t.Extra, field)
@@ -168,11 +178,11 @@ func (t LogEvent) GetString(field string) string {
 	}
 }
 
-func (t LogEvent) GetValue(field string) (interface{}, bool) {
+func (t LogEvent) GetValue(field string) (any, bool) {
 	return getPathValue(t.Extra, field)
 }
 
-func (t *LogEvent) SetValue(field string, v interface{}) bool {
+func (t *LogEvent) SetValue(field string, v any) bool {
 	if field == "message" {
 		if value, ok := v.(string); ok {
 			t.Message = value
@@ -180,7 +190,7 @@ func (t *LogEvent) SetValue(field string, v interface{}) bool {
 		}
 	}
 	if t.Extra == nil {
-		t.Extra = map[string]interface{}{}
+		t.Extra = map[string]any{}
 	}
 	return setPathValue(t.Extra, field, v)
 }
@@ -192,7 +202,7 @@ func (t *LogEvent) Remove(field string) bool {
 var (
 	reCurrentTime = regexp.MustCompile(`%{\+([^}]+)}`)
 	reEventTime   = regexp.MustCompile(`%{\+@([^}]+)}`)
-	revar         = regexp.MustCompile(`%{([\w@\.]+)}`)
+	revar         = regexp.MustCompile(`%{([\w@.]+)}`)
 )
 
 // FormatWithEnv format string with environment value, ex: %{HOSTNAME}
@@ -204,10 +214,10 @@ func FormatWithEnv(text string) (result string) {
 		field := submatches[1]
 		value := os.Getenv(field)
 		if value != "" {
-			result = strings.Replace(result, submatches[0], value, -1)
+			result = strings.ReplaceAll(result, submatches[0], value)
 		} else if field == "HOSTNAME" {
 			if value, _ := os.Hostname(); value != "" {
-				result = strings.Replace(result, submatches[0], value, -1)
+				result = strings.ReplaceAll(result, submatches[0], value)
 			}
 		}
 	}
@@ -222,7 +232,7 @@ func FormatWithCurrentTime(text string) (result string) {
 	matches := reCurrentTime.FindAllStringSubmatch(result, -1)
 	for _, submatches := range matches {
 		value := time.Now().Format(submatches[1])
-		result = strings.Replace(result, submatches[0], value, -1)
+		result = strings.ReplaceAll(result, submatches[0], value)
 	}
 
 	return
@@ -235,7 +245,7 @@ func FormatWithEventTime(text string, evevtTime time.Time) (result string) {
 	matches := reEventTime.FindAllStringSubmatch(result, -1)
 	for _, submatches := range matches {
 		value := evevtTime.Format(submatches[1])
-		result = strings.Replace(result, submatches[0], value, -1)
+		result = strings.ReplaceAll(result, submatches[0], value)
 	}
 
 	return
@@ -253,7 +263,7 @@ func (t LogEvent) Format(format string) (out string) {
 		field := submatches[1]
 		value := t.GetString(field)
 		if value != "" {
-			out = strings.Replace(out, submatches[0], value, -1)
+			out = strings.ReplaceAll(out, submatches[0], value)
 		}
 	}
 

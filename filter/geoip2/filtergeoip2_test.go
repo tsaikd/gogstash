@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/KDGoLib/futil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -47,17 +48,17 @@ filter:
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   `223.137.229.27 - - [20/Mar/2017:00:42:51 +0000] "GET /explore HTTP/1.1" 200 1320 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"`,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"clientip": "223.137.229.27",
-			"geoip": map[string]interface{}{
-				"city": map[string]interface{}{
+			"geoip": map[string]any{
+				"city": map[string]any{
 					"name": "Taipei",
 				},
-				"continent": map[string]interface{}{
+				"continent": map[string]any{
 					"code": "AS",
 					"name": "Asia",
 				},
-				"country": map[string]interface{}{
+				"country": map[string]any{
 					"code": "TW",
 					"name": "Taiwan",
 				},
@@ -65,7 +66,7 @@ filter:
 				"latitude":  float64(25.0478),
 				"location":  []float64{float64(121.5318), float64(25.0478)},
 				"longitude": float64(121.5318),
-				"region": map[string]interface{}{
+				"region": map[string]any{
 					"code": "TPE",
 					"name": "Taipei City",
 				},
@@ -77,7 +78,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   `223.137.229.27 - - [20/Mar/2017:00:42:51 +0000] "GET /explore HTTP/1.1" 200 1320 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"`,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"clientip": "223.137.229.27",
 		},
 	})
@@ -90,7 +91,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   `223.137.229.27 - - [20/Mar/2017:00:42:51 +0000] "GET /explore HTTP/1.1" 200 1320 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"`,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"clientip": "223.137.229.27",
 		},
 	})
@@ -127,9 +128,9 @@ filter:
 
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"clientip": "184.55.201.214",
-			"geoip": map[string]interface{}{
+			"geoip": map[string]any{
 				"city_name":      "Milwaukee",
 				"continent_code": "NA",
 				"country_code":   "US",
@@ -148,7 +149,7 @@ filter:
 
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"clientip": "184.55.201.214",
 		},
 	})
@@ -185,7 +186,7 @@ filter:
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   `192.168.0.1 - - [20/Mar/2017:00:42:51 +0000] "GET /explore HTTP/1.1" 200 1320 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"`,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"clientip": "192.168.0.1",
 		},
 	}
@@ -193,7 +194,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   `192.168.0.1 - - [20/Mar/2017:00:42:51 +0000] "GET /explore HTTP/1.1" 200 1320 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"`,
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"clientip": "192.168.0.1",
 		},
 	})

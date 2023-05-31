@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -201,7 +202,7 @@ func (o *OutputConfig) getConnection(url string) (c *amqp.Connection, e error) {
 		}
 
 		for _, ca := range o.TLSCACerts {
-			if cert, err := ioutil.ReadFile(ca); err == nil {
+			if cert, err := os.ReadFile(ca); err == nil {
 				cfg.RootCAs.AppendCertsFromPEM(cert)
 			}
 		}

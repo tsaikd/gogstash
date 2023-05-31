@@ -9,6 +9,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/ip2location/ip2proxy-go"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"

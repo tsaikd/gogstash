@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 
 func NewContainerLogStream(msgChan chan<- logevent.LogEvent, id string,
-	eventExtra map[string]interface{}, since *time.Time, logger *logrus.Logger,
+	eventExtra map[string]any, since *time.Time, logger *logrus.Logger,
 	codec config.TypeCodecConfig) ContainerLogStream {
 	return ContainerLogStream{
 		ID:         id,
@@ -30,7 +31,7 @@ type ContainerLogStream struct {
 	io.Writer
 	ID         string
 	eventChan  chan<- logevent.LogEvent
-	eventExtra map[string]interface{}
+	eventExtra map[string]any
 	logger     *logrus.Logger
 	buffer     *bytes.Buffer
 	since      *time.Time
@@ -81,7 +82,7 @@ func (t *ContainerLogStream) sendEvent(data []byte) (err error) {
 		eventTime, err = time.Parse(time.RFC3339Nano, timestr)
 		if err == nil {
 			if eventTime.Before(*t.since) {
-				return
+				return err
 			}
 			event.Timestamp = eventTime
 			data = data[loc[1]+1:]
@@ -97,7 +98,7 @@ func (t *ContainerLogStream) sendEvent(data []byte) (err error) {
 	if t.since.Before(event.Timestamp) {
 		*t.since = event.Timestamp
 	} else {
-		return
+		return err
 	}
 
 	if err != nil {
@@ -107,5 +108,5 @@ func (t *ContainerLogStream) sendEvent(data []byte) (err error) {
 
 	t.eventChan <- event
 
-	return
+	return err
 }

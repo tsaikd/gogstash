@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config/logevent"
 )
 

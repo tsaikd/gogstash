@@ -5,15 +5,19 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/tsaikd/gogstash/internal/httpctx"
+
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
@@ -44,17 +48,17 @@ input:
 
 	time.Sleep(500 * time.Millisecond)
 
-	resp, err := http.Post("http://127.0.0.1:8089/", "application/json", bytes.NewReader([]byte("{\"foo\":\"bar\"}")))
+	resp, err := httpctx.Post(ctx, "http://127.0.0.1:8089/", "application/json", bytes.NewReader([]byte("{\"foo\":\"bar\"}")))
 	require.NoError(err)
 	defer resp.Body.Close()
 
 	assert.Equal(http.StatusOK, resp.StatusCode)
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	require.NoError(err)
 	assert.Equal([]byte{}, data)
 
 	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {
-		assert.Equal(map[string]interface{}{"foo": "bar"}, event.Extra)
+		assert.Equal(map[string]any{"foo": "bar"}, event.Extra)
 	}
 }
 
@@ -80,7 +84,7 @@ input:
 
 	time.Sleep(500 * time.Millisecond)
 
-	rootPEM, err := ioutil.ReadFile("./root.pem")
+	rootPEM, err := os.ReadFile("./root.pem")
 	require.NoError(err)
 	roots := x509.NewCertPool()
 	assert.NotNil(roots)
@@ -89,16 +93,16 @@ input:
 
 	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: roots}}}
 
-	resp, err := client.Post("https://127.0.0.1:8989/tls/", "application/json", bytes.NewReader([]byte("{\"foo\":\"bar\"}")))
+	resp, err := httpctx.ClientPost(ctx, client, "https://127.0.0.1:8989/tls/", "application/json", bytes.NewReader([]byte("{\"foo\":\"bar\"}")))
 	require.NoError(err)
 	defer resp.Body.Close()
 	assert.Equal(http.StatusOK, resp.StatusCode)
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	require.NoError(err)
 	assert.Equal([]byte{}, data)
 
 	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {
-		assert.Equal(map[string]interface{}{"foo": "bar"}, event.Extra)
+		assert.Equal(map[string]any{"foo": "bar"}, event.Extra)
 	}
 }
 
@@ -124,7 +128,7 @@ input:
 	require.NoError(conf.Start(ctx))
 	time.Sleep(500 * time.Millisecond)
 
-	rootPEM, err := ioutil.ReadFile("./root.pem")
+	rootPEM, err := os.ReadFile("./root.pem")
 	require.NoError(err)
 	roots := x509.NewCertPool()
 	assert.NotNil(roots)
@@ -145,21 +149,30 @@ input:
 
 	client := &http.Client{Transport: &transport}
 
-	_, err = client.Post("https://127.0.0.1:8999/tls2/", "application/json", bytes.NewReader([]byte("{\"foo2\":\"bar2\"}")))
+	resp1, err := httpctx.ClientPost(ctx, client, "https://127.0.0.1:8999/tls2/", "application/json", bytes.NewReader([]byte("{\"foo2\":\"bar2\"}")))
+	defer func(r *http.Response) {
+		if r != nil && r.Body != nil {
+			_ = r.Body.Close()
+		}
+	}(resp1)
 	assert.NotNil(err)
 
 	// case 2: with correct client cert
 	tlsConfig.Certificates = []tls.Certificate{clientCert}
-	resp, err := client.Post("https://127.0.0.1:8999/tls2/", "application/json", bytes.NewReader([]byte("{\"foo2\":\"bar2\"}")))
+	resp, err := httpctx.ClientPost(ctx, client, "https://127.0.0.1:8999/tls2/", "application/json", bytes.NewReader([]byte("{\"foo2\":\"bar2\"}")))
 	require.NoError(err)
-	defer resp.Body.Close()
+	defer func(r *http.Response) {
+		if r != nil && r.Body != nil {
+			_ = r.Body.Close()
+		}
+	}(resp)
 	assert.Equal(http.StatusOK, resp.StatusCode)
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	require.NoError(err)
 	assert.Equal([]byte{}, data)
 
 	if event, err := conf.TestGetOutputEvent(100 * time.Millisecond); assert.NoError(err) {
-		assert.Equal(map[string]interface{}{"foo2": "bar2"}, event.Extra)
+		assert.Equal(map[string]any{"foo2": "bar2"}, event.Extra)
 	}
 }

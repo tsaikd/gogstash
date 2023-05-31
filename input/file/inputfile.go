@@ -13,10 +13,11 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/futil"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"golang.org/x/sync/errgroup"
 )
 
 // ModuleName is the name used in config file
@@ -85,8 +86,8 @@ func InitHandler(
 func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error) {
 	logger := goglog.Logger
 
-	if err = t.LoadSinceDBInfos(); err != nil {
-		return
+	if err := t.LoadSinceDBInfos(); err != nil {
+		return err
 	}
 
 	matches, err := filepath.Glob(t.Path)
@@ -153,7 +154,7 @@ func (t *InputConfig) fileReadLoop(
 
 	if fpath, err = evalSymlinks(ctx, fpath); err != nil {
 		logger.Errorf("Get symlinks failed: %q\n%v", fpath, err)
-		return
+		return err
 	}
 
 	if since, ok = t.SinceDBInfos[fpath]; !ok {
@@ -172,26 +173,26 @@ func (t *InputConfig) fileReadLoop(
 	}
 
 	if fp, reader, err = openfile(fpath, since.Offset, whence); err != nil {
-		return
+		return err
 	}
 	defer fp.Close()
 
 	if truncated, err = isFileTruncated(fp, since); err != nil {
-		return
+		return err
 	}
 	if truncated {
 		logger.Warnf("File truncated, seeking to beginning: %q", fpath)
 		since.Offset = 0
 		if _, err = fp.Seek(since.Offset, io.SeekStart); err != nil {
 			logger.Errorf("seek file failed: %q", fpath)
-			return
+			return err
 		}
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return err
 		default:
 		}
 
@@ -204,30 +205,30 @@ func (t *InputConfig) fileReadLoop(
 					fp.Close()
 					since.Offset = 0
 					if fp, reader, err = openfile(fpath, since.Offset, io.SeekStart); err != nil {
-						return
+						return err
 					}
 				}
 				if truncated, err = isFileTruncated(fp, since); err != nil {
-					return
+					return err
 				}
 				if truncated {
 					logger.Warnf("File truncated, seeking to beginning: %q", fpath)
 					since.Offset = 0
 					if _, err = fp.Seek(since.Offset, io.SeekStart); err != nil {
 						logger.Errorf("seek file failed: %q", fpath)
-						return
+						return err
 					}
 					continue
 				}
 				logger.Debugf("watch %q %q %v", watchev.Name, fpath, watchev)
 				continue
 			} else {
-				return
+				return err
 			}
 		}
 
 		_, err := t.Codec.Decode(ctx, []byte(line),
-			map[string]interface{}{
+			map[string]any{
 				"host":   t.hostname,
 				"path":   fpath,
 				"offset": since.Offset,
@@ -237,12 +238,7 @@ func (t *InputConfig) fileReadLoop(
 
 		if err == nil {
 			since.Offset += int64(size)
-
-			//loggfer.Debugf("%q %v", event.Message, event)
-			//msgChan <- event
-
-			//self.SaveSinceDBInfos()
-			if err = t.CheckSaveSinceDBInfos(); err != nil {
+			if err := t.CheckSaveSinceDBInfos(); err != nil {
 				return err
 			}
 		} else {
@@ -308,7 +304,7 @@ func readline(ctx context.Context, reader *bufio.Reader, buffer *bytes.Buffer) (
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return line, size, err
 		default:
 		}
 
@@ -316,12 +312,12 @@ func readline(ctx context.Context, reader *bufio.Reader, buffer *bytes.Buffer) (
 			if err != io.EOF {
 				err = errutil.New("read line failed", err)
 			}
-			return
+			return line, size, err
 		}
 
 		if _, err = buffer.Write(segment); err != nil {
 			err = errutil.New("write buffer failed", err)
-			return
+			return line, size, err
 		}
 
 		if isPartialLine(segment) {
@@ -331,7 +327,7 @@ func readline(ctx context.Context, reader *bufio.Reader, buffer *bytes.Buffer) (
 			line = buffer.String()
 			buffer.Reset()
 			line = strings.TrimRight(line, "\r\n")
-			return
+			return line, size, err
 		}
 	}
 }
@@ -359,41 +355,40 @@ func waitWatchEvent(ctx context.Context, fpath string, op fsnotify.Op) (event fs
 
 	if fpath, err = evalSymlinks(ctx, fpath); err != nil {
 		err = errutil.New("Get symlinks failed: "+fpath, err)
-		return
+		return event, err
 	}
 
 	fdir = filepath.Dir(fpath)
 
 	if watcher, ok = mapWatcher[fdir]; !ok {
-		//		logger.Debugf("create new watcher for %q", fdir)
 		if watcher, err = fsnotify.NewWatcher(); err != nil {
 			err = errutil.New("create new watcher failed: "+fdir, err)
-			return
+			return event, err
 		}
 		mapWatcher[fdir] = watcher
 		if err = watcher.Add(fdir); err != nil {
 			err = errutil.New("add new watch path failed: "+fdir, err)
-			return
+			return event, err
 		}
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return event, err
 		case event = <-watcher.Events:
 			if event.Name == fpath {
 				if op > 0 {
 					if event.Op&op > 0 {
-						return
+						return event, err
 					}
 				} else {
-					return
+					return event, err
 				}
 			}
 		case err = <-watcher.Errors:
 			err = errutil.New("watcher error", err)
-			return
+			return event, err
 		}
 	}
 }

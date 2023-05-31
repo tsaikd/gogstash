@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -71,13 +72,11 @@ func TestMapFromInts(t *testing.T) {
 		t.Error("Length incorrect")
 	}
 	// check if first elem is in list
-	_, ok := myMap[input[0]]
-	if ok {
+	if _, ok := myMap[input[0]]; !ok {
 		t.Error("First element not in list")
 	}
 	// check element not in list
-	_, ok = myMap[-1]
-	if ok {
+	if _, ok := myMap[-1]; ok {
 		t.Error("Found element not in list")
 	}
 }

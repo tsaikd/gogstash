@@ -96,7 +96,7 @@ func InitHandler(
 	if len(conf.Source) == 0 {
 		return nil, errors.New("hash: no source fields")
 	}
-	if len(conf.Target) == 0 {
+	if conf.Target == "" {
 		return nil, errors.New("hash: no destination field")
 	}
 

@@ -32,31 +32,31 @@ func TestCompilePath(t *testing.T) {
 
 	tokens := compilePath("a.b.c")
 	assert.Equal([]pathtoken{
-		pathtoken{isSlice: false, key: "a"},
-		pathtoken{isSlice: false, key: "b"},
-		pathtoken{isSlice: false, key: "c"},
+		{isSlice: false, key: "a"},
+		{isSlice: false, key: "b"},
+		{isSlice: false, key: "c"},
 	}, tokens)
 
 	tokens = compilePath("a.b[1].c")
 	assert.Equal([]pathtoken{
-		pathtoken{isSlice: false, key: "a"},
-		pathtoken{isSlice: false, key: "b"},
-		pathtoken{isSlice: true, index: 1},
-		pathtoken{isSlice: false, key: "c"},
+		{isSlice: false, key: "a"},
+		{isSlice: false, key: "b"},
+		{isSlice: true, index: 1},
+		{isSlice: false, key: "c"},
 	}, tokens)
 
 	tokens = compilePath("a.b[0][2].c")
 	assert.Equal([]pathtoken{
-		pathtoken{isSlice: false, key: "a"},
-		pathtoken{isSlice: false, key: "b"},
-		pathtoken{isSlice: true, index: 0},
-		pathtoken{isSlice: true, index: 2},
-		pathtoken{isSlice: false, key: "c"},
+		{isSlice: false, key: "a"},
+		{isSlice: false, key: "b"},
+		{isSlice: true, index: 0},
+		{isSlice: true, index: 2},
+		{isSlice: false, key: "c"},
 	}, tokens)
 
 	tokens = compilePath("[0]")
 	assert.Equal([]pathtoken{
-		pathtoken{isSlice: true, index: 0},
+		{isSlice: true, index: 0},
 	}, tokens)
 }
 
@@ -64,9 +64,9 @@ func TestGetPathValue(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
 
-	d := map[string]interface{}{
-		"a": map[string]interface{}{
-			"b": map[string]interface{}{
+	d := map[string]any{
+		"a": map[string]any{
+			"b": map[string]any{
 				"c": "foo",
 			},
 		},
@@ -85,10 +85,10 @@ func TestGetPathValue(t *testing.T) {
 	assert.False(ok)
 	assert.Nil(r)
 
-	d = map[string]interface{}{
-		"a": map[string]interface{}{
-			"b": []interface{}{
-				map[string]interface{}{"c": "foo"},
+	d = map[string]any{
+		"a": map[string]any{
+			"b": []any{
+				map[string]any{"c": "foo"},
 			},
 		},
 	}
@@ -109,8 +109,8 @@ func TestGetPathValue(t *testing.T) {
 	assert.False(ok)
 	assert.Nil(r)
 
-	d = map[string]interface{}{
-		"a": map[string]interface{}{
+	d = map[string]any{
+		"a": map[string]any{
 			"b": []string{"c", "foo"},
 		},
 	}
@@ -123,8 +123,8 @@ func TestGetPathValue(t *testing.T) {
 	assert.True(ok)
 	assert.Equal("foo", r)
 
-	d = map[string]interface{}{
-		"a": []interface{}{"b", "c", "foo"},
+	d = map[string]any{
+		"a": []any{"b", "c", "foo"},
 	}
 	r, ok = getPathValue(d, "a[-1]")
 	assert.True(ok)
@@ -142,7 +142,7 @@ func TestGetPathValue(t *testing.T) {
 	assert.False(ok)
 	assert.Nil(r)
 
-	d = map[string]interface{}{
+	d = map[string]any{
 		"a": []string{"b", "c", "foo"},
 	}
 	r, ok = getPathValue(d, "a[-1]")

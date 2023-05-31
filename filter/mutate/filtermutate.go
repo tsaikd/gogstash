@@ -26,10 +26,12 @@ var (
 type FilterConfig struct {
 	config.FilterConfig
 
-	Split   [2]string `yaml:"split"`
-	Replace [3]string `yaml:"replace"`
-	Merge   [2]string `yaml:"merge"`  // merge string value into existing string slice field
-	Rename  [2]string `yaml:"rename"` // rename field name into new field name
+	Uppercase string    `yaml:"uppercase"`
+	Lowercase string    `yaml:"lowercase"`
+	Split     [2]string `yaml:"split"`
+	Replace   [3]string `yaml:"replace"`
+	Merge     [2]string `yaml:"merge"`  // merge string value into existing string slice field
+	Rename    [2]string `yaml:"rename"` // rename field name into new field name
 }
 
 // DefaultFilterConfig returns an FilterConfig struct with default values
@@ -55,7 +57,7 @@ func InitHandler(
 		return nil, err
 	}
 
-	if conf.Split[0] == "" && conf.Replace[0] == "" && conf.Merge[0] == "" && conf.Rename[0] == "" && !conf.IsConfigured() {
+	if conf.Uppercase == "" && conf.Lowercase == "" && conf.Split[0] == "" && conf.Replace[0] == "" && conf.Merge[0] == "" && conf.Rename[0] == "" && !conf.IsConfigured() {
 		return nil, ErrNotConfigured
 	}
 
@@ -64,18 +66,26 @@ func InitHandler(
 
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (logevent.LogEvent, bool) {
+	if f.Uppercase != "" {
+		event.SetValue(f.Uppercase, strings.ToUpper(event.GetString(f.Uppercase)))
+	}
+	if f.Lowercase != "" {
+		event.SetValue(f.Lowercase, strings.ToLower(event.GetString(f.Lowercase)))
+	}
 	if f.Split[0] != "" {
 		event.SetValue(f.Split[0], strings.Split(event.GetString(f.Split[0]), f.Split[1]))
 	}
 	if f.Replace[0] != "" {
-		event.SetValue(f.Replace[0], strings.Replace(event.GetString(f.Replace[0]), f.Replace[1], f.Replace[2], -1))
+		event.SetValue(f.Replace[0], strings.ReplaceAll(event.GetString(f.Replace[0]), f.Replace[1], f.Replace[2]))
 	}
 	if f.Merge[0] != "" {
 		event = mergeField(event, f.Merge[0], f.Merge[1])
 	}
 	if f.Rename[0] != "" {
 		value := event.Get(f.Rename[0])
-		event.SetValue(f.Rename[1], value)
+		if value != nil {
+			event.SetValue(f.Rename[1], value)
+		}
 		event.Remove(f.Rename[0])
 	}
 	// always return true here for configured filter

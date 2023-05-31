@@ -21,6 +21,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
@@ -57,11 +58,11 @@ input:
 	defer c.Close()
 
 	ts := time.Date(2019, time.January, 4, 0, 55, 36, 0, time.UTC)
-	eventData := map[string]interface{}{
+	eventData := map[string]any{
 		"@timestamp": ts.Format(time.RFC3339),
 		"message":    "test message",
 	}
-	data := []interface{}{eventData}
+	data := []any{eventData}
 	err = c.Send(data)
 	require.NoError(err)
 
@@ -79,7 +80,7 @@ func Test_input_beats_module_tls(t *testing.T) {
 
 	// generate key pair
 	// https://golang.org/src/crypto/tls/generate_cert.go
-	var priv interface{}
+	var priv any
 	var err error
 	rsaBits := 2048
 	priv, err = rsa.GenerateKey(rand.Reader, rsaBits)
@@ -122,7 +123,7 @@ func Test_input_beats_module_tls(t *testing.T) {
 	require.NoError(err)
 	defer os.Remove("cert.pem")
 
-	keyOut, err := os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	keyOut, err := os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	require.NoError(err)
 	err = pem.Encode(keyOut, pemBlockForKey(priv))
 	require.NoError(err)
@@ -162,11 +163,11 @@ input:
 	t.Log("client: handshake:", state.HandshakeComplete)
 
 	ts := time.Date(2019, time.January, 4, 0, 55, 36, 0, time.UTC)
-	eventData := map[string]interface{}{
+	eventData := map[string]any{
 		"@timestamp": ts.Format(time.RFC3339),
 		"message":    "test message",
 	}
-	data := []interface{}{eventData}
+	data := []any{eventData}
 	err = c.Send(data)
 	require.NoError(err)
 
@@ -176,7 +177,7 @@ input:
 	}
 }
 
-func publicKey(priv interface{}) interface{} {
+func publicKey(priv any) any {
 	switch k := priv.(type) {
 	case *rsa.PrivateKey:
 		return &k.PublicKey
@@ -187,7 +188,7 @@ func publicKey(priv interface{}) interface{} {
 	}
 }
 
-func pemBlockForKey(priv interface{}) *pem.Block {
+func pemBlockForKey(priv any) *pem.Block {
 	switch k := priv.(type) {
 	case *rsa.PrivateKey:
 		return &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(k)}

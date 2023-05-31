@@ -7,6 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/futil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 
@@ -46,7 +47,7 @@ func gogstash(
 		return startWorkers(ctx, conf.Worker)
 	}
 
-	if err = conf.Start(ctx); err != nil {
+	if err := conf.Start(ctx); err != nil {
 		return err
 	}
 

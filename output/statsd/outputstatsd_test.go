@@ -3,7 +3,6 @@ package outputstatsd
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"net"
 	"strings"
 	"sync/atomic"
@@ -13,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -42,7 +42,7 @@ func Test_output_statsd_module(t *testing.T) {
 	server := newServer(t, "udp", testAddr, func(p []byte) {
 		s := strings.Split(string(p), "\n")
 		l := len(s)
-		if l > 0 && len(s[l-1]) == 0 {
+		if l > 0 && s[l-1] == "" {
 			l--
 		}
 		for j := 0; j < l; j++ {
@@ -101,8 +101,8 @@ output:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   "outputstatsd test message",
-		Extra: map[string]interface{}{
-			"logmsg": map[string]interface{}{
+		Extra: map[string]any{
+			"logmsg": map[string]any{
 				"status": int32(200),
 				"time":   float64(0.12),
 				"count":  int32(4),
@@ -171,7 +171,7 @@ func newServer(t testing.TB, network, addr string, f func([]byte)) *server {
 					s.closed <- true
 					return
 				}
-				p, err := ioutil.ReadAll(conn)
+				p, err := io.ReadAll(conn)
 				if err != nil {
 					t.Fatal(err)
 				}

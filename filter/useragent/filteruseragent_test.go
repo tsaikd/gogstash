@@ -2,7 +2,6 @@ package filteruseragent
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -11,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -34,7 +34,7 @@ func init() {
 	goglog.Logger.SetLevel(logrus.DebugLevel)
 	config.RegistFilterHandler(ModuleName, InitHandler)
 
-	err := ioutil.WriteFile(fileName, fileData, 0644)
+	err := os.WriteFile(fileName, fileData, 0o644)
 	if err != nil {
 		panic(err)
 	}
@@ -74,9 +74,9 @@ filter:
 
 	uagent := "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
 	expectedEvent := logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"agent": uagent,
-			"user_agent": map[string]interface{}{
+			"user_agent": map[string]any{
 				"device":   "Other",
 				"major":    "71",
 				"minor":    "0",
@@ -90,7 +90,7 @@ filter:
 	}
 
 	conf.TestInputEvent(logevent.LogEvent{
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"agent": uagent,
 		},
 	})

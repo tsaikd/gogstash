@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -44,7 +45,7 @@ filter:
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "Test",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"host": "Hostname",
 		},
 		Tags: []string{"foo"},
@@ -53,7 +54,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Now(),
 		Message:   "{ \"message\": \"Test\", \"host\": \"Hostname\", \"time\":\"2016-12-04T09:09:41.193Z\", \"tags\": [ \"foo\" ] }",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"myfield": "test",
 		},
 	})
@@ -66,7 +67,7 @@ filter:
 	expectedEvent = logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "Test",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"myfield": "test",
 		},
 		Tags: []string{"gogstash_filter_json_error"},
@@ -75,7 +76,7 @@ filter:
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "Test",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"myfield": "test",
 		},
 	})
@@ -111,7 +112,7 @@ filter:
 	expectedEvent := logevent.LogEvent{
 		Timestamp: timestamp,
 		Message:   "Test",
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"host":    "Hostname",
 			"myfield": fieldvalue,
 		},
@@ -120,7 +121,7 @@ filter:
 
 	conf.TestInputEvent(logevent.LogEvent{
 		Timestamp: time.Now(),
-		Extra: map[string]interface{}{
+		Extra: map[string]any{
 			"myfield": fieldvalue,
 		},
 	})

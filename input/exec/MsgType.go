@@ -30,7 +30,7 @@ func (t *MsgType) UnmarshalJSON(b []byte) (err error) {
 	return msgTypeEnum.UnmarshalJSON(t, b)
 }
 
-func (t *MsgType) Scan(value interface{}) (err error) {
+func (t *MsgType) Scan(value any) (err error) {
 	return msgTypeEnum.Scan(t, value)
 }
 

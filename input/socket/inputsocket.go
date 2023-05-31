@@ -10,11 +10,12 @@ import (
 
 	reuse "github.com/libp2p/go-reuseport"
 	"github.com/tsaikd/KDGoLib/errutil"
+	"golang.org/x/sync/errgroup"
+
 	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
-	"golang.org/x/sync/errgroup"
 )
 
 // ModuleName is the name used in config file
@@ -95,7 +96,7 @@ func (i *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		}
 		defer l.Close()
 		// Set socket permissions.
-		if err = os.Chmod(i.Address, 0777); err != nil {
+		if err := os.Chmod(i.Address, 0o777); err != nil {
 			return err
 		}
 	case "tcp":
@@ -206,7 +207,7 @@ func (i *InputConfig) handleUDPpacketMode(ctx context.Context, conn net.PacketCo
 					i.BufferSize += bufIncSize
 					b = make([]byte, i.BufferSize)
 				} else {
-					extras := map[string]interface{}{
+					extras := map[string]any{
 						"host_ip": addr.String(),
 					}
 					_, codecErr := i.Codec.Decode(ctx, b[:n], extras, []string{}, msgChan)
@@ -218,7 +219,7 @@ func (i *InputConfig) handleUDPpacketMode(ctx context.Context, conn net.PacketCo
 			// handle error
 			switch err {
 			case nil:
-			// continue processing
+				// no err, continue processing
 			case io.EOF:
 				return nil
 			default:

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
 	"github.com/tsaikd/gogstash/config/logevent"
@@ -82,7 +83,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 				case string:
 					if vparse, err := strconv.ParseInt(v, 0, 64); err == nil {
 						event.SetValue(field, vparse)
-					} else if vparse, err := strconv.ParseFloat(fmt.Sprintf("%v", v), 64); err == nil {
+					} else if vparse, err := strconv.ParseFloat(v, 64); err == nil {
 						event.SetValue(field, int64(vparse))
 					} else {
 						goglog.Logger.Error(err)
