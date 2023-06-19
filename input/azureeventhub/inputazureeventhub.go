@@ -3,6 +3,7 @@ package inputazureeventhub
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -62,6 +63,9 @@ func InitHandler(
 }
 
 func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEvent) (err error) {
+
+	// Create checkpoint store and consumer client
+
 	containerClient, err := container.NewClientFromConnectionString(t.StorageConnectionString, t.StorageContainer, nil)
 	if err != nil {
 		goglog.Logger.Errorf("Error instanciating storage client from connection string: %v", err)
@@ -74,111 +78,113 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 		return err
 	}
 
+	consumerClient, err := azeventhubs.NewConsumerClientFromConnectionString(t.EventHubNamespaceConnectionString, t.EventHub, t.ConsumerGroup, nil)
+	if err != nil {
+		goglog.Logger.Errorf("Error instanciating consumer client from connection string: %v", err)
+		return err
+	}
+
+	defer consumerClient.Close(context.TODO())
+
+	// Create a processor to load balance eventhub partitiond
+
+	var earliest bool = t.OffsetEarliest
+	var latest bool = !t.OffsetEarliest
+
+	processor, err := azeventhubs.NewProcessor(consumerClient, checkpointStore, &azeventhubs.ProcessorOptions{
+		LoadBalancingStrategy: azeventhubs.ProcessorStrategyBalanced,
+		StartPositions: azeventhubs.StartPositions{
+			Default: azeventhubs.StartPosition{
+				Earliest: &earliest,
+				Latest:   &latest,
+			},
+		},
+	})
+
+	if err != nil {
+		goglog.Logger.Errorf("Error instanciating processor: %v", err)
+		return err
+	}
+
 	wg := &sync.WaitGroup{}
 
 	go func() {
-		consumerClient, err := azeventhubs.NewConsumerClientFromConnectionString(t.EventHubNamespaceConnectionString, t.EventHub, t.ConsumerGroup, nil)
-		if err != nil {
-			goglog.Logger.Errorf("Error instanciating consumer client from connection string: %v", err)
-			return
-		}
+		maxLoopWithoutEventBeforeReconnect := 5
 
-		defer consumerClient.Close(ctx)
+		for {
+			partitionClient := processor.NextPartitionClient(context.TODO())
+			if partitionClient == nil {
+				break
+			}
 
-		var earliest bool = t.OffsetEarliest
-		var latest bool = !t.OffsetEarliest
+			wg.Add(1)
 
-		processor, err := azeventhubs.NewProcessor(consumerClient, checkpointStore, &azeventhubs.ProcessorOptions{
-			UpdateInterval:        1 * time.Minute,
-			LoadBalancingStrategy: azeventhubs.ProcessorStrategyBalanced,
-			StartPositions: azeventhubs.StartPositions{
-				Default: azeventhubs.StartPosition{
-					Earliest: &earliest,
-					Latest:   &latest,
-				},
-			},
-		})
-		if err != nil {
-			goglog.Logger.Errorf("Error instanciating processor: %v", err)
-			return
-		}
+			go func() error {
+				defer partitionClient.Close(context.TODO())
+				defer wg.Done()
 
-		go func() {
-			for {
-				partitionClient := processor.NextPartitionClient(ctx)
-				if partitionClient == nil {
-					break
-				}
+				loopWithoutEvent := 0
 
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					defer partitionClient.Close(ctx)
+				goglog.Logger.Infof("New client initialized %s/%s", t.EventHub, partitionClient.PartitionID())
 
-					checkpointLastUpdateFailed := false
+				for {
+					receiveCtx, receiveCtxCancel := context.WithTimeout(context.TODO(), time.Minute)
+					events, err := partitionClient.ReceiveEvents(receiveCtx, 100, nil)
+					receiveCtxCancel()
 
-					for {
-						if ctx.Err() == context.Canceled {
-							break
-						}
-
-						receiveCtx, receiveCtxCancel := context.WithTimeout(ctx, time.Minute)
-						events, err := partitionClient.ReceiveEvents(receiveCtx, 100, nil)
-						receiveCtxCancel()
-
-						if err != nil && !errors.Is(err, context.DeadlineExceeded) {
-							if ctx.Err() != context.Canceled {
-								if eventHubError := (*azeventhubs.Error)(nil); errors.As(err, &eventHubError) && eventHubError.Code == azeventhubs.ErrorCodeOwnershipLost {
-									goglog.Logger.Debugln("Partition rebalanced")
-								} else {
-									goglog.Logger.Errorf("Error while processing partition: %v", err)
-								}
-							}
-							break
-						}
-
-						for _, event := range events {
-							ok, err := t.Codec.Decode(ctx, []byte(event.Body), t.Extras, []string{}, msgChan)
-							if !ok {
-								goglog.Logger.Errorf("Error while decoding message to msg chan: %v", err)
-							}
-						}
-
-						// it's possible to get zero events if the partition is empty, or if no new events have arrived
-						// since your last receive.
-						if len(events) != 0 {
-							// Update the checkpoint with the last event received. If we lose ownership of this partition or
-							// have to restart the next owner will start from this point.
-							if err := partitionClient.UpdateCheckpoint(ctx, events[len(events)-1]); err != nil {
-								if ctx.Err() != context.Canceled {
-									goglog.Logger.Warnf("Error during checkpoints update: %v", err)
-									checkpointLastUpdateFailed = true
-								}
-							} else {
-								if checkpointLastUpdateFailed {
-									checkpointLastUpdateFailed = false
-									goglog.Logger.Warnf("checkpoints updated")
-								} else {
-									goglog.Logger.Debugln("checkpoints updated")
-								}
-							}
+					if err != nil && !errors.Is(err, context.DeadlineExceeded) {
+						var eventHubError *azeventhubs.Error
+						if errors.As(err, &eventHubError) && eventHubError.Code == azeventhubs.ErrorCodeOwnershipLost {
+							goglog.Logger.Debugln("Partition rebalanced %s/%s", t.EventHub, partitionClient.PartitionID())
+							return nil
+						} else {
+							goglog.Logger.Errorf("Error while processing partition: %v", err)
+							return err
 						}
 					}
-				}()
-			}
-		}()
 
-		if err := processor.Run(ctx); err != nil {
-			goglog.Logger.Errorf("Error, unable to start processor: %v", err)
-			return
+					if len(events) == 0 {
+						loopWithoutEvent = loopWithoutEvent + 1
+						if loopWithoutEvent > maxLoopWithoutEventBeforeReconnect {
+							goglog.Logger.Infof("MaxLoopWithoutEventBeforeReconnect %s/%s", t.EventHub, partitionClient.PartitionID())
+							return errors.New(fmt.Sprintf("MaxLoopWithoutEventBeforeReconnect %s/%s", t.EventHub, partitionClient.PartitionID()))
+						}
+
+						continue
+					}
+
+					loopWithoutEvent = 0
+
+					for _, event := range events {
+						ok, err := t.Codec.Decode(context.TODO(), []byte(event.Body), t.Extras, []string{}, msgChan)
+						if !ok && err != nil {
+							goglog.Logger.Errorf("Error while decoding message to msg chan: %v", err)
+						}
+					}
+
+					// Update the checkpoint with the last event received. If we lose ownership of this partition or
+					// have to restart the next owner will start from this point.
+					if err := partitionClient.UpdateCheckpoint(context.TODO(), events[len(events)-1]); err != nil {
+						goglog.Logger.Warnf("Error during checkpoints update: %v for %s/%s", err, t.EventHub, partitionClient.PartitionID())
+						return err
+					}
+				}
+			}()
 		}
 	}()
 
-	<-ctx.Done()
+	processorCtx, processorCtxCancel := context.WithCancel(context.TODO())
+	defer processorCtxCancel()
 
-	goglog.Logger.Debugln("Terminating: context canceled")
+	if err := processor.Run(processorCtx); err != nil {
+		goglog.Logger.Errorf("Error, unable to start processor: %v", err)
+		return err
+	}
+
+	goglog.Logger.Debugln("Waiting completion of all processors...")
+
 	wg.Wait()
-	goglog.Logger.Debugln("Terminating: all processors stopped")
+	goglog.Logger.Debugln("Terminated")
 
 	return nil
 }
