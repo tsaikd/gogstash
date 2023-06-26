@@ -27,10 +27,11 @@ const DefaultTarget = "@timestamp"
 type FilterConfig struct {
 	config.FilterConfig
 
-	Format []string `json:"format"` // date parse format
-	Source string   `json:"source"` // source message field name
-	Joda   bool     `json:"joda"`   // whether using joda time format
-	Target string   `json:"target"` // target field where date should be stored
+	Format               []string `json:"format"`                  // date parse format
+	Source               string   `json:"source"`                  // source message field name
+	Joda                 bool     `json:"joda"`                    // whether using joda time format
+	Target               string   `json:"target"`                  // target field where date should be stored
+	ComputeYearIfMissing bool     `json:"compute_year_if_missing"` // try to find missing year; dont support logs older than 1 year
 
 	timeParser func(layout, value string) (time.Time, error)
 }
@@ -43,9 +44,10 @@ func DefaultFilterConfig() FilterConfig {
 				Type: ModuleName,
 			},
 		},
-		Format: []string{time.RFC3339Nano},
-		Source: "message",
-		Target: DefaultTarget,
+		Format:               []string{time.RFC3339Nano},
+		Source:               "message",
+		Target:               DefaultTarget,
+		ComputeYearIfMissing: false,
 	}
 }
 
@@ -109,6 +111,18 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 			timestamp = time.Unix(0, nsec)
 		default:
 			timestamp, err = f.timeParser(thisFormat, event.GetString(f.Source))
+			if timestamp.Year() == 0 && f.ComputeYearIfMissing {
+				now := time.Now()
+
+				timestamptest := time.Date(now.Year(), timestamp.Month(), timestamp.Day(), timestamp.Hour(), timestamp.Minute(), timestamp.Second(), timestamp.Nanosecond(), timestamp.Location())
+				if timestamptest.After(now) {
+					timestamp = time.Date(now.Year()-1, timestamp.Month(), timestamp.Day(), timestamp.Hour(), timestamp.Minute(), timestamp.Second(), timestamp.Nanosecond(), timestamp.Location())
+				} else {
+					timestamp = timestamptest
+				}
+
+				err = nil
+			}
 		}
 		if err == nil {
 			break
