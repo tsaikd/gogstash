@@ -149,7 +149,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 						if len(events) != 0 {
 							// Update the checkpoint with the last event received. If we lose ownership of this partition or
 							// have to restart the next owner will start from this point.
-							if err := partitionClient.UpdateCheckpoint(ctx, events[len(events)-1]); err != nil {
+							if err := partitionClient.UpdateCheckpoint(ctx, events[len(events)-1], &azeventhubs.UpdateCheckpointOptions{}); err != nil {
 								if ctx.Err() != context.Canceled {
 									goglog.Logger.Warnf("Error during checkpoints update: %v", err)
 									checkpointLastUpdateFailed = true
