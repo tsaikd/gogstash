@@ -2,6 +2,10 @@ module github.com/tsaikd/gogstash
 
 go 1.18
 
+replace (
+	github.com/tsaikd/gogstash => ./
+)
+
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs v1.0.1
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.0.0
