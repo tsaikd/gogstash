@@ -13,6 +13,8 @@ linters-settings:
       - style
     disabled-checks:
       - dupImport # https://github.com/go-critic/go-critic/issues/845
+      - emptyStringTest
+      - hugeParam
       - ifElseChain
       - paramTypeCombine
       - importShadow
