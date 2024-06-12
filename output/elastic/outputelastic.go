@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/olivere/elastic/v7"
 	"github.com/sirupsen/logrus"
@@ -185,6 +186,7 @@ func (t *OutputConfig) BulkAfter(executionID int64, requests []elastic.BulkableR
 		for i, item := range response.Items {
 			for _, v := range item {
 				if v.Error != nil {
+					sentry.CaptureMessage(v.Error.Reason)
 					goglog.Logger.Errorf("%s: bulk processor request %s failed: %s", ModuleName, requests[i].String(), v.Error.Reason)
 				}
 			}
