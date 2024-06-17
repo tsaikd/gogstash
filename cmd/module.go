@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"context"
+	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/spf13/cobra"
 	"github.com/tsaikd/KDGoLib/cliutil/cobrather"
 )
@@ -41,7 +43,10 @@ func init() {
 		Use:   "worker",
 		Short: "gogstash worker mode",
 		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
-			return gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), true)
+			err := gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), true)
+			sentry.CurrentHub().Recover(err)
+			sentry.Flush(time.Second * 5)
+			return err
 		},
 	}
 
@@ -59,7 +64,10 @@ func init() {
 			flagPProf,
 		},
 		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
-			return gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), false)
+			err := gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), false)
+			sentry.CurrentHub().Recover(err)
+			sentry.Flush(time.Second * 5)
+			return err
 		},
 	}
 }
