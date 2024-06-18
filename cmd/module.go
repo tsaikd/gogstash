@@ -42,10 +42,14 @@ func init() {
 	WorkerModule = &cobrather.Module{
 		Use:   "worker",
 		Short: "gogstash worker mode",
-		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
-			err := gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), true)
-			sentry.CurrentHub().Recover(err)
-			sentry.Flush(time.Second * 5)
+		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) (err error) {
+			defer func() {
+				if err != nil {
+					sentry.CurrentHub().Recover(err)
+					sentry.Flush(time.Second * 5)
+				}
+			}()
+			err = gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), true)
 			return err
 		},
 	}
@@ -63,10 +67,14 @@ func init() {
 			flagDebug,
 			flagPProf,
 		},
-		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
-			err := gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), false)
-			sentry.CurrentHub().Recover(err)
-			sentry.Flush(time.Second * 5)
+		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) (err error) {
+			defer func() {
+				if err != nil {
+					sentry.CurrentHub().Recover(err)
+					sentry.Flush(time.Second * 5)
+				}
+			}()
+			err = gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), false)
 			return err
 		},
 	}
