@@ -38,36 +38,15 @@ func Test_output_sentry_module(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			t.Parallel()
 			switch {
-			case i%6 == 0:
-				sentry.WithScope(func(scope *sentry.Scope) {
-					scope.SetLevel(sentry.LevelInfo)
-					sentry.CaptureMessage(fmt.Sprintf("Scope Info %d", i))
-				})
-			case i%6 == 1:
-				sentry.WithScope(func(scope *sentry.Scope) {
-					scope.SetLevel(sentry.LevelWarning)
-					sentry.CaptureMessage(fmt.Sprintf("Scope Warn %d", i))
-				})
-			case i%6 == 2:
-				sentry.ConfigureScope(func(scope *sentry.Scope) {
-					scope.SetLevel(sentry.LevelInfo)
-				})
-				sentry.CaptureMessage(fmt.Sprintf("Configure Info %d", i))
-			case i%6 == 3:
-				sentry.ConfigureScope(func(scope *sentry.Scope) {
-					scope.SetLevel(sentry.LevelWarning)
-				})
-				sentry.CaptureMessage(fmt.Sprintf("Configure Warn %d", i))
-			case i%6 == 4:
+			case i%2 == 0:
 				hubInfo.CaptureMessage(fmt.Sprintf("Hub Info %d", i))
-			case i%6 == 5:
+			case i%2 == 1:
 				hubWarn.CaptureMessage(fmt.Sprintf("Hub Warn %d", i))
 			}
 		})
 	}
 
 	t.Cleanup(func() {
-		sentry.Flush(5 * time.Second)
 		hubInfo.Flush(5 * time.Second)
 		hubWarn.Flush(5 * time.Second)
 	})

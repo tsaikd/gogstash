@@ -81,46 +81,51 @@ func (t LoggerType) Printf(format string, args ...any) {
 
 // Warnf wrap logrus function
 func (t LoggerType) Warnf(format string, args ...any) {
-	sentry.ConfigureScope(func(scope *sentry.Scope) {
+	hub := sentry.CurrentHub().Clone()
+	hub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetLevel(sentry.LevelWarning)
 	})
-	sentry.CaptureMessage(fmt.Sprintf(format, args...))
+	hub.CaptureMessage(fmt.Sprintf(format, args...))
 	t.stdout.Warnf(format, args...)
 }
 
 // Warningf wrap logrus function
 func (t LoggerType) Warningf(format string, args ...any) {
-	sentry.ConfigureScope(func(scope *sentry.Scope) {
+	hub := sentry.CurrentHub().Clone()
+	hub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetLevel(sentry.LevelWarning)
 	})
-	sentry.CaptureMessage(fmt.Sprintf(format, args...))
+	hub.CaptureMessage(fmt.Sprintf(format, args...))
 	t.stdout.Warningf(format, args...)
 }
 
 // Errorf wrap logrus function
 func (t LoggerType) Errorf(format string, args ...any) {
-	sentry.ConfigureScope(func(scope *sentry.Scope) {
+	hub := sentry.CurrentHub().Clone()
+	hub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetLevel(sentry.LevelError)
 	})
-	sentry.CaptureMessage(fmt.Sprintf(format, args...))
+	hub.CaptureMessage(fmt.Sprintf(format, args...))
 	t.stderr.Errorf(format, args...)
 }
 
 // Fatalf wrap logrus function
 func (t LoggerType) Fatalf(format string, args ...any) {
-	sentry.ConfigureScope(func(scope *sentry.Scope) {
+	hub := sentry.CurrentHub().Clone()
+	hub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetLevel(sentry.LevelFatal)
 	})
-	sentry.CaptureMessage(fmt.Sprintf(format, args...))
+	hub.CaptureMessage(fmt.Sprintf(format, args...))
 	t.stderr.Fatalf(format, args...)
 }
 
 // Panicf wrap logrus function
 func (t LoggerType) Panicf(format string, args ...any) {
-	sentry.ConfigureScope(func(scope *sentry.Scope) {
+	hub := sentry.CurrentHub().Clone()
+	hub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetLevel(sentry.LevelFatal)
 	})
-	sentry.CaptureMessage(fmt.Sprintf(format, args...))
+	hub.CaptureMessage(fmt.Sprintf(format, args...))
 	t.stderr.Panicf(format, args...)
 }
 
