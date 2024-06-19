@@ -17,6 +17,15 @@ func init() {
 	config.RegistOutputHandler(ModuleName, InitHandler)
 }
 
+func captureWithSentry(level sentry.Level, format string, args ...any) {
+	hub := sentry.CurrentHub().Clone()
+	hub.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetLevel(level)
+	})
+	hub.CaptureMessage(fmt.Sprintf(format, args...))
+	hub.Flush(time.Second * 3)
+}
+
 func Test_output_sentry_module(t *testing.T) {
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:              "",
@@ -24,32 +33,18 @@ func Test_output_sentry_module(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	hubInfo := sentry.CurrentHub().Clone()
-	hubInfo.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetLevel(sentry.LevelInfo)
-	})
-	hubWarn := sentry.CurrentHub().Clone()
-	hubWarn.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetLevel(sentry.LevelWarning)
-	})
-	fmt.Println("Test output sentry module")
 	for i := 0; i < 60; i++ {
 		i := i
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			t.Parallel()
 			switch {
 			case i%2 == 0:
-				hubInfo.CaptureMessage(fmt.Sprintf("Hub Info %d", i))
+				captureWithSentry(sentry.LevelInfo, "Hub Info %d", i)
 			case i%2 == 1:
-				hubWarn.CaptureMessage(fmt.Sprintf("Hub Warn %d", i))
+				captureWithSentry(sentry.LevelWarning, "Hub warn %d", i)
 			}
 		})
 	}
-
-	t.Cleanup(func() {
-		hubInfo.Flush(5 * time.Second)
-		hubWarn.Flush(5 * time.Second)
-	})
 }
 
 func TestSentryRecover(t *testing.T) {

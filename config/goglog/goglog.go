@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/sirupsen/logrus"
@@ -40,13 +41,35 @@ func newLogger() *LoggerType {
 			Hooks:     make(logrus.LevelHooks),
 			Level:     logrus.InfoLevel,
 		},
+		sentryHubs: make(map[sentry.Level]*sentry.Hub),
 	}
 }
 
-// LoggerType wrap logrus.Logger type
+// LoggerType wraps logrus.Logger type and adds a cache for Sentry hubs
 type LoggerType struct {
-	stdout *logrus.Logger
-	stderr *logrus.Logger
+	stdout     *logrus.Logger
+	stderr     *logrus.Logger
+	sentryHubs map[sentry.Level]*sentry.Hub
+}
+
+// Helper function to get or create a Sentry hub for a specific level
+func (t *LoggerType) getSentryHub(level sentry.Level) *sentry.Hub {
+	if hub, ok := t.sentryHubs[level]; ok {
+		return hub
+	}
+	hub := sentry.CurrentHub().Clone()
+	hub.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetLevel(level)
+	})
+	hub.Flush(time.Second * 3)
+	t.sentryHubs[level] = hub
+	return hub
+}
+
+// Helper function to capture messages with Sentry
+func (t *LoggerType) captureWithSentry(level sentry.Level, format string, args ...any) {
+	hub := t.getSentryHub(level)
+	hub.CaptureMessage(fmt.Sprintf(format, args...))
 }
 
 // WithField wrap logrus function
@@ -81,51 +104,31 @@ func (t LoggerType) Printf(format string, args ...any) {
 
 // Warnf wrap logrus function
 func (t LoggerType) Warnf(format string, args ...any) {
-	hub := sentry.CurrentHub().Clone()
-	hub.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetLevel(sentry.LevelWarning)
-	})
-	hub.CaptureMessage(fmt.Sprintf(format, args...))
+	t.captureWithSentry(sentry.LevelWarning, format, args...)
 	t.stdout.Warnf(format, args...)
 }
 
 // Warningf wrap logrus function
 func (t LoggerType) Warningf(format string, args ...any) {
-	hub := sentry.CurrentHub().Clone()
-	hub.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetLevel(sentry.LevelWarning)
-	})
-	hub.CaptureMessage(fmt.Sprintf(format, args...))
+	t.captureWithSentry(sentry.LevelWarning, format, args...)
 	t.stdout.Warningf(format, args...)
 }
 
 // Errorf wrap logrus function
 func (t LoggerType) Errorf(format string, args ...any) {
-	hub := sentry.CurrentHub().Clone()
-	hub.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetLevel(sentry.LevelError)
-	})
-	hub.CaptureMessage(fmt.Sprintf(format, args...))
+	t.captureWithSentry(sentry.LevelError, format, args...)
 	t.stderr.Errorf(format, args...)
 }
 
 // Fatalf wrap logrus function
 func (t LoggerType) Fatalf(format string, args ...any) {
-	hub := sentry.CurrentHub().Clone()
-	hub.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetLevel(sentry.LevelFatal)
-	})
-	hub.CaptureMessage(fmt.Sprintf(format, args...))
+	t.captureWithSentry(sentry.LevelFatal, format, args...)
 	t.stderr.Fatalf(format, args...)
 }
 
 // Panicf wrap logrus function
 func (t LoggerType) Panicf(format string, args ...any) {
-	hub := sentry.CurrentHub().Clone()
-	hub.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetLevel(sentry.LevelFatal)
-	})
-	hub.CaptureMessage(fmt.Sprintf(format, args...))
+	t.captureWithSentry(sentry.LevelFatal, format, args...)
 	t.stderr.Panicf(format, args...)
 }
 
