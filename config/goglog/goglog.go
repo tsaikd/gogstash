@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -50,14 +51,26 @@ type LoggerType struct {
 	stdout     *logrus.Logger
 	stderr     *logrus.Logger
 	sentryHubs map[sentry.Level]*sentry.Hub
+	mu         sync.RWMutex
 }
 
 // Helper function to get or create a Sentry hub for a specific level
 func (t *LoggerType) getSentryHub(level sentry.Level) *sentry.Hub {
-	if hub, ok := t.sentryHubs[level]; ok {
+	t.mu.RLock()
+	hub, ok := t.sentryHubs[level]
+	t.mu.RUnlock()
+	if ok {
 		return hub
 	}
-	hub := sentry.CurrentHub().Clone()
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	hub, ok = t.sentryHubs[level]
+	if ok {
+		return hub
+	}
+
+	hub = sentry.CurrentHub().Clone()
 	hub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetLevel(level)
 	})
