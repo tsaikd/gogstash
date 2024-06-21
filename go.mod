@@ -51,7 +51,7 @@ require (
 )
 
 require (
-	github.com/getsentry/sentry-go v0.28.0
+	github.com/getsentry/sentry-go v0.28.1
 	github.com/samber/lo v1.38.1
 	github.com/shirou/gopsutil/v3 v3.21.11
 )
