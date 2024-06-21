@@ -6,42 +6,82 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
-	"github.com/tsaikd/gogstash/config"
-	"github.com/tsaikd/gogstash/config/goglog"
 )
 
-func init() {
-	goglog.Logger.SetLevel(logrus.DebugLevel)
-	config.RegistOutputHandler(ModuleName, InitHandler)
+type sentryLogger struct {
+	InfoSentryHub  func(string, ...any)
+	WarnSentryHub  func(string, ...any)
+	FatalSentryHub func(string, ...any)
+	ErrorSentryHub func(string, ...any)
 }
 
-func captureWithSentry(level sentry.Level, format string, args ...any) {
-	hub := sentry.CurrentHub().Clone()
-	hub.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetLevel(level)
+func initLogger() *sentryLogger {
+	_ = sentry.Init(sentry.ClientOptions{
+		Dsn:              "https://efc659a87d984025d9e3810cd6cdee8d@sr.cdmx.io/17",
+		TracesSampleRate: 1.0,
 	})
-	hub.CaptureMessage(fmt.Sprintf(format, args...))
-	hub.Flush(time.Second * 3)
+
+	infoHub := func(format string, args ...any) {
+		hub := sentry.CurrentHub().Clone()
+		hub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetLevel(sentry.LevelInfo)
+		})
+		hub.CaptureMessage(fmt.Sprintf(format, args...))
+		hub.Flush(time.Second * 3)
+	}
+
+	warnHub := func(format string, args ...any) {
+		hub := sentry.CurrentHub().Clone()
+		hub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetLevel(sentry.LevelWarning)
+		})
+		hub.CaptureMessage(fmt.Sprintf(format, args...))
+		hub.Flush(time.Second * 3)
+	}
+
+	fatalHub := func(format string, args ...any) {
+		hub := sentry.CurrentHub().Clone()
+		hub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetLevel(sentry.LevelFatal)
+		})
+		hub.CaptureMessage(fmt.Sprintf(format, args...))
+		hub.Flush(time.Second * 3)
+	}
+
+	errorHub := func(format string, args ...any) {
+		hub := sentry.CurrentHub().Clone()
+		hub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetLevel(sentry.LevelError)
+		})
+		hub.CaptureMessage(fmt.Sprintf(format, args...))
+		hub.Flush(time.Second * 3)
+	}
+
+	return &sentryLogger{
+		InfoSentryHub:  infoHub,
+		WarnSentryHub:  warnHub,
+		FatalSentryHub: fatalHub,
+		ErrorSentryHub: errorHub,
+	}
 }
 
 func Test_output_sentry_module(t *testing.T) {
-	err := sentry.Init(sentry.ClientOptions{
-		Dsn:              "",
-		TracesSampleRate: 1.0,
-	})
-	require.NoError(t, err)
+	logger := initLogger()
 
 	for i := 0; i < 60; i++ {
 		i := i
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			t.Parallel()
 			switch {
-			case i%2 == 0:
-				captureWithSentry(sentry.LevelInfo, "Hub Info %d", i)
-			case i%2 == 1:
-				captureWithSentry(sentry.LevelWarning, "Hub warn %d", i)
+			case i%4 == 0:
+				logger.InfoSentryHub(fmt.Sprintf("Hub Info %d", i))
+			case i%4 == 1:
+				logger.WarnSentryHub(fmt.Sprintf("Hub warn %d", i))
+			case i%4 == 2:
+				logger.ErrorSentryHub(fmt.Sprintf("Hub Error %d", i))
+			case i%4 == 3:
+				logger.FatalSentryHub(fmt.Sprintf("Hub Fatal %d", i))
 			}
 		})
 	}

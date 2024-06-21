@@ -45,7 +45,11 @@ func init() {
 		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) (err error) {
 			defer func() {
 				if err != nil {
-					sentry.CurrentHub().Recover(err)
+					hub := sentry.CurrentHub().Clone()
+					hub.ConfigureScope(func(scope *sentry.Scope) {
+						scope.SetLevel(sentry.LevelError)
+					})
+					hub.CaptureException(err)
 					sentry.Flush(time.Second * 5)
 				}
 			}()
@@ -70,7 +74,11 @@ func init() {
 		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) (err error) {
 			defer func() {
 				if err != nil {
-					sentry.CurrentHub().Recover(err)
+					hub := sentry.CurrentHub().Clone()
+					hub.ConfigureScope(func(scope *sentry.Scope) {
+						scope.SetLevel(sentry.LevelError)
+					})
+					hub.CaptureException(err)
 					sentry.Flush(time.Second * 5)
 				}
 			}()
