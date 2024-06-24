@@ -36,28 +36,23 @@ func InitHandler(
 	control config.Control,
 ) (config.TypeOutputConfig, error) {
 	conf := DefaultOutputConfig()
+
 	if err := config.ReflectConfig(raw, &conf); err != nil {
 		return nil, err
 	}
+
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:              conf.DSN,
 		TracesSampleRate: 1.0,
 	})
 	if err != nil {
-		log.Fatalf("Failed to initialize Sentry: %v", err)
-		return nil, err
+		log.Fatalf("sentry.Init: %s", err)
 	}
 
+	defer sentry.Flush(3 * time.Second)
 	return &conf, nil
 }
 
-func (o *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) error {
-	sentry.WithScope(func(scope *sentry.Scope) {
-		for key, value := range event.Extra {
-			scope.SetExtra(key, value)
-		}
-		sentry.CaptureMessage(event.Message)
-	})
-	sentry.Flush(2 * time.Second)
-	return nil
+func (o *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err error) {
+	return
 }
