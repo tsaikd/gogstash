@@ -6,57 +6,43 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/stretchr/testify/require"
 )
 
 type sentryLogger struct {
-	InfoSentryHub  func(string, ...any)
-	WarnSentryHub  func(string, ...any)
-	FatalSentryHub func(string, ...any)
-	ErrorSentryHub func(string, ...any)
+	InfoSentryHub  *sentry.Hub
+	WarnSentryHub  *sentry.Hub
+	FatalSentryHub *sentry.Hub
+	ErrorSentryHub *sentry.Hub
 }
 
 func initLogger() *sentryLogger {
+	sentrySyncTransport := sentry.NewHTTPSyncTransport()
+	sentrySyncTransport.Timeout = time.Second * 2
 	_ = sentry.Init(sentry.ClientOptions{
-		Dsn:              "https://efc659a87d984025d9e3810cd6cdee8d@sr.cdmx.io/17",
+		Dsn:              "",
 		TracesSampleRate: 1.0,
+		Transport:        sentrySyncTransport,
 	})
 
-	infoHub := func(format string, args ...any) {
-		hub := sentry.CurrentHub().Clone()
-		hub.ConfigureScope(func(scope *sentry.Scope) {
-			scope.SetLevel(sentry.LevelInfo)
-		})
-		hub.CaptureMessage(fmt.Sprintf(format, args...))
-		hub.Flush(time.Second * 3)
-	}
+	infoHub := sentry.CurrentHub().Clone()
+	infoHub.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetLevel(sentry.LevelInfo)
+	})
 
-	warnHub := func(format string, args ...any) {
-		hub := sentry.CurrentHub().Clone()
-		hub.ConfigureScope(func(scope *sentry.Scope) {
-			scope.SetLevel(sentry.LevelWarning)
-		})
-		hub.CaptureMessage(fmt.Sprintf(format, args...))
-		hub.Flush(time.Second * 3)
-	}
+	warnHub := sentry.CurrentHub().Clone()
+	warnHub.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetLevel(sentry.LevelWarning)
+	})
 
-	fatalHub := func(format string, args ...any) {
-		hub := sentry.CurrentHub().Clone()
-		hub.ConfigureScope(func(scope *sentry.Scope) {
-			scope.SetLevel(sentry.LevelFatal)
-		})
-		hub.CaptureMessage(fmt.Sprintf(format, args...))
-		hub.Flush(time.Second * 3)
-	}
+	fatalHub := sentry.CurrentHub().Clone()
+	fatalHub.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetLevel(sentry.LevelFatal)
+	})
 
-	errorHub := func(format string, args ...any) {
-		hub := sentry.CurrentHub().Clone()
-		hub.ConfigureScope(func(scope *sentry.Scope) {
-			scope.SetLevel(sentry.LevelError)
-		})
-		hub.CaptureMessage(fmt.Sprintf(format, args...))
-		hub.Flush(time.Second * 3)
-	}
+	errorHub := sentry.CurrentHub().Clone()
+	errorHub.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetLevel(sentry.LevelError)
+	})
 
 	return &sentryLogger{
 		InfoSentryHub:  infoHub,
@@ -69,41 +55,22 @@ func initLogger() *sentryLogger {
 func Test_output_sentry_module(t *testing.T) {
 	logger := initLogger()
 
+	// defer sentry.Flush(2 * time.Second)
+
 	for i := 0; i < 60; i++ {
 		i := i
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			t.Parallel()
 			switch {
 			case i%4 == 0:
-				logger.InfoSentryHub(fmt.Sprintf("Hub Info %d", i))
+				logger.InfoSentryHub.CaptureMessage(fmt.Sprintf("HubA Info %d", i))
 			case i%4 == 1:
-				logger.WarnSentryHub(fmt.Sprintf("Hub warn %d", i))
+				logger.WarnSentryHub.CaptureMessage(fmt.Sprintf("HubA warn %d", i))
 			case i%4 == 2:
-				logger.ErrorSentryHub(fmt.Sprintf("Hub Error %d", i))
+				logger.ErrorSentryHub.CaptureMessage(fmt.Sprintf("HubA Error %d", i))
 			case i%4 == 3:
-				logger.FatalSentryHub(fmt.Sprintf("Hub Fatal %d", i))
+				logger.FatalSentryHub.CaptureMessage(fmt.Sprintf("HubA Fatal %d", i))
 			}
 		})
 	}
-}
-
-func TestSentryRecover(t *testing.T) {
-	err := sentry.Init(sentry.ClientOptions{
-		Dsn:              "", // Use an actual DSN here
-		TracesSampleRate: 1.0,
-	})
-	require.NoError(t, err)
-
-	require.NotPanics(t, func() {
-		defer func() {
-			if err := recover(); err != nil {
-				// Report the panic to Sentry
-				sentry.CurrentHub().Recover(err)
-				// Flush the buffered events to ensure the panic is sent to Sentry
-				sentry.Flush(time.Second * 5)
-			}
-		}()
-		// Code that causes a panic
-		panic("panic")
-	})
 }

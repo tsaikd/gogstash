@@ -41,15 +41,19 @@ func InitHandler(
 		return nil, err
 	}
 
+	sentrySyncTransport := sentry.NewHTTPSyncTransport()
+	sentrySyncTransport.Timeout = time.Second * 3
+
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:              conf.DSN,
 		TracesSampleRate: 1.0,
+		Transport:        sentrySyncTransport,
 	})
+
 	if err != nil {
 		log.Fatalf("sentry.Init: %s", err)
 	}
 
-	defer sentry.Flush(3 * time.Second)
 	return &conf, nil
 }
 

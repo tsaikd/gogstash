@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"time"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/spf13/cobra"
@@ -50,7 +49,6 @@ func init() {
 						scope.SetLevel(sentry.LevelError)
 					})
 					hub.CaptureException(err)
-					sentry.Flush(time.Second * 5)
 				}
 			}()
 			err = gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), true)
@@ -79,7 +77,6 @@ func init() {
 						scope.SetLevel(sentry.LevelError)
 					})
 					hub.CaptureException(err)
-					sentry.Flush(time.Second * 5)
 				}
 			}()
 			err = gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), false)
