@@ -27,7 +27,17 @@ func gogstash(
 	debug bool,
 	pprofAddress string,
 	workerMode bool,
-) error {
+) (err error) {
+	defer func() {
+		if err != nil {
+			hub := sentry.CurrentHub().Clone()
+			hub.ConfigureScope(func(scope *sentry.Scope) {
+				scope.SetLevel(sentry.LevelError)
+			})
+			hub.CaptureException(err)
+		}
+	}()
+
 	dsn := os.Getenv("GS_SENTRY_DSN")
 
 	if dsn != "" {

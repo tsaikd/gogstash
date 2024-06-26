@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/spf13/cobra"
 	"github.com/tsaikd/KDGoLib/cliutil/cobrather"
 )
@@ -41,18 +40,8 @@ func init() {
 	WorkerModule = &cobrather.Module{
 		Use:   "worker",
 		Short: "gogstash worker mode",
-		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) (err error) {
-			defer func() {
-				if err != nil {
-					hub := sentry.CurrentHub().Clone()
-					hub.ConfigureScope(func(scope *sentry.Scope) {
-						scope.SetLevel(sentry.LevelError)
-					})
-					hub.CaptureException(err)
-				}
-			}()
-			err = gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), true)
-			return err
+		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
+			return gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), true)
 		},
 	}
 
@@ -69,18 +58,8 @@ func init() {
 			flagDebug,
 			flagPProf,
 		},
-		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) (err error) {
-			defer func() {
-				if err != nil {
-					hub := sentry.CurrentHub().Clone()
-					hub.ConfigureScope(func(scope *sentry.Scope) {
-						scope.SetLevel(sentry.LevelError)
-					})
-					hub.CaptureException(err)
-				}
-			}()
-			err = gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), false)
-			return err
+		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
+			return gogstash(ctx, flagConfig.String(), flagDebug.Bool(), flagPProf.String(), false)
 		},
 	}
 }
