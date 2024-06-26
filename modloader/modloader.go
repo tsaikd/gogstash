@@ -52,7 +52,6 @@ import (
 	outputprometheus "github.com/tsaikd/gogstash/output/prometheus"
 	outputredis "github.com/tsaikd/gogstash/output/redis"
 	outputreport "github.com/tsaikd/gogstash/output/report"
-	outputsentry "github.com/tsaikd/gogstash/output/sentry"
 	outputsocket "github.com/tsaikd/gogstash/output/socket"
 	outputstatsd "github.com/tsaikd/gogstash/output/statsd"
 	outputstdout "github.com/tsaikd/gogstash/output/stdout"
@@ -112,7 +111,6 @@ func init() {
 	config.RegistOutputHandler(outputfile.ModuleName, outputfile.InitHandler)
 	config.RegistOutputHandler(outputkafka.ModuleName, outputkafka.InitHandler)
 	config.RegistOutputHandler(outputloki.ModuleName, outputloki.InitHandler)
-	config.RegistOutputHandler(outputsentry.ModuleName, outputsentry.InitHandler)
 
 	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
