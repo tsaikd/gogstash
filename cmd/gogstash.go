@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"net/http"
-	"os"
 	"runtime"
 	"time"
 
@@ -28,35 +27,6 @@ func gogstash(
 	pprofAddress string,
 	workerMode bool,
 ) (err error) {
-	defer func() {
-		if err != nil {
-			hub := sentry.CurrentHub().Clone()
-			hub.ConfigureScope(func(scope *sentry.Scope) {
-				scope.SetLevel(sentry.LevelError)
-			})
-			hub.CaptureException(err)
-		}
-	}()
-
-	dsn := os.Getenv("GS_SENTRY_DSN")
-
-	if dsn != "" {
-		sentrySyncTransport := sentry.NewHTTPSyncTransport()
-		sentrySyncTransport.Timeout = time.Second * 3
-
-		err := sentry.Init(sentry.ClientOptions{
-			Dsn:              dsn,
-			TracesSampleRate: 1.0,
-			Transport:        sentrySyncTransport,
-		})
-
-		if err != nil {
-			return err
-		}
-	}
-
-	goglog.NewLogger()
-
 	if debug {
 		goglog.Logger.SetLevel(logrus.DebugLevel)
 	}
@@ -72,6 +42,31 @@ func gogstash(
 	conf, err := config.LoadFromFile(confpath)
 	if err != nil {
 		return err
+	}
+
+	if conf.Sentry.DSN != "" {
+		var transport sentry.Transport
+		if conf.Sentry.SyncTransport {
+			syncTransport := sentry.NewHTTPSyncTransport()
+			if conf.Sentry.SyncTransportTimeout > 0 {
+				syncTransport.Timeout = conf.Sentry.SyncTransportTimeout
+			}
+			transport = syncTransport
+		}
+
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn:              conf.Sentry.DSN,
+			TracesSampleRate: 1.0,
+			Transport:        transport,
+		}); err != nil {
+			return err
+		}
+		goglog.Logger.ConfigSentry(sentry.CurrentHub())
+
+		defer func() {
+			goglog.Logger.Trace(err)
+			goglog.Logger.FlushSentry(5 * time.Second)
+		}()
 	}
 
 	// use worker mode when user need more than one worker
