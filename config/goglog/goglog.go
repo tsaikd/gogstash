@@ -1,16 +1,22 @@
 package goglog
 
 import (
+	"fmt"
 	"os"
 	"strings"
+	"sync"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/logrusutil"
 	"github.com/tsaikd/KDGoLib/runtimecaller"
 )
 
 // Logger app logger
-var Logger = newLogger()
+var (
+	initOnce sync.Once
+	Logger   *LoggerType
+)
 
 const timestampFormat = "2006/01/02 15:04:05"
 
@@ -24,27 +30,50 @@ func filterGoglogRuntimeCaller(callinfo runtimecaller.CallInfo) (valid bool, sto
 	return !strings.Contains(callinfo.PackageName(), "github.com/tsaikd/gogstash/config/goglog"), false
 }
 
-func newLogger() *LoggerType {
-	return &LoggerType{
-		stdout: &logrus.Logger{
-			Out:       os.Stdout,
-			Formatter: logrusFormatter,
-			Hooks:     make(logrus.LevelHooks),
-			Level:     logrus.InfoLevel,
-		},
-		stderr: &logrus.Logger{
-			Out:       os.Stderr,
-			Formatter: logrusFormatter,
-			Hooks:     make(logrus.LevelHooks),
-			Level:     logrus.InfoLevel,
-		},
-	}
+func NewLogger() *LoggerType {
+	initOnce.Do(func() {
+		warnHub := sentry.CurrentHub().Clone()
+		warnHub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetLevel(sentry.LevelWarning)
+		})
+
+		errorHub := sentry.CurrentHub().Clone()
+		errorHub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetLevel(sentry.LevelError)
+		})
+
+		fatalHub := sentry.CurrentHub().Clone()
+		fatalHub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetLevel(sentry.LevelFatal)
+		})
+
+		Logger = &LoggerType{
+			stdout: &logrus.Logger{
+				Out:       os.Stdout,
+				Formatter: logrusFormatter,
+				Hooks:     make(logrus.LevelHooks),
+				Level:     logrus.InfoLevel,
+			},
+			stderr: &logrus.Logger{
+				Out:       os.Stderr,
+				Formatter: logrusFormatter,
+				Hooks:     make(logrus.LevelHooks),
+				Level:     logrus.InfoLevel,
+			},
+			warnHub:  warnHub,
+			errorHub: errorHub,
+			fatalHub: fatalHub,
+		}
+	})
+	return Logger
 }
 
-// LoggerType wrap logrus.Logger type
 type LoggerType struct {
-	stdout *logrus.Logger
-	stderr *logrus.Logger
+	stdout   *logrus.Logger
+	stderr   *logrus.Logger
+	warnHub  *sentry.Hub
+	errorHub *sentry.Hub
+	fatalHub *sentry.Hub
 }
 
 // WithField wrap logrus function
@@ -79,26 +108,36 @@ func (t LoggerType) Printf(format string, args ...any) {
 
 // Warnf wrap logrus function
 func (t LoggerType) Warnf(format string, args ...any) {
+	t.warnHub.CaptureException(fmt.Errorf(format, args...))
+	// t.captureWithSentry(sentry.LevelWarning, format, args...)
 	t.stdout.Warnf(format, args...)
 }
 
 // Warningf wrap logrus function
 func (t LoggerType) Warningf(format string, args ...any) {
+	t.warnHub.CaptureException(fmt.Errorf(format, args...))
+	// t.captureWithSentry(sentry.LevelWarning, format, args...)
 	t.stdout.Warningf(format, args...)
 }
 
 // Errorf wrap logrus function
-func (t LoggerType) Errorf(format string, args ...any) {
+func (t *LoggerType) Errorf(format string, args ...any) {
+	t.errorHub.CaptureException(fmt.Errorf(format, args...))
+	// t.captureWithSentry(sentry.LevelError, format, args...)
 	t.stderr.Errorf(format, args...)
 }
 
 // Fatalf wrap logrus function
 func (t LoggerType) Fatalf(format string, args ...any) {
+	t.fatalHub.CaptureException(fmt.Errorf(format, args...))
+	// t.captureWithSentry(sentry.LevelFatal, format, args...)
 	t.stderr.Fatalf(format, args...)
 }
 
 // Panicf wrap logrus function
 func (t LoggerType) Panicf(format string, args ...any) {
+	t.fatalHub.CaptureException(fmt.Errorf(format, args...))
+	// t.captureWithSentry(sentry.LevelFatal, format, args...)
 	t.stderr.Panicf(format, args...)
 }
 
