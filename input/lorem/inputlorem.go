@@ -51,16 +51,16 @@ func (t *loremTemplate) TimeFormat(layout string) string {
 	return t.timestamp.Format(layout)
 }
 
-func (t *loremTemplate) Word(min, max int) string {
-	return lorem.Word(min, max)
+func (t *loremTemplate) Word(minCount, maxCount int) string {
+	return lorem.Word(minCount, maxCount)
 }
 
-func (t *loremTemplate) Sentence(min, max int) string {
-	return lorem.Sentence(min, max)
+func (t *loremTemplate) Sentence(minCount, maxCount int) string {
+	return lorem.Sentence(minCount, maxCount)
 }
 
-func (t *loremTemplate) Paragraph(min, max int) string {
-	return lorem.Paragraph(min, max)
+func (t *loremTemplate) Paragraph(minCount, maxCount int) string {
+	return lorem.Paragraph(minCount, maxCount)
 }
 
 func (t *loremTemplate) Email() string {
