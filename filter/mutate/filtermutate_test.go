@@ -147,6 +147,40 @@ filter:
 	}
 }
 
+func Test_filter_mutate_module_replace_with_extrapolation(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+
+	ctx := context.Background()
+	conf, err := config.LoadFromYAML([]byte(strings.TrimSpace(`
+debugch: true
+filter:
+  - type: mutate
+    replace: ["key", ",", "%{spacer}"]
+	`)))
+	require.NoError(err)
+	require.NoError(conf.Start(ctx))
+
+	expectedEvent := logevent.LogEvent{
+		Extra: map[string]any{
+			"key":    "foo~~bar",
+			"spacer": "~~",
+		},
+	}
+
+	conf.TestInputEvent(logevent.LogEvent{
+		Extra: map[string]any{
+			"key":    "foo,bar",
+			"spacer": "~~",
+		},
+	})
+
+	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+		require.Equal(expectedEvent, event)
+	}
+}
 func Test_filter_mutate_module_merge(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)

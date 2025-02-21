@@ -8,8 +8,8 @@ jobs:
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - uses: golangci/golangci-lint-action@v2
+    - uses: actions/checkout@v4
+    - uses: golangci/golangci-lint-action@v3
       with:
         args: --verbose --timeout=5m
 
@@ -22,11 +22,11 @@ jobs:
     env:
       CACHE_VERSION: 2021-10-20-0
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-go@v2
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go-version }}
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       with:
         path: |
           ~/go/pkg/mod
