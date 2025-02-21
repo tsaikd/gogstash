@@ -70,7 +70,7 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 	}
 	message.SetHeader("Subject", t.Subject)
 
-	if t.Attachments != nil && len(t.Attachments) > 0 {
+	if len(t.Attachments) > 0 {
 		for _, v := range t.Attachments {
 			message.Attach(v)
 		}
