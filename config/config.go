@@ -46,6 +46,12 @@ type Config struct {
 	// enable debug channel, used for testing
 	DebugChannel bool `json:"debugch,omitempty" yaml:"debugch"`
 
+	Sentry struct {
+		DSN                  string        `json:"dsn,omitempty" yaml:"dsn"`
+		SyncTransport        bool          `json:"syncTransport,omitempty" yaml:"syncTransport"`
+		SyncTransportTimeout time.Duration `json:"syncTransportTimeout,omitempty" yaml:"syncTransportTimeout"`
+	} `json:"sentry,omitempty" yaml:"sentry"`
+
 	chInFilter  MsgChan // channel from input to filter
 	chFilterOut MsgChan // channel from filter to output
 	chOutDebug  MsgChan // channel from output to debug

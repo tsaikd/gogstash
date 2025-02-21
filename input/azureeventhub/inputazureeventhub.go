@@ -127,7 +127,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 
 				for {
 					receiveCtx, receiveCtxCancel := context.WithTimeout(context.TODO(), time.Minute)
-					events, err := partitionClient.ReceiveEvents(receiveCtx, 100, nil)
+					events, _ := partitionClient.ReceiveEvents(receiveCtx, 100, nil)
 					receiveCtxCancel()
 
 					for {
@@ -159,6 +159,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 
 						// it's possible to get zero events if the partition is empty, or if no new events have arrived
 						// since your last receive.
+						checkpointLastUpdateFailed := false
 						if len(events) != 0 {
 							// Update the checkpoint with the last event received. If we lose ownership of this partition or
 							// have to restart the next owner will start from this point.
@@ -199,7 +200,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 
 					// Update the checkpoint with the last event received. If we lose ownership of this partition or
 					// have to restart the next owner will start from this point.
-					if err := partitionClient.UpdateCheckpoint(context.TODO(), events[len(events)-1]); err != nil {
+					if err := partitionClient.UpdateCheckpoint(context.TODO(), events[len(events)-1], &azeventhubs.UpdateCheckpointOptions{}); err != nil {
 						goglog.Logger.Warnf("Error during checkpoints update: %v for %s/%s", err, t.EventHub, partitionClient.PartitionID())
 						return
 					}

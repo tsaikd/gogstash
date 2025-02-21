@@ -52,9 +52,9 @@ func Test_output_statsd_module(t *testing.T) {
 				atomic.AddInt32(&cInc, 1) // increment
 			} else if s[j] == "Log.staging.all.decrement.200:-1|c" {
 				atomic.AddInt32(&cDec, 1) // decrement
-			} else if s[j] == "Log.staging.all.responce_time:0.12|ms" {
+			} else if s[j] == "Log.staging.all.response_time:0.12|ms" {
 				atomic.AddInt32(&cTiming, 1)
-			} else if s[j] == "Log.staging.all.responce_time2:0.12|ms" {
+			} else if s[j] == "Log.staging.all.response_time2:0.12|ms" {
 				atomic.AddInt32(&cTiming, 1)
 			} else if s[j] == "Log.staging.all.count.200:4|c" {
 				atomic.AddInt32(&cCount, 1)
@@ -89,9 +89,9 @@ output:
       - name: "all.gauge.%{logmsg.status}"
         value: "%{logmsg.count}"
     timing:
-      - name: "all.responce_time"
+      - name: "all.response_time"
         value: "%{logmsg.time}"
-      - name: "all.responce_time2"
+      - name: "all.response_time2"
         value: "%{logmsg.time}"
     `)))
 	require.NoError(err)

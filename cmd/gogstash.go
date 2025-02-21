@@ -4,7 +4,9 @@ import (
 	"context"
 	"net/http"
 	"runtime"
+	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/futil"
 
@@ -24,7 +26,7 @@ func gogstash(
 	debug bool,
 	pprofAddress string,
 	workerMode bool,
-) error {
+) (err error) {
 	if debug {
 		goglog.Logger.SetLevel(logrus.DebugLevel)
 	}
@@ -40,6 +42,31 @@ func gogstash(
 	conf, err := config.LoadFromFile(confpath)
 	if err != nil {
 		return err
+	}
+
+	if conf.Sentry.DSN != "" {
+		var transport sentry.Transport
+		if conf.Sentry.SyncTransport {
+			syncTransport := sentry.NewHTTPSyncTransport()
+			if conf.Sentry.SyncTransportTimeout > 0 {
+				syncTransport.Timeout = conf.Sentry.SyncTransportTimeout
+			}
+			transport = syncTransport
+		}
+
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn:              conf.Sentry.DSN,
+			TracesSampleRate: 1.0,
+			Transport:        transport,
+		}); err != nil {
+			return err
+		}
+		goglog.Logger.ConfigSentry(sentry.CurrentHub())
+
+		defer func() {
+			goglog.Logger.Trace(err)
+			goglog.Logger.FlushSentry(5 * time.Second)
+		}()
 	}
 
 	// use worker mode when user need more than one worker
