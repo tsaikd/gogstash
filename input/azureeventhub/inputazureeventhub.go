@@ -127,17 +127,55 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 
 				for {
 					receiveCtx, receiveCtxCancel := context.WithTimeout(context.TODO(), time.Minute)
-					events, err := partitionClient.ReceiveEvents(receiveCtx, 100, nil)
+					events, _ := partitionClient.ReceiveEvents(receiveCtx, 100, nil)
 					receiveCtxCancel()
 
-					if err != nil && !errors.Is(err, context.DeadlineExceeded) {
-						var eventHubError *azeventhubs.Error
-						if errors.As(err, &eventHubError) && eventHubError.Code == azeventhubs.ErrorCodeOwnershipLost {
-							goglog.Logger.Debugf("Partition rebalanced %s/%s", t.EventHub, partitionClient.PartitionID())
-							return
-						} else {
-							goglog.Logger.Errorf("Error while processing partition: %v", err)
-							return
+					for {
+						if ctx.Err() == context.Canceled {
+							break
+						}
+
+						receiveCtx, receiveCtxCancel := context.WithTimeout(ctx, time.Minute)
+						events, err := partitionClient.ReceiveEvents(receiveCtx, 100, nil)
+						receiveCtxCancel()
+
+						if err != nil && !errors.Is(err, context.DeadlineExceeded) {
+							if ctx.Err() != context.Canceled {
+								if eventHubError := (*azeventhubs.Error)(nil); errors.As(err, &eventHubError) && eventHubError.Code == azeventhubs.ErrorCodeOwnershipLost {
+									goglog.Logger.Debugln("Partition rebalanced")
+								} else {
+									goglog.Logger.Errorf("Error while processing partition: %v", err)
+								}
+							}
+							break
+						}
+
+						for _, event := range events {
+							ok, err := t.Codec.Decode(ctx, []byte(event.Body), t.Extras, []string{}, msgChan)
+							if !ok {
+								goglog.Logger.Errorf("Error while decoding message to msg chan: %v", err)
+							}
+						}
+
+						// it's possible to get zero events if the partition is empty, or if no new events have arrived
+						// since your last receive.
+						checkpointLastUpdateFailed := false
+						if len(events) != 0 {
+							// Update the checkpoint with the last event received. If we lose ownership of this partition or
+							// have to restart the next owner will start from this point.
+							if err := partitionClient.UpdateCheckpoint(ctx, events[len(events)-1], &azeventhubs.UpdateCheckpointOptions{}); err != nil {
+								if ctx.Err() != context.Canceled {
+									goglog.Logger.Warnf("Error during checkpoints update: %v", err)
+									checkpointLastUpdateFailed = true
+								}
+							} else {
+								if checkpointLastUpdateFailed {
+									checkpointLastUpdateFailed = false
+									goglog.Logger.Warnf("checkpoints updated")
+								} else {
+									goglog.Logger.Debugln("checkpoints updated")
+								}
+							}
 						}
 					}
 
@@ -162,7 +200,7 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 
 					// Update the checkpoint with the last event received. If we lose ownership of this partition or
 					// have to restart the next owner will start from this point.
-					if err := partitionClient.UpdateCheckpoint(context.TODO(), events[len(events)-1]); err != nil {
+					if err := partitionClient.UpdateCheckpoint(context.TODO(), events[len(events)-1], &azeventhubs.UpdateCheckpointOptions{}); err != nil {
 						goglog.Logger.Warnf("Error during checkpoints update: %v for %s/%s", err, t.EventHub, partitionClient.PartitionID())
 						return
 					}

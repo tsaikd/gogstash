@@ -3,7 +3,9 @@ gogstash
 
 Logstash like, written in golang
 
-[![Build Status](https://github.com/tsaikd/gogstash/actions/workflows/build.yml/badge.svg)](https://github.com/tsaikd/gogstash/actions/workflows/build.yml)
+[![Build Status](https://github.com/jbuchbinder/gogstash/actions/workflows/build.yml/badge.svg)](https://github.com/jbuchbinder/gogstash/actions/workflows/build.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jbuchbinder/gogstash)](https://goreportcard.com/report/github.com/jbuchbinder/gogstash)
+[![GoDoc](https://godoc.org/github.com/jbuchbinder/gogstash?status.png)](https://godoc.org/github.com/jbuchbinder/gogstash)
 
 * Download gogstash from github
 	* [check latest version](https://github.com/tsaikd/gogstash/releases)
