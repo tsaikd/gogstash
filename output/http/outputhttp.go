@@ -32,12 +32,15 @@ var (
 // OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
-	URLs                []string `json:"urls" yaml:"urls"`                           // Array of HTTP connection strings
-	AcceptedHttpResult  []int    `json:"http_status_codes" yaml:"http_status_codes"` // HTTP codes that indicate success
-	PermanentHttpErrors []int    `json:"http_error_codes" yaml:"http_error_codes"`   // HTTP codes that will not retry an event
-	RetryInterval       uint     `json:"retry_interval" yaml:"retry_interval"`       // seconds before a new retry in case on error
-	IgnoreSSL           bool     `json:"ignore_ssl" yaml:"ignore_ssl"`
-	MaxQueueSize        int      `json:"max_queue_size" yaml:"max_queue_size"` // max size of queue before deleting events (-1=no limit, 0=disable)
+	URLs                []string          `json:"urls" yaml:"urls"`                           // Array of HTTP connection strings
+	AcceptedHttpResult  []int             `json:"http_status_codes" yaml:"http_status_codes"` // HTTP codes that indicate success
+	PermanentHttpErrors []int             `json:"http_error_codes" yaml:"http_error_codes"`   // HTTP codes that will not retry an event
+	RetryInterval       uint              `json:"retry_interval" yaml:"retry_interval"`       // seconds before a new retry in case on error
+	IgnoreSSL           bool              `json:"ignore_ssl" yaml:"ignore_ssl"`               //
+	ContentType         string            `json:"content_type" yaml:"content_type"`           // HTTP content type
+	Format              string            `json:"format" yaml:"format"`                       // Format of data (defaults to json)
+	Headers             map[string]string `json:"headers" yaml:"headers"`                     // Map of additional headers
+	MaxQueueSize        int               `json:"max_queue_size" yaml:"max_queue_size"`       // max size of queue before deleting events (-1=no limit, 0=disable)
 
 	acceptedHttpResult  map[int]struct{} // a map containing the accepted result codes
 	permanentHttpErrors map[int]struct{} // a map containing the permanent error codes
@@ -117,8 +120,17 @@ func (t *OutputConfig) OutputEvent(ctx context.Context, event logevent.LogEvent)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
+	if t.ContentType != "" {
+		req.Header.Set("Content-Type", t.ContentType)
+	} else {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	req.Header.Set("User-Agent", "gogstash/output"+ModuleName)
+
+	// Add custom headers, if they exist
+	for k, v := range t.Headers {
+		req.Header.Set(k, v)
+	}
 
 	resp, err := t.httpClient.Do(req)
 	if err != nil {
