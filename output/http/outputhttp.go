@@ -128,10 +128,8 @@ func (t *OutputConfig) OutputEvent(ctx context.Context, event logevent.LogEvent)
 	req.Header.Set("User-Agent", "gogstash/output"+ModuleName)
 
 	// Add custom headers, if they exist
-	if t.Headers != nil {
-		for k, v := range t.Headers {
-			req.Header.Set(k, v)
-		}
+	for k, v := range t.Headers {
+		req.Header.Set(k, v)
 	}
 
 	resp, err := t.httpClient.Do(req)
