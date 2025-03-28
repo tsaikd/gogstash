@@ -24,8 +24,6 @@ type Codec struct {
 }
 
 var (
-	// nameMatch            = `(\S+)\{([^\}]+)\}`
-	// nameMatchRegex       *regexp.Regexp
 	fullStringMatch      = `(\S+)\{([^\}]+)\}\s+(.+)`
 	fullStringMatchRegex *regexp.Regexp
 )
@@ -33,12 +31,7 @@ var (
 // InitHandler initialize the codec plugin
 func InitHandler(context.Context, config.ConfigRaw) (config.TypeCodecConfig, error) {
 	var err error
-	// nameMatchRegex, err = regexp.Compile(nameMatch)
-	// if err != nil {
-	// 	goto INITPCODEC
-	// }
 	fullStringMatchRegex, err = regexp.Compile(fullStringMatch)
-	// INITPCODEC:
 	return &Codec{
 		CodecConfig: config.CodecConfig{
 			CommonConfig: config.CommonConfig{
@@ -106,7 +99,6 @@ func (c *Codec) Decode(ctx context.Context, data any, eventExtra map[string]any,
 			e := event
 			err = c.decodePrometheusEvent(line, savetype, &e)
 			if err == nil {
-				// fmt.Printf("event = %#v\n", e)
 				msgChan <- e
 				ok = true
 			}
@@ -157,11 +149,9 @@ func (c *Codec) decodePrometheusEvent(line string, typeref map[string]string, ev
 
 	m := fullStringMatchRegex.FindStringSubmatch(line)
 	if len(m) < 4 {
-		// fmt.Printf("m[] = %#v\n", m)
 		goglog.Logger.Errorf("incorrect bracket format")
 		return config.ErrorInitCodecFailed1
 	}
-	// fmt.Printf("m = %#v\n", m)
 
 	name = strings.Split(line, "{")[0]
 	event.Extra["name"] = name
