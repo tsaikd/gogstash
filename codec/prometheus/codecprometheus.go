@@ -24,8 +24,8 @@ type Codec struct {
 }
 
 var (
-	nameMatch            = `(\S+)\{([^\}]+)\}`
-	nameMatchRegex       *regexp.Regexp
+	// nameMatch            = `(\S+)\{([^\}]+)\}`
+	// nameMatchRegex       *regexp.Regexp
 	fullStringMatch      = `(\S+)\{([^\}]+)\}\s+(.+)`
 	fullStringMatchRegex *regexp.Regexp
 )
@@ -33,12 +33,12 @@ var (
 // InitHandler initialize the codec plugin
 func InitHandler(context.Context, config.ConfigRaw) (config.TypeCodecConfig, error) {
 	var err error
-	nameMatchRegex, err = regexp.Compile(nameMatch)
-	if err != nil {
-		goto INITPCODEC
-	}
+	// nameMatchRegex, err = regexp.Compile(nameMatch)
+	// if err != nil {
+	// 	goto INITPCODEC
+	// }
 	fullStringMatchRegex, err = regexp.Compile(fullStringMatch)
-INITPCODEC:
+	// INITPCODEC:
 	return &Codec{
 		CodecConfig: config.CodecConfig{
 			CommonConfig: config.CommonConfig{
@@ -60,11 +60,11 @@ func (c *Codec) Decode(ctx context.Context, data any, eventExtra map[string]any,
 	event.AddTag(tags...)
 
 	datastr := ""
-	switch data.(type) {
+	switch data := data.(type) {
 	case string:
-		datastr = data.(string)
+		datastr = data
 	case []byte:
-		datastr = string(data.([]byte))
+		datastr = string(data)
 	default:
 		err = config.ErrDecodeData
 		event.AddTag(ErrorTag)
@@ -86,7 +86,7 @@ func (c *Codec) Decode(ctx context.Context, data any, eventExtra map[string]any,
 			continue
 		}
 
-		//fmt.Printf("Decode line = '%s'\n", line)
+		// fmt.Printf("Decode line = '%s'\n", line)
 		// Preserve formatted type definitions
 		if strings.HasPrefix(line, "# TYPE") {
 			p := strings.Split(line, " ")
@@ -106,14 +106,12 @@ func (c *Codec) Decode(ctx context.Context, data any, eventExtra map[string]any,
 			e := event
 			err = c.decodePrometheusEvent(line, savetype, &e)
 			if err == nil {
-				//fmt.Printf("event = %#v\n", e)
+				// fmt.Printf("event = %#v\n", e)
 				msgChan <- e
 				ok = true
 			}
 		}
-
 	}
-
 	return ok, err
 }
 
@@ -123,7 +121,7 @@ func (c *Codec) DecodeEvent(msg []byte, event *logevent.LogEvent) (err error) {
 
 // decodePrometheusEvent decodes 'data' as prometheus format to event
 func (c *Codec) decodePrometheusEvent(line string, typeref map[string]string, event *logevent.LogEvent) (err error) {
-	//fmt.Printf("decodePrometheusEvent line = '%s'\n", line)
+	// fmt.Printf("decodePrometheusEvent line = '%s'\n", line)
 	// If the pointer is empty, raise error
 	if event == nil {
 		goglog.Logger.Errorf("Provided DecodeEvent target event pointer is nil")
@@ -138,14 +136,14 @@ func (c *Codec) decodePrometheusEvent(line string, typeref map[string]string, ev
 
 	p := strings.Split(line, " ")
 	if len(p) < 2 {
-		return
+		return err
 	}
 	name := p[0]
 	value := strings.TrimSpace(strings.Join(p[1:], " "))
 
 	// Detect bracket format
-	if !fullStringMatchRegex.Match([]byte(line)) {
-		//fmt.Printf("Does not match regex!!!\n")
+	if !fullStringMatchRegex.MatchString(line) {
+		// fmt.Printf("Does not match regex!!!\n")
 		// Deal with straight name/value pair
 		event.Extra["name"] = name
 		event.Extra["value"] = value
@@ -154,16 +152,16 @@ func (c *Codec) decodePrometheusEvent(line string, typeref map[string]string, ev
 			event.Extra["type"] = t
 		}
 		c.populateEventExtras(event)
-		return
+		return err
 	}
 
 	m := fullStringMatchRegex.FindStringSubmatch(line)
 	if len(m) < 4 {
-		//fmt.Printf("m[] = %#v\n", m)
+		// fmt.Printf("m[] = %#v\n", m)
 		goglog.Logger.Errorf("incorrect bracket format")
 		return config.ErrorInitCodecFailed1
 	}
-	//fmt.Printf("m = %#v\n", m)
+	// fmt.Printf("m = %#v\n", m)
 
 	name = strings.Split(line, "{")[0]
 	event.Extra["name"] = name
@@ -183,7 +181,7 @@ func (c *Codec) decodePrometheusEvent(line string, typeref map[string]string, ev
 	}
 	event.Extra["dimensions"] = dimensions
 
-	return
+	return err
 }
 
 // Encode encodes the event to a JSON encoded message
