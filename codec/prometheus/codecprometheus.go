@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -138,7 +139,10 @@ func (c *Codec) decodePrometheusEvent(line string, typeref map[string]string, ev
 		// fmt.Printf("Does not match regex!!!\n")
 		// Deal with straight name/value pair
 		event.Extra["name"] = name
-		event.Extra["value"] = value
+		event.Extra["value"], err = strconv.ParseFloat(value, 64)
+		if err != nil {
+			event.Extra["value"] = value
+		}
 		t, ok := typeref[name]
 		if ok {
 			event.Extra["type"] = t
@@ -155,7 +159,10 @@ func (c *Codec) decodePrometheusEvent(line string, typeref map[string]string, ev
 
 	name = strings.Split(line, "{")[0]
 	event.Extra["name"] = name
-	event.Extra["value"] = strings.Split(line, "}")[1]
+	event.Extra["value"], err = strconv.ParseFloat(strings.Split(line, "}")[1], 64)
+	if err != nil {
+		event.Extra["value"] = strings.Split(line, "}")[1]
+	}
 	t, ok := typeref[name]
 	if ok {
 		event.Extra["type"] = t
