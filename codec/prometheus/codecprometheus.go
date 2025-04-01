@@ -100,8 +100,12 @@ func (c *Codec) Decode(ctx context.Context, data any, eventExtra map[string]any,
 			e := event
 			err = c.decodePrometheusEvent(line, savetype, &e)
 			if err == nil {
-				msgChan <- e
-				ok = true
+				select {
+				case <-ctx.Done():
+					// error handling ...
+				case msgChan <- e:
+					ok = true
+				}
 			}
 		}
 	}
