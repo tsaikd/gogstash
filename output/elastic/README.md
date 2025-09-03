@@ -38,6 +38,12 @@ output:
     # uses the simpleclient connection type instead of the normal client, helpful in cases you get error messages even when the client can connect
     simple_client: true
 
+    # (optional) default: “index”
+    # op_type controls the bulk request operation type.
+    # - “index”: (default) use BulkIndexRequest, works with regular indices
+    # - “create”: use BulkCreateRequest, required when writing to Elasticsearch Data Streams
+    op_type: “index”
+
     # (optional) default: 1000
     # BulkActions specifies when to flush based on the number of actions
     # currently added. Defaults to 1000 and can be set to -1 to be disabled.

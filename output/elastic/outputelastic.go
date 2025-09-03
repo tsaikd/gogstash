@@ -29,6 +29,7 @@ type OutputConfig struct {
 	DocumentType    string   `json:"document_type"`     // type name to log
 	DocumentID      string   `json:"document_id"`       // id to log, used if you want to control id format
 	RetryOnConflict int      `json:"retry_on_conflict"` // the number of times Elasticsearch should internally retry an update/upserted document
+	OpType          string   `json:"op_type"`           // allowed: "index" | "create"
 	Username        string   `json:"username"`          // basic auth username to Elasticsearch
 	Password        string   `json:"password"`          // basic auth password to Elasticsearch
 	SimpleClient    bool     `json:"simple_client"`     // if set uses simpleclient instead of newclient, disables some functionality
@@ -76,6 +77,7 @@ func DefaultOutputConfig() OutputConfig {
 			},
 		},
 		RetryOnConflict:                  1,
+		OpType:                           "index",
 		BulkActions:                      1000,    // 1000 actions
 		BulkSize:                         5 << 20, // 5 MB
 		BulkFlushInterval:                30 * time.Second,
@@ -199,12 +201,22 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 	index = strings.ToLower(index)
 	id := event.Format(t.DocumentID)
 
-	indexRequest := elastic.NewBulkIndexRequest().
-		Index(index).
-		RetryOnConflict(t.RetryOnConflict).
-		Id(id).
-		Doc(event)
-	t.processor.Add(indexRequest)
+	// Data streams only support op_type='create' in Bulk API.
+	// When OpType is "create", we use BulkCreateRequest and do not set RetryOnConflict.
+	if strings.EqualFold(t.OpType, "create") {
+		createReq := elastic.NewBulkCreateRequest().
+			Index(index).
+			Id(id).
+			Doc(event)
+		t.processor.Add(createReq)
+	} else {
+		indexReq := elastic.NewBulkIndexRequest().
+			Index(index).
+			RetryOnConflict(t.RetryOnConflict).
+			Id(id).
+			Doc(event)
+		t.processor.Add(indexReq)
+	}
 
 	return
 }
