@@ -3,6 +3,7 @@ package modloader
 import (
 	codecazureeventhubjson "github.com/tsaikd/gogstash/codec/azureeventhubjson"
 	codecjson "github.com/tsaikd/gogstash/codec/json"
+	codecprometheus "github.com/tsaikd/gogstash/codec/prometheus"
 	"github.com/tsaikd/gogstash/config"
 	filteraddfield "github.com/tsaikd/gogstash/filter/addfield"
 	filtercond "github.com/tsaikd/gogstash/filter/cond"
@@ -115,4 +116,5 @@ func init() {
 	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
 	config.RegistCodecHandler(codecazureeventhubjson.ModuleName, codecazureeventhubjson.InitHandler)
+	config.RegistCodecHandler(codecprometheus.ModuleName, codecprometheus.InitHandler)
 }
