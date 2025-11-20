@@ -1,84 +1,97 @@
-linters-settings:
-  dupl:
-    threshold: 100
-  goconst:
-    min-len: 4
-    min-occurrences: 2
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-checks:
-      - dupImport # https://github.com/go-critic/go-critic/issues/845
-      - emptyStringTest
-      - hugeParam
-      - ifElseChain
-      - paramTypeCombine
-      - importShadow
-      - sprintfQuotedString
-      - singleCaseSwitch
-      - exitAfterDefer # Remove in the future
-      - whyNoLint # Remove in the future
-      - rangeValCopy # Remove in the future
-      - defaultCaseOrder # Remove in the future
-      - deferInLoop # Remove in the future
-  gocyclo:
-    min-complexity: 30 # Recommended between 10-20
-  gofmt:
-    rewrite-rules:
-      - pattern: 'interface{}'
-        replacement: 'any'
-  goimports:
-    local-prefixes: github.com/tsaikd/gogstash
-
-  lll:
-    line-length: 110
-  misspell:
-    locale: US
-  nolintlint:
-    allow-unused: false # report any unused nolint directives
-    require-specific: false # don't require nolint directives to be specific about which linter is being skipped
-  revive:
-    rules:
-      - name: unexported-return
-        disabled: true
-      - name: unused-parameter
-
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
     - bodyclose
     - copyloopvar
     - dogsled
-      #- dupl
     - errcheck
     - goconst
     - gocritic
     - gocyclo
-    - gofmt
-    - goimports
-      #- gomnd
     - goprintffuncname
-      #- gosec
-    - gosimple
     - govet
     - ineffassign
-      #- lll
     - misspell
     - nakedret
-    - noctx
+    # - noctx
     - nolintlint
-      #- revive
     - staticcheck
-      #- stylecheck
-    - typecheck
-      #- unconvert
-      #- unparam
     - unused
     - whitespace
-
-run:
-  timeout: 5m
+  settings:
+    dupl:
+      threshold: 100
+    goconst:
+      min-len: 4
+      min-occurrences: 2
+    gocritic:
+      disabled-checks:
+        - dupImport
+        - emptyStringTest
+        - hugeParam
+        - ifElseChain
+        - paramTypeCombine
+        - importShadow
+        - sprintfQuotedString
+        - singleCaseSwitch
+        - exitAfterDefer
+        - whyNoLint
+        - rangeValCopy
+        - defaultCaseOrder
+        - deferInLoop
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+    gocyclo:
+      min-complexity: 30
+    lll:
+      line-length: 110
+    misspell:
+      locale: US
+    nolintlint:
+      require-specific: false
+      allow-unused: false
+    revive:
+      rules:
+        - name: unexported-return
+          disabled: true
+        - name: unused-parameter
+    staticcheck:
+      checks:
+        - all
+        - '-QF1008'
+        - '-ST1003'
+        - '-ST1016'
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    gofmt:
+      rewrite-rules:
+        - pattern: interface{}
+          replacement: any
+    goimports:
+      local-prefixes:
+        - github.com/tsaikd/gogstash
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

@@ -46,21 +46,22 @@ func Test_output_statsd_module(t *testing.T) {
 			l--
 		}
 		for j := 0; j < l; j++ {
-			if s[j] == "Log.staging.all.increment.200:1|c" {
+			switch s[j] {
+			case "Log.staging.all.increment.200:1|c":
 				atomic.AddInt32(&cInc, 1) // increment
-			} else if s[j] == "Log.staging.all.increment2.200:1|c" {
+			case "Log.staging.all.increment2.200:1|c":
 				atomic.AddInt32(&cInc, 1) // increment
-			} else if s[j] == "Log.staging.all.decrement.200:-1|c" {
+			case "Log.staging.all.decrement.200:-1|c":
 				atomic.AddInt32(&cDec, 1) // decrement
-			} else if s[j] == "Log.staging.all.response_time:0.12|ms" {
+			case "Log.staging.all.response_time:0.12|ms":
 				atomic.AddInt32(&cTiming, 1)
-			} else if s[j] == "Log.staging.all.response_time2:0.12|ms" {
+			case "Log.staging.all.response_time2:0.12|ms":
 				atomic.AddInt32(&cTiming, 1)
-			} else if s[j] == "Log.staging.all.count.200:4|c" {
+			case "Log.staging.all.count.200:4|c":
 				atomic.AddInt32(&cCount, 1)
-			} else if s[j] == "Log.staging.all.gauge.200:4|g" {
+			case "Log.staging.all.gauge.200:4|g":
 				atomic.AddInt32(&cGauge, 1)
-			} else {
+			default:
 				t.Errorf("invalid output [%d of %d]: %q", j, len(s), s[j])
 			}
 		}

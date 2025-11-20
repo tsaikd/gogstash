@@ -20,7 +20,7 @@ type codecOutput struct {
 	queue       Queue           // our queue
 	ch          chan []byte     // the channel we will receive on
 	ctx         context.Context // to listen for stop signal
-	FailMsgId   []uint32        // received message # to fail on
+	FailMsgID   []uint32        // received message # to fail on
 }
 
 // background runs in the background, counting number of successfully received messages
@@ -32,8 +32,8 @@ func (c *codecOutput) background() {
 		case msg := <-c.ch:
 			id := atomic.AddUint32(&c.numReceived, 1)
 			var failed bool
-			for x := range c.FailMsgId {
-				if c.FailMsgId[x] == id {
+			for x := range c.FailMsgID {
+				if c.FailMsgID[x] == id {
 					failed = true
 					break
 				}
@@ -66,13 +66,12 @@ func (c *codecOutput) OutputEvent(ctx context.Context, event logevent.LogEvent) 
 }
 
 func TestSimpleQueueCodec(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	o := &codecOutput{
 		queue:     nil,
 		ch:        make(chan []byte, 10),
 		ctx:       ctx,
-		FailMsgId: []uint32{2},
+		FailMsgID: []uint32{2},
 	}
 	control := newControlCounter()
 	q := NewSimpleQueue(ctx, control, o, o.ch, 5, 1)
@@ -95,7 +94,7 @@ func TestSimpleQueueCodec(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	time.Sleep(300 * time.Millisecond)
+	time.Sleep(900 * time.Millisecond)
 	if atomic.LoadUint32(&o.numQueued) != 1 || atomic.LoadUint32(&o.numReceived) != 2 || atomic.LoadUint32(&o.numSuccess) != 1 {
 		t.Errorf("Queueing does not work, %v", *o)
 		return

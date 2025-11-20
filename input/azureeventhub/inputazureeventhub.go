@@ -86,8 +86,8 @@ func (t *InputConfig) Start(ctx context.Context, msgChan chan<- logevent.LogEven
 
 	// Create a processor to load balance eventhub partitiond
 
-	var earliest bool = t.OffsetEarliest
-	var latest bool = !t.OffsetEarliest
+	earliest := t.OffsetEarliest
+	latest := !t.OffsetEarliest
 
 	processor, err := azeventhubs.NewProcessor(consumerClient, checkpointStore, &azeventhubs.ProcessorOptions{
 		LoadBalancingStrategy: azeventhubs.ProcessorStrategyBalanced,

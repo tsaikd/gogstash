@@ -113,8 +113,8 @@ func InitHandler(
 	return &conf, nil
 }
 
-// not_supported is copied from ip2proxy and is the field entry for each field that is not supported by the current database
-const not_supported string = "NOT SUPPORTED"
+// notSupported is copied from ip2proxy and is the field entry for each field that is not supported by the current database
+const notSupported string = "NOT SUPPORTED"
 
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (logevent.LogEvent, bool) {
@@ -151,7 +151,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 	}
 	m := make(map[string]string)
 	for k, v := range record {
-		if v != not_supported {
+		if v != notSupported {
 			m[k] = v
 		}
 	}
@@ -170,16 +170,16 @@ func (f *FilterConfig) privateIP(ip net.IP) bool {
 
 // reloadFile reloads a new file from disk and invalidates the cache
 func (fc *FilterConfig) reloadFile() {
-	newDb, err := ip2proxy.OpenDB(fc.DBPath)
+	newDB, err := ip2proxy.OpenDB(fc.DBPath)
 	if err != nil {
 		goglog.Logger.Errorf("%s failed to update %s: %s", ModuleName, fc.DBPath, err.Error())
 		return
 	}
-	oldDb := fc.db
+	oldDB := fc.db
 	fc.dbMtx.Lock()
-	fc.db = newDb
+	fc.db = newDB
 	fc.dbMtx.Unlock()
-	oldDb.Close()
+	oldDB.Close()
 	fc.cache.Purge()
 	goglog.Logger.Infof("%s reloaded file %s", ModuleName, fc.DBPath)
 }

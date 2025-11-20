@@ -100,6 +100,7 @@ func clearNetworkStats(network *docker.NetworkStats) {
 	}
 }
 
+//nolint:gocritic
 func clear(v any) {
 	p := reflect.ValueOf(v).Elem()
 	p.Set(reflect.Zero(p.Type()))

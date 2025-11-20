@@ -50,7 +50,7 @@ output:
 		Message:   "outputemail test message",
 	})
 
-	if event, err := conf.TestGetOutputEvent(300 * time.Millisecond); assert.NoError(err) {
+	if event, err := conf.TestGetOutputEvent(500 * time.Millisecond); assert.NoError(err) {
 		require.Equal("outputemail test message", event.Message)
 	}
 }

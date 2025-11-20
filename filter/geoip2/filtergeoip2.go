@@ -224,17 +224,17 @@ func (f *FilterConfig) privateIP(ip net.IP) bool {
 
 // reloadFile reloads a new file from disk and invalidates the cache
 func (fc *FilterConfig) reloadFile() {
-	newDb, err := geoip2.Open(fc.DBPath)
+	newDB, err := geoip2.Open(fc.DBPath)
 	if err != nil {
 		goglog.Logger.Errorf("%s failed to update %s: %s", ModuleName, fc.DBPath, err.Error())
 		return
 	}
-	oldDb := fc.db
+	oldDB := fc.db
 	fc.dbMtx.Lock()
-	fc.db = newDb
+	fc.db = newDB
 	fc.dbMtx.Unlock()
 	fc.cache.Purge()
-	oldDb.Close()
+	oldDB.Close()
 	goglog.Logger.Infof("%s reloaded file %s", ModuleName, fc.DBPath)
 }
 

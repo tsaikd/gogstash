@@ -72,16 +72,16 @@ func DefaultFilterConfig() FilterConfig {
 
 // reloadFile reloads the file from disk invalidates the cache
 func (fc *FilterConfig) reloadFile() {
-	newDb, err := ip2location.OpenDB(fc.DBPath)
+	newDB, err := ip2location.OpenDB(fc.DBPath)
 	if err != nil {
 		goglog.Logger.Errorf("ip2location failed to update %s: %s", fc.DBPath, err.Error())
 		return
 	}
-	oldDb := fc.db
+	oldDB := fc.db
 	fc.dbMtx.Lock()
-	fc.db = newDb
+	fc.db = newDB
 	fc.dbMtx.Unlock()
-	oldDb.Close()
+	oldDB.Close()
 	fc.cache.Purge()
 	goglog.Logger.Infof("ip2location reloaded file %s", fc.DBPath)
 }
@@ -169,8 +169,8 @@ func InitHandler(
 	return &conf, nil
 }
 
-// not_supported is copied from ip2location and is the field entry for each field that is not supported by the current database
-const not_supported string = "This parameter is unavailable for selected data file. Please upgrade the data file."
+// notSupported is copied from ip2location and is the field entry for each field that is not supported by the current database
+const notSupported string = "This parameter is unavailable for selected data file. Please upgrade the data file."
 
 // Event the main filter event
 func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (logevent.LogEvent, bool) {
@@ -213,11 +213,11 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 		"country_code": record.Country_short,
 		"country_name": record.Country_long,
 	}
-	if record.City != not_supported {
+	if record.City != notSupported {
 		m["city_name"] = record.City
 		m["region_name"] = record.Region
 	}
-	if record.Isp != not_supported {
+	if record.Isp != notSupported {
 		m["ISP"] = record.Isp
 	}
 	if record.Latitude != 0 || record.Longitude != 0 {

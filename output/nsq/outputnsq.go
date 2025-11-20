@@ -56,10 +56,10 @@ func InitHandler(
 	}
 
 	if conf.NSQ == "" {
-		return nil, errors.New("Missing NSQ server")
+		return nil, errors.New("missing NSQ server")
 	}
 	if conf.Topic == "" {
-		return nil, errors.New("Missing topic")
+		return nil, errors.New("missing topic")
 	}
 
 	conf.Codec, err = config.GetCodecOrDefault(ctx, raw["codec"])

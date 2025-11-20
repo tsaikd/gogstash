@@ -64,7 +64,7 @@ type sampleOutput struct {
 	queue       Queue         // our queue
 	target      uint32        // number of messages that we want to receive
 	doneCh      chan struct{} // closed when target # of messages has been received
-	FailMsgId   []uint32      // received message # to fail on
+	FailMsgID   []uint32      // received message # to fail on
 }
 
 func (s *sampleOutput) GetType() string {
@@ -76,8 +76,8 @@ const numMessages = 140
 func (s *sampleOutput) OutputEvent(ctx context.Context, event logevent.LogEvent) (err error) {
 	id := atomic.AddUint32(&s.numReceived, 1)
 	var failed bool
-	for x := range s.FailMsgId {
-		if s.FailMsgId[x] == id {
+	for x := range s.FailMsgID {
+		if s.FailMsgID[x] == id {
 			failed = true
 			break
 		}
@@ -98,7 +98,7 @@ func TestNewSimpleQueue1(t *testing.T) {
 	control := newControlCounter()
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	o := &sampleOutput{doneCh: make(chan struct{}), target: numMessages, FailMsgId: []uint32{1, 2, 100}}
+	o := &sampleOutput{doneCh: make(chan struct{}), target: numMessages, FailMsgID: []uint32{1, 2, 100}}
 	q := NewSimpleQueue(ctx, control, o, nil, numMessages, 1)
 	o.queue = q
 	// send four messages
@@ -118,7 +118,7 @@ func TestNewSimpleQueue1(t *testing.T) {
 		break
 	}
 	// check if we got the expected result
-	numFails := uint32(len(o.FailMsgId))
+	numFails := uint32(len(o.FailMsgID))
 	if o.numSent != numMessages {
 		t.Errorf("Received %v messages, expected %v messages", o.numSent, numMessages)
 	}

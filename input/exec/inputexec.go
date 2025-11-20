@@ -104,7 +104,7 @@ func (t *InputConfig) exec(msgChan chan<- logevent.LogEvent) {
 	}
 
 	switch t.MsgType {
-	case MsgTypeJson:
+	case MsgTypeJSON:
 		if err = jsoniter.Unmarshal([]byte(message), &extra); err != nil {
 			errs = append(errs, err)
 		} else {

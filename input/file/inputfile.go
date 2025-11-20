@@ -247,7 +247,7 @@ func (t *InputConfig) fileReadLoop(
 	}
 }
 
-func (self *InputConfig) fileWatchLoop(ctx context.Context, readEventChan chan fsnotify.Event, fpath string, op fsnotify.Op) (err error) {
+func (t *InputConfig) fileWatchLoop(ctx context.Context, readEventChan chan fsnotify.Event, fpath string, op fsnotify.Op) (err error) {
 	var (
 		event fsnotify.Event
 	)

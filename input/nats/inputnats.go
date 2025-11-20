@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/nats-io/nats.go"
+	nats "github.com/nats-io/nats.go"
 
 	codecjson "github.com/tsaikd/gogstash/codec/json"
 	"github.com/tsaikd/gogstash/config"

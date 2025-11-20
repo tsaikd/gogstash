@@ -18,56 +18,56 @@ type SinceDBInfo struct {
 	Offset int64 `json:"offset,omitempty"`
 }
 
-func (self *InputConfig) LoadSinceDBInfos() (err error) {
+func (t *InputConfig) LoadSinceDBInfos() (err error) {
 	var (
 		raw []byte
 	)
 	log.Debug("LoadSinceDBInfos")
-	self.SinceDBInfos = map[string]*SinceDBInfo{}
+	t.SinceDBInfos = map[string]*SinceDBInfo{}
 
-	if self.SinceDBPath == "" || self.SinceDBPath == devNull {
+	if t.SinceDBPath == "" || t.SinceDBPath == devNull {
 		log.Warnf("No valid sincedb path")
 		return
 	}
 
-	if !futil.IsExist(self.SinceDBPath) {
-		log.Debugf("sincedb not found: %q", self.SinceDBPath)
+	if !futil.IsExist(t.SinceDBPath) {
+		log.Debugf("sincedb not found: %q", t.SinceDBPath)
 		return
 	}
 
-	if raw, err = os.ReadFile(self.SinceDBPath); err != nil {
-		log.Errorf("Read sincedb failed: %q\n%s", self.SinceDBPath, err)
+	if raw, err = os.ReadFile(t.SinceDBPath); err != nil {
+		log.Errorf("Read sincedb failed: %q\n%s", t.SinceDBPath, err)
 		return
 	}
 
-	if err = jsoniter.Unmarshal(raw, &self.SinceDBInfos); err != nil {
-		log.Errorf("Unmarshal sincedb failed: %q\n%s", self.SinceDBPath, err)
+	if err = jsoniter.Unmarshal(raw, &t.SinceDBInfos); err != nil {
+		log.Errorf("Unmarshal sincedb failed: %q\n%s", t.SinceDBPath, err)
 		return
 	}
 
 	return
 }
 
-func (self *InputConfig) SaveSinceDBInfos() (err error) {
+func (t *InputConfig) SaveSinceDBInfos() (err error) {
 	var (
 		raw []byte
 	)
 	log.Debug("SaveSinceDBInfos")
-	self.SinceDBLastSaveTime = time.Now()
+	t.SinceDBLastSaveTime = time.Now()
 
-	if self.SinceDBPath == "" || self.SinceDBPath == devNull {
+	if t.SinceDBPath == "" || t.SinceDBPath == devNull {
 		log.Warnf("No valid sincedb path")
 		return
 	}
 
-	if raw, err = json.Marshal(self.SinceDBInfos); err != nil {
+	if raw, err = json.Marshal(t.SinceDBInfos); err != nil {
 		log.Errorf("Marshal sincedb failed: %s", err)
 		return
 	}
-	self.sinceDBLastInfosRaw = raw
+	t.sinceDBLastInfosRaw = raw
 
-	if err = os.WriteFile(self.SinceDBPath, raw, 0o664); err != nil {
-		log.Errorf("Write sincedb failed: %q\n%s", self.SinceDBPath, err)
+	if err = os.WriteFile(t.SinceDBPath, raw, 0o664); err != nil {
+		log.Errorf("Write sincedb failed: %q\n%s", t.SinceDBPath, err)
 		return
 	}
 

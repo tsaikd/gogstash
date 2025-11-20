@@ -10,12 +10,12 @@ type MsgType int8
 
 const (
 	MsgTypeText MsgType = 1 + iota
-	MsgTypeJson
+	MsgTypeJSON
 )
 
 var msgTypeEnum = enumutil.NewEnumFactory().
 	Add(MsgTypeText, "text").
-	Add(MsgTypeJson, "json").
+	Add(MsgTypeJSON, "json").
 	Build()
 
 func (t MsgType) String() string {

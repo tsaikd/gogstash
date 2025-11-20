@@ -248,8 +248,8 @@ func (w *UDPWriter) writeChunked(zBytes []byte) (err error) {
 	}
 	nChunks := uint8(nChunksI)
 	// use urandom to get a unique message id
-	msgId := make([]byte, 8)
-	n, err := io.ReadFull(rand.Reader, msgId)
+	msgID := make([]byte, 8)
+	n, err := io.ReadFull(rand.Reader, msgID)
 	if err != nil || n != 8 {
 		return fmt.Errorf("rand.Reader: %d/%s", n, err)
 	}
@@ -261,7 +261,7 @@ func (w *UDPWriter) writeChunked(zBytes []byte) (err error) {
 		// host/network byte order, because the spec only
 		// deals in individual bytes.
 		buf.Write(magicChunked) // magic
-		buf.Write(msgId)
+		buf.Write(msgID)
 		buf.WriteByte(i)
 		buf.WriteByte(nChunks)
 		// slice out our chunk from zBytes

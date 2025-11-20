@@ -113,10 +113,11 @@ func InitHandler(
 		sarConfig.Net.SASL.User = conf.User
 		sarConfig.Net.SASL.Password = conf.Password
 
-		if conf.SaslMechanism == "SCRAM-SHA-512" {
+		switch conf.SaslMechanism {
+		case "SCRAM-SHA-512":
 			sarConfig.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &SCRAMClient{HashGeneratorFcn: SHA512} }
 			sarConfig.Net.SASL.Mechanism = sarama.SASLTypeSCRAMSHA512
-		} else if conf.SaslMechanism == "SCRAM-SHA-256" {
+		case "SCRAM-SHA-256":
 			sarConfig.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &SCRAMClient{HashGeneratorFcn: SHA256} }
 			sarConfig.Net.SASL.Mechanism = sarama.SASLTypeSCRAMSHA256
 		}

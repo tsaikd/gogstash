@@ -26,7 +26,7 @@ type FilterConfig struct {
 	includeAll  bool
 
 	// url_decode params, "all_fields" or "*" decode all params values
-	UrlDecode []string `json:"url_decode"`
+	URLDecode []string `json:"url_decode"`
 	decodeAll bool
 
 	// prefix for param name, default: request_url_args_
@@ -45,7 +45,7 @@ func DefaultFilterConfig() FilterConfig {
 		},
 		Source:            "request_url",
 		IncludeKeys:       []string{"*"},
-		UrlDecode:         []string{"*"},
+		URLDecode:         []string{"*"},
 		Prefix:            "request_url_args_",
 		RemoveEmptyValues: true,
 	}
@@ -73,7 +73,7 @@ func InitHandler(
 		conf.includeAll = false
 	}
 
-	if len(conf.UrlDecode) > 0 && conf.UrlDecode[0] == "*" {
+	if len(conf.URLDecode) > 0 && conf.URLDecode[0] == "*" {
 		conf.decodeAll = true
 	} else {
 		conf.decodeAll = false
@@ -116,7 +116,7 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 			}
 		}
 	} else {
-		for _, k := range f.UrlDecode {
+		for _, k := range f.URLDecode {
 			if v := params.Get(k); v != "" {
 				if nv, err := url.PathUnescape(v); err != nil {
 					params.Set(k, nv)

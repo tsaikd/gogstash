@@ -67,7 +67,7 @@ func ToStringE(i any) (string, error) {
 	case error:
 		return s.Error(), nil
 	default:
-		return "", errors.New("Unable to Cast to string")
+		return "", errors.New("unable to Cast to string")
 	}
 }
 
@@ -173,10 +173,11 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 		return err
 	}
 
-	if !(resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNoContent) {
+	switch resp.StatusCode {
+	case http.StatusOK, http.StatusNoContent:
+		return nil
+	default:
 		goglog.Logger.Errorf("output loki  startCode: %v  error:%s", resp.StatusCode, body)
 		return err
 	}
-
-	return nil
 }

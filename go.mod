@@ -1,6 +1,6 @@
 module github.com/tsaikd/gogstash
 
-go 1.24.0
+go 1.25
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs v0.5.0
