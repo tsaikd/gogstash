@@ -39,6 +39,7 @@ import (
 	inputredis "github.com/tsaikd/gogstash/input/redis"
 	inputsocket "github.com/tsaikd/gogstash/input/socket"
 	outputamqp "github.com/tsaikd/gogstash/output/amqp"
+	outputclickhouse "github.com/tsaikd/gogstash/output/clickhouse"
 	outputcond "github.com/tsaikd/gogstash/output/cond"
 	outputelastic "github.com/tsaikd/gogstash/output/elastic"
 	outputelasticv5 "github.com/tsaikd/gogstash/output/elasticv5"
@@ -111,6 +112,7 @@ func init() {
 	config.RegistOutputHandler(outputfile.ModuleName, outputfile.InitHandler)
 	config.RegistOutputHandler(outputkafka.ModuleName, outputkafka.InitHandler)
 	config.RegistOutputHandler(outputloki.ModuleName, outputloki.InitHandler)
+	config.RegistOutputHandler(outputclickhouse.ModuleName, outputclickhouse.InitHandler)
 
 	config.RegistCodecHandler(config.DefaultCodecName, config.DefaultCodecInitHandler)
 	config.RegistCodecHandler(codecjson.ModuleName, codecjson.InitHandler)
