@@ -1,6 +1,6 @@
 module github.com/tsaikd/gogstash
 
-go 1.25.0
+go 1.25.5
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs v0.5.0
@@ -12,7 +12,7 @@ require (
 	github.com/drhodes/golorem v0.0.0-20160418191928-ecccc744c2d9
 	github.com/elastic/go-lumber v0.1.0
 	github.com/fsnotify/fsnotify v1.6.0
-	github.com/fsouza/go-dockerclient v1.9.7
+	github.com/fsouza/go-dockerclient v1.13.1
 	github.com/getsentry/sentry-go v0.28.0
 	github.com/golang/mock v1.6.0
 	github.com/hashicorp/golang-lru v0.5.4
@@ -32,10 +32,10 @@ require (
 	github.com/samber/lo v1.38.1
 	github.com/satyrius/gonx v1.3.1-0.20181123214749-d96bd26e3b2c
 	github.com/shirou/gopsutil/v3 v3.21.11
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.0.0
 	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.10.0
 	github.com/subchen/go-trylock/v2 v2.0.0
 	github.com/tengattack/jodatime v0.0.0-20180920000830-48b203d08145
 	github.com/tsaikd/KDGoLib v0.0.0-20191001134900-7f3cf518e07d
@@ -50,10 +50,9 @@ require (
 )
 
 require (
-	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.3.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.1.2 // indirect
-	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20180125190556-5a6b3ba71ee6 // indirect
 	github.com/antithesishq/antithesis-sdk-go v0.6.0-default-no-op // indirect
@@ -62,8 +61,6 @@ require (
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/docker v28.0.0+incompatible // indirect
-	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
@@ -71,11 +68,9 @@ require (
 	github.com/frankban/quicktest v1.14.4 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/go-version v1.2.0 // indirect
@@ -94,22 +89,23 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/minio/highwayhash v1.0.4-0.20251030100505-070ab1a87a76 // indirect
 	github.com/mitchellh/mapstructure v1.2.2 // indirect
-	github.com/moby/docker-image-spec v1.3.1 // indirect
-	github.com/moby/patternmatcher v0.5.0 // indirect
-	github.com/moby/sys/sequential v0.5.0 // indirect
-	github.com/moby/sys/user v0.3.0 // indirect
+	github.com/moby/go-archive v0.2.0 // indirect
+	github.com/moby/moby/api v1.54.0 // indirect
+	github.com/moby/moby/client v0.3.0 // indirect
+	github.com/moby/patternmatcher v0.6.1 // indirect
+	github.com/moby/sys/sequential v0.6.0 // indirect
+	github.com/moby/sys/user v0.4.0 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
-	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
+	github.com/moby/term v0.5.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/nats-io/jwt/v2 v2.8.1 // indirect
 	github.com/nats-io/nkeys v0.4.15 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.27.6 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0 // indirect
+	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/oschwald/maxminddb-golang v1.6.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pierrec/lz4 v2.5.1+incompatible // indirect
@@ -145,6 +141,5 @@ require (
 	gopkg.in/jcmturner/gokrb5.v7 v7.5.0 // indirect
 	gopkg.in/jcmturner/rpc.v1 v1.1.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gotest.tools/v3 v3.4.0 // indirect
 	lukechampine.com/uint128 v1.3.0 // indirect
 )
