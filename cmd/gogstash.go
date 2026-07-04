@@ -92,11 +92,14 @@ func gogstash(
 	return conf.Wait()
 }
 
+// defaultConfigFile is the default config file name used when no config path is provided
+const defaultConfigFile = "config.json"
+
 func searchConfigPath() string {
-	for _, path := range []string{"config.json", "config.yaml", "config.yml"} {
+	for _, path := range []string{defaultConfigFile, "config.yaml", "config.yml"} {
 		if futil.IsExist(path) {
 			return path
 		}
 	}
-	return "config.json"
+	return defaultConfigFile
 }

@@ -13,6 +13,7 @@ import (
 	"hash/adler32"
 	"hash/fnv"
 	"math/big"
+	"sync"
 
 	"github.com/tsaikd/gogstash/config"
 	"github.com/tsaikd/gogstash/config/goglog"
@@ -22,6 +23,22 @@ import (
 // ModuleName is the name used in the config file
 const ModuleName = "hash"
 
+// hash algorithm names
+const (
+	kindSHA1    = "sha1"
+	kindSHA256  = "sha256"
+	kindMD5     = "md5"
+	kindFNV128a = "fnv128a"
+	kindAdler32 = "adler32"
+	kindFNV32a  = "fnv32a"
+)
+
+// defaultHashKind is the default hash algorithm name
+const defaultHashKind = kindSHA1
+
+// defaultSourceField is the default source field name to hash
+const defaultSourceField = "message"
+
 // FilterConfig holds the configuration json fields and internal objects
 type FilterConfig struct {
 	config.FilterConfig
@@ -30,6 +47,7 @@ type FilterConfig struct {
 	Kind         string             `json:"kind" yaml:"kind"`     // kind of hash
 	Format       string             `json:"format" yaml:"format"` // output format
 	hash         hash.Hash          // the hasher we use with hash.Hash interface
+	hashMu       sync.Mutex         // guards the shared, mutable hash above against concurrent Event calls
 	hash32       func() hash.Hash32 // init function for hash.Hash32 interface, used if above is nil
 	outputFormat int                // output format
 }
@@ -43,8 +61,8 @@ func DefaultFilterConfig() FilterConfig {
 			},
 		},
 		Target: "hash",
-		Source: []string{"message"},
-		Kind:   "sha1",
+		Source: []string{defaultSourceField},
+		Kind:   defaultHashKind,
 	}
 }
 
@@ -70,16 +88,16 @@ type hash32Algo struct {
 
 // hash32Algos is a list of supported hash.Hash32 algorithms
 var hash32Algos = []hash32Algo{
-	{"adler32", adler32.New},
-	{"fnv32a", fnv.New32a},
+	{kindAdler32, adler32.New},
+	{kindFNV32a, fnv.New32a},
 }
 
 // hashAlgos is a list of supported hash.Hash algorithms
 var hashAlgos = []hashAlgo{
-	{"sha1", sha1.New},
-	{"sha256", sha256.New},
-	{"md5", md5.New},
-	{"fnv128a", fnv.New128a},
+	{kindSHA1, sha1.New},
+	{kindSHA256, sha256.New},
+	{kindMD5, md5.New},
+	{kindFNV128a, fnv.New128a},
 }
 
 // InitHandler initialize the filter plugin
@@ -173,7 +191,9 @@ func i32tob(val uint32) []byte {
 func (f *FilterConfig) makeHash(source string) (result string) {
 	var bs []byte
 	if f.hash != nil {
+		f.hashMu.Lock()
 		bs = f.hash.Sum([]byte(source))
+		f.hashMu.Unlock()
 	} else {
 		h := f.hash32()
 		h.Write([]byte(source))

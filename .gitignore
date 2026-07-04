@@ -4,6 +4,7 @@
 # /docker/
 /filter/geoip2/GeoLite2-City.mmdb
 /vendor/
+/.envrc
 /gogstash*
 /config.json
 /config.yaml
@@ -12,4 +13,4 @@
 
 .DS_Store
 .idea
-*.i*
+*.iml

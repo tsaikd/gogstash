@@ -19,6 +19,12 @@ const ModuleName = "redis"
 // ErrorTag tag added to event when process module failed
 const ErrorTag = "gogstash_output_redis_error"
 
+// redis data types
+const (
+	dataTypeList    = "list"
+	dataTypeChannel = "channel"
+)
+
 // OutputConfig holds the configuration json fields and internal objects
 type OutputConfig struct {
 	config.OutputConfig
@@ -42,7 +48,7 @@ func DefaultOutputConfig() OutputConfig {
 		},
 		Host:              []string{"localhost:6379"},
 		Key:               "gogstash",
-		DataType:          "list",
+		DataType:          dataTypeList,
 		Timeout:           5,
 		ReconnectInterval: 1,
 		Connections:       10,
@@ -102,11 +108,11 @@ func (t *OutputConfig) Output(ctx context.Context, event logevent.LogEvent) (err
 		}
 
 		switch t.DataType {
-		case "list":
+		case dataTypeList:
 			if _, err = t.client.RPush(key, raw).Result(); err == nil {
 				return nil
 			}
-		case "channel":
+		case dataTypeChannel:
 			if _, err = t.client.Publish(key, string(raw)).Result(); err == nil {
 				return nil
 			}

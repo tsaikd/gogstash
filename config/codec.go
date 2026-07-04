@@ -43,6 +43,9 @@ type CodecConfig struct {
 // CodecHandler is a handler to regist codec module
 type CodecHandler func(ctx context.Context, raw ConfigRaw) (TypeCodecConfig, error)
 
+// codecTypeField is the config key holding the codec type name
+const codecTypeField = "type"
+
 var (
 	mapCodecHandler = map[string]CodecHandler{
 		DefaultCodecName: DefaultCodecInitHandler,
@@ -78,9 +81,9 @@ func GetCodec(
 	case string:
 		// shorthand codec config method:
 		// codec: [codecTypeName]
-		raw = ConfigRaw{"type": cfg}
+		raw = ConfigRaw{codecTypeField: cfg}
 	case nil:
-		raw = ConfigRaw{"type": defaultType}
+		raw = ConfigRaw{codecTypeField: defaultType}
 	default:
 		return nil, ErrorUnknownCodecType1.New(nil, raw)
 	}
@@ -88,7 +91,7 @@ func GetCodec(
 	if !ok {
 		return nil, ErrorUnknownCodecType1.New(nil, raw)
 	}
-	typeNameRaw, ok := cfg["type"]
+	typeNameRaw, ok := cfg[codecTypeField]
 	if !ok {
 		typeNameRaw = defaultType
 	}

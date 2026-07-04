@@ -21,6 +21,25 @@ const ModuleName = "geoip2"
 // ErrorTag tag added to event when process geoip2 failed
 const ErrorTag = "gogstash_filter_geoip2_error"
 
+// geoip2 output field keys
+const (
+	fieldName      = "name"
+	fieldCode      = "code"
+	fieldLatitude  = "latitude"
+	fieldLongitude = "longitude"
+	fieldLocation  = "location"
+
+	fieldCity          = "city"
+	fieldContinent     = "continent"
+	fieldContinentCode = "continent_code"
+	fieldCountry       = "country"
+	fieldCountryCode   = "country_code"
+	fieldCountryName   = "country_name"
+	fieldTimezone      = "timezone"
+
+	defaultKey = "geoip"
+)
+
 // FilterConfig holds the configuration json fields and internal objects
 type FilterConfig struct {
 	config.FilterConfig
@@ -52,7 +71,7 @@ func DefaultFilterConfig() FilterConfig {
 			},
 		},
 		DBPath:      "GeoLite2-City.mmdb",
-		Key:         "geoip",
+		Key:         defaultKey,
 		QuietFail:   false, // backwards compatible
 		SkipPrivate: false,
 		FlatFormat:  false,
@@ -88,6 +107,7 @@ func InitHandler(
 	conf.watcher, err = fsnotify.NewWatcher()
 	if err != nil {
 		goglog.Logger.Errorf("%s failed to init watcher, %s", ModuleName, err.Error())
+		return nil, err
 	}
 	err = conf.watcher.Add(conf.DBPath)
 	if err != nil {
@@ -160,13 +180,13 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 
 	if f.FlatFormat {
 		m := map[string]any{
-			"continent_code": record.Continent.Code,
-			"country_code":   record.Country.IsoCode,
-			"country_name":   record.Country.Names["en"],
-			"ip":             ipstr,
-			"latitude":       record.Location.Latitude,
-			"location":       []float64{record.Location.Longitude, record.Location.Latitude},
-			"longitude":      record.Location.Longitude,
+			fieldContinentCode: record.Continent.Code,
+			fieldCountryCode:   record.Country.IsoCode,
+			fieldCountryName:   record.Country.Names["en"],
+			"ip":               ipstr,
+			fieldLatitude:      record.Location.Latitude,
+			fieldLocation:      []float64{record.Location.Longitude, record.Location.Latitude},
+			fieldLongitude:     record.Location.Longitude,
 		}
 		if record.City.Names != nil {
 			m["city_name"] = record.City.Names["en"]
@@ -179,32 +199,32 @@ func (f *FilterConfig) Event(ctx context.Context, event logevent.LogEvent) (loge
 			m["region_name"] = record.Subdivisions[0].Names["en"]
 		}
 		if record.Location.TimeZone != "" {
-			m["timezone"] = record.Location.TimeZone
+			m[fieldTimezone] = record.Location.TimeZone
 		}
 		event.SetValue(f.Key, m)
 	} else {
 		m := map[string]any{
-			"city": map[string]any{
-				"name": record.City.Names["en"],
+			fieldCity: map[string]any{
+				fieldName: record.City.Names["en"],
 			},
-			"continent": map[string]any{
-				"code": record.Continent.Code,
-				"name": record.Continent.Names["en"],
+			fieldContinent: map[string]any{
+				fieldCode: record.Continent.Code,
+				fieldName: record.Continent.Names["en"],
 			},
-			"country": map[string]any{
-				"code": record.Country.IsoCode,
-				"name": record.Country.Names["en"],
+			fieldCountry: map[string]any{
+				fieldCode: record.Country.IsoCode,
+				fieldName: record.Country.Names["en"],
 			},
-			"ip":        ipstr,
-			"latitude":  record.Location.Latitude,
-			"location":  []float64{record.Location.Longitude, record.Location.Latitude},
-			"longitude": record.Location.Longitude,
-			"timezone":  record.Location.TimeZone,
+			"ip":           ipstr,
+			fieldLatitude:  record.Location.Latitude,
+			fieldLocation:  []float64{record.Location.Longitude, record.Location.Latitude},
+			fieldLongitude: record.Location.Longitude,
+			fieldTimezone:  record.Location.TimeZone,
 		}
 		if len(record.Subdivisions) > 0 {
 			m["region"] = map[string]any{
-				"code": record.Subdivisions[0].IsoCode,
-				"name": record.Subdivisions[0].Names["en"],
+				fieldCode: record.Subdivisions[0].IsoCode,
+				fieldName: record.Subdivisions[0].Names["en"],
 			}
 		}
 		event.SetValue(f.Key, m)

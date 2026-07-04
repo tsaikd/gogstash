@@ -90,7 +90,7 @@ func TestFilterConfig_makeHash(t *testing.T) {
 
 	var totalRuns uint64
 	// the test function
-	myTest := func(f FilterConfig) error {
+	myTest := func(f *FilterConfig) error {
 		baseResult := f.makeHash(myStringToHash) // baseline
 		if known, ok := knownHashes[f.Kind]; ok {
 			if known != baseResult {
@@ -128,7 +128,7 @@ func TestFilterConfig_makeHash(t *testing.T) {
 		if err != nil {
 			t.Errorf("Failed to init %s", hash)
 		}
-		err = myTest(f)
+		err = myTest(&f)
 		if err != nil {
 			t.Errorf("%s error %v", hash, err)
 		}

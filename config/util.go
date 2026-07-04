@@ -62,7 +62,7 @@ func formatReflect(rv reflect.Value) {
 	}
 
 	switch rv.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		if !rv.IsNil() {
 			formatReflect(rv.Elem())
 		}

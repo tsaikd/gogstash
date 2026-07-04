@@ -14,6 +14,9 @@ import (
 // ModuleName is the name used in config file
 const ModuleName = "url_param"
 
+// defaultSourceField is the default source field name to parse url params from
+const defaultSourceField = "request_url"
+
 // FilterConfig holds the configuration json fields and internal objects
 type FilterConfig struct {
 	config.FilterConfig
@@ -43,7 +46,7 @@ func DefaultFilterConfig() FilterConfig {
 				Type: ModuleName,
 			},
 		},
-		Source:            "request_url",
+		Source:            defaultSourceField,
 		IncludeKeys:       []string{"*"},
 		URLDecode:         []string{"*"},
 		Prefix:            "request_url_args_",
