@@ -65,9 +65,11 @@ func TestCancelGroup(t *testing.T) {
 
 	var firstClose string
 	select {
-	case <-cg1.Done():
+	case err := <-cg1.Done():
+		require.NoError(err)
 		firstClose = "cg1"
-	case <-cg2.Done():
+	case err := <-cg2.Done():
+		require.ErrorIs(err, context.DeadlineExceeded)
 		firstClose = "cg2"
 	}
 

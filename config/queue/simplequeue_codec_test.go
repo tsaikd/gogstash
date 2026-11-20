@@ -6,7 +6,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/tsaikd/gogstash/config/logevent"
+)
+
+const (
+	waitTimeout  = 5 * time.Second
+	pollInterval = 10 * time.Millisecond
 )
 
 // This test will check that we receive messages after a codec ([]byte) has processed the stream.
@@ -74,33 +82,40 @@ func TestSimpleQueueCodec(t *testing.T) {
 		FailMsgID: []uint32{2},
 	}
 	control := newControlCounter()
-	q := NewSimpleQueue(ctx, control, o, o.ch, 5, 1)
+	const retryInterval = 1
+	start := time.Now()
+	q := NewSimpleQueue(ctx, control, o, o.ch, 5, retryInterval)
 	o.queue = q
 	// now send a message that should go through
 	event := logevent.LogEvent{Timestamp: time.Now()}
 	go o.background()
-	err := q.Output(ctx, event)
-	if err == nil {
-		time.Sleep(time.Second)
-		if atomic.LoadUint32(&o.numSuccess) != 1 {
-			t.Error("Sent one messages, did not get through")
-		}
-	} else {
-		t.Error(err)
-	}
+	require.NoError(t, q.Output(ctx, event))
+	require.Eventually(t, func() bool {
+		return atomic.LoadUint32(&o.numSuccess) == 1
+	}, waitTimeout, pollInterval, "sent one message, did not get through")
+
 	// now send a message that should be queued
-	err = q.Output(ctx, event)
-	if err != nil {
-		t.Error(err)
-		return
+	require.NoError(t, q.Output(ctx, event))
+	require.Eventually(t, func() bool {
+		return atomic.LoadUint32(&o.numQueued) == 1
+	}, waitTimeout, pollInterval, "second message was not queued")
+
+	// The retry fires on the queue's own ticker, created by the goroutine
+	// NewSimpleQueue starts, so it is not aligned with the test's sends and
+	// redelivery may follow queueing at once. It cannot fire before
+	// start+retryInterval, though: counters read before that instant must still
+	// show the message waiting, and a slower run skips the check rather than
+	// racing the ticker.
+	received := atomic.LoadUint32(&o.numReceived)
+	success := atomic.LoadUint32(&o.numSuccess)
+	if time.Since(start) < retryInterval*time.Second {
+		assert.EqualValues(t, 2, received, "queued message was redelivered before the first retry tick")
+		assert.EqualValues(t, 1, success, "queued message was redelivered before the first retry tick")
 	}
-	time.Sleep(900 * time.Millisecond)
-	if atomic.LoadUint32(&o.numQueued) != 1 || atomic.LoadUint32(&o.numReceived) != 2 || atomic.LoadUint32(&o.numSuccess) != 1 {
-		t.Errorf("Queueing does not work, %v", *o)
-		return
-	}
-	time.Sleep(900 * time.Millisecond)
-	if atomic.LoadUint32(&o.numSuccess) != 2 {
-		t.Error("Two messages not delivered")
-	}
+
+	require.Eventually(t, func() bool {
+		return atomic.LoadUint32(&o.numSuccess) == 2
+	}, waitTimeout, pollInterval, "queued message was not redelivered")
+	assert.EqualValues(t, 3, atomic.LoadUint32(&o.numReceived))
+	assert.EqualValues(t, 1, atomic.LoadUint32(&o.numQueued))
 }
